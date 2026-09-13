@@ -1,18 +1,30 @@
 import { useState, useEffect } from 'react'
-import { getRecommendations } from './planificador.api'
+import { getPlanificadorRecomendaciones } from './planificador.api'
+import type { DestinoRecomendadoDto, NivelPresupuesto, TipoClima } from '@/shared/types/global.types'
 
-export const usePlanificador = (budget: number, climate: string) => {
-  const [recommendations, setRecommendations] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+export const usePlanificador = (
+  presupuesto: NivelPresupuesto,
+  clima: TipoClima
+) => {
+  const [recomendaciones, setRecomendaciones] = useState<DestinoRecomendadoDto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
-      const data = await getRecommendations(budget, climate)
-      setRecommendations(data)
-      setLoading(false)
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await getPlanificadorRecomendaciones(presupuesto, clima)
+        setRecomendaciones(data)
+      } catch {
+        setError('No se pudieron cargar las recomendaciones.')
+      } finally {
+        setIsLoading(false)
+      }
     }
     load()
-  }, [budget, climate])
+  }, [presupuesto, clima])
 
-  return { recommendations, loading }
+  return { recomendaciones, isLoading, error }
 }

@@ -1,17 +1,10 @@
-export const login = async (email: string, password: string) => {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  })
-  return response.json()
-}
+import api from '@/shared/lib/api'
+import type { LoginApiResponse } from './auth.types'
 
-export const register = async (name: string, email: string, password: string) => {
-  const response = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password })
-  })
-  return response.json()
-}
+/**
+ * POST /api/auth/login
+ * El backend espera: { Email, Password } (LoginCommand — record de C#, case-insensitive en JSON).
+ * Devuelve: { token, nombreCompleto, rol }
+ */
+export const login = (email: string, password: string): Promise<LoginApiResponse> =>
+  api.post('/auth/login', { email, password })

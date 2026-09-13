@@ -1,9 +1,5 @@
-import { DashboardBI } from '@/features/portal-admin/dashboard-bi'
+import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 
 export const AdminPanel = () => {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardBI />
-    </div>
-  )
+  return <Habitaciones />
 }

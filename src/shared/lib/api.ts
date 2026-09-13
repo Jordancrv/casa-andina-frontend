@@ -1,25 +1,27 @@
-import axios from 'axios'
+import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
 
+// VITE_API_URL se define en .env.local → http://localhost:51141/api
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:51141/api',
   headers: {
     'Content-Type': 'application/json'
   }
 })
 
-api.interceptors.request.use((config: any) => {
+api.interceptors.request.use((config: AxiosRequestConfig) => {
   const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  if (token && config.headers) {
+    config.headers['Authorization'] = `Bearer ${token}`
   }
   return config
 })
 
 api.interceptors.response.use(
-  (response: any) => response.data,
-  (error: any) => {
-    if (error.response?.status === 401) {
-      // TODO: Handle token expiry / redirect to login
+  (response: AxiosResponse) => response.data,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      localStorage.removeItem('token')
+      window.location.href = '/login'
     }
     return Promise.reject(error)
   }

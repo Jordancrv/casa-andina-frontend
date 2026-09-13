@@ -1,24 +1,27 @@
 import { useState } from 'react'
+import { getRecomendaciones } from '../chatbot.api'
+import type { DestinoRecomendadoDto, NivelPresupuesto, TipoClima } from '@/shared/types/global.types'
 
 export const useChatbot = () => {
-  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
-  const [input, setInput] = useState('')
+  const [recomendaciones, setRecomendaciones] = useState<DestinoRecomendadoDto[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const sendMessage = async (message: string) => {
-    setMessages(prev => [...prev, { role: 'user', content: message }])
-    setInput('')
-
-    const response = await fetch('/api/chatbot', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      },
-      body: JSON.stringify({ message })
-    })
-    const data = await response.json()
-    setMessages(prev => [...prev, { role: 'bot', content: data.response }])
+  const buscarRecomendaciones = async (
+    presupuesto: NivelPresupuesto,
+    clima: TipoClima
+  ) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const data = await getRecomendaciones(presupuesto, clima)
+      setRecomendaciones(data)
+    } catch {
+      setError('No se pudieron cargar las recomendaciones. Intente nuevamente.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  return { messages, input, setInput, sendMessage }
+  return { recomendaciones, isLoading, error, buscarRecomendaciones }
 }
