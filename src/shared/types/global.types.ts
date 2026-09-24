@@ -134,9 +134,102 @@ export interface DestinoRecomendadoDto {
 }
 
 // ---------------------------------------------------------------------------
-// Dashboard
+// Dashboard BI — DTOs alineados con los endpoints del backend
 // ---------------------------------------------------------------------------
 
+/** GET /api/dashboard/kpis
+ *  Devuelve los 4 KPIs principales del período seleccionado.
+ *  Params: periodo ('7d' | '30d' | 'mes') + sedeId? (null = todas) */
+export interface DashboardKpisDto {
+  totalReservas: number
+  totalReservasPeriodoAnterior: number   // para calcular variación %
+  ingresosTotalSoles: number
+  ingresosPeriodoAnterior: number
+  ocupacionPromedioPct: number
+  ocupacionPeriodoAnterior: number
+  totalClientesActivos: number
+  nuevosClientesPct: number
+}
+
+/** GET /api/dashboard/reservas-semana
+ *  Series de reservas confirmadas + canceladas para las últimas N semanas.
+ *  Params: semanas (default 6) + sedeId? */
+export interface ReservaSemanaSerie {
+  semanaLabel: string        // "S-5", "S-4" … "Actual"
+  confirmadas: number
+  canceladas: number
+  alturaPctConfirmadas: number   // calculado en FE: max=100
+  alturaPctCanceladas: number
+}
+
+/** GET /api/dashboard/ocupacion-sedes
+ *  Porcentaje de ocupación actual por sede, ordenado desc.
+ *  Params: sedeId? (null = todas → devuelve array) */
+export interface OcupacionSedeDto {
+  sedeNombre: string
+  ciudad: string
+  ocupacionPct: number       // 0-100
+  cantidad: number           // cantidad de habitaciones/reservas
+}
+
+/** GET /api/dashboard/cancelaciones-motivos
+ *  Motivos de cancelación (porcentaje y cantidad).
+ *  Params: periodo + sedeId? */
+export interface CancelacionMotivoDto {
+  motivo: string
+  porcentaje: number
+  cantidad: number
+}
+
+/** GET /api/dashboard/proyeccion-demanda
+ *  Estimación de reservas para las próximas 4 semanas.
+ *  Params: sedeId? */
+export interface ProyeccionSemanaDto {
+  semanaLabel: string        // "SEMANA 01" … "SEMANA 04"
+  reservasProyectadas: number
+  confianzaPct: number       // barra de confianza 0-100
+}
+
+/** GET /api/dashboard/canales
+ *  Desglose por canal (Directo / OTA) + métricas derivadas.
+ *  Params: periodo + sedeId? */
+export interface CanalReservasDto {
+  reservasDirectas: number
+  reservasOTA: number
+  totalReservas: number
+  ticketPromedioSoles: number
+  estadiaPromedioNoches: number
+}
+
+/** GET /api/dashboard/chatbot-metricas
+ *  KPIs del asistente IA.
+ *  Params: periodo + sedeId? */
+export interface ChatbotMetricasDto {
+  consultasRealizadas: number
+  reservasGeneradas: number
+  tasaConversionPct: number
+  presupuestoMasConsultado: string   // "Económico" | "Estándar" | "Lujo"
+  climaMasConsultado: string         // "Cálido" | "Frío" | "Templado"
+}
+
+/** Parámetros de filtro compartidos por todos los endpoints del dashboard */
+export interface DashboardFiltros {
+  periodo: '7d' | '30d' | 'mes'
+  sedeId: number | null    // null = todas las sedes
+}
+
+/** Tipo compuesto que agrupa toda la data del dashboard (carga paralela) */
+export interface DashboardData {
+  kpis: DashboardKpisDto
+  reservasSemana: ReservaSemanaSerie[]
+  ocupacionSedes: OcupacionSedeDto[]
+  cancelacionesMotivos: CancelacionMotivoDto[]
+  proyeccion: ProyeccionSemanaDto[]
+  canales: CanalReservasDto
+  chatbot: ChatbotMetricasDto
+}
+
+/** @deprecated Usar DashboardKpisDto en su lugar */
 export interface DashboardResumenDto {
   habitacionesOcupadas: number
   habitacionesDisponibles: number

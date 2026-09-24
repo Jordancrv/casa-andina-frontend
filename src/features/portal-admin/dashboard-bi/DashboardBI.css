@@ -1,0 +1,576 @@
+/* ==========================================================================
+   DashboardBI.css
+   Estilos BEM exclusivos del módulo de Resumen (Dashboard BI).
+   NO incluye layout global ni sidebar — eso lo gestiona el shell existente.
+   Paleta: Casa Andina Design System (#0F564B primary, #F4FBF8 bg)
+   Responsivo: móvil < 640px · tablet 640-1024px · desktop > 1024px
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Variables locales del módulo
+   -------------------------------------------------------------------------- */
+:root {
+  --db-primary:       #0F564B;
+  --db-primary-mid:   #2F6F63;
+  --db-primary-dim:   #4D8175;
+  --db-accent:        #5D8B80;
+  --db-accent-soft:   #B7D2CB;
+  --db-bg:            #F4FBF8;
+  --db-surface:       #ffffff;
+  --db-border:        #DAE4E1;
+  --db-border-soft:   #E1EAE7;
+  --db-text:          #163C36;
+  --db-text-sec:      #49625D;
+  --db-text-muted:    #7B918C;
+  --db-success:       #2F7A46;
+  --db-warning:       #D4860B;
+  --db-error:         #BA1A1A;
+  --db-shadow:        0 1px 4px rgba(15,86,75,.07);
+  --db-font:          'Hanken Grotesk', Arial, sans-serif;
+  --db-mono:          'JetBrains Mono', Consolas, monospace;
+}
+
+/* --------------------------------------------------------------------------
+   Contenedor raíz de la página — solo padding interior, sin posición fija
+   -------------------------------------------------------------------------- */
+.db-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 30px;
+  background: var(--db-bg);
+  min-height: 100%;
+  font-family: var(--db-font);
+  color: var(--db-text);
+}
+
+@media (max-width: 639px) {
+  .db-page { padding: 16px 14px; gap: 12px; }
+}
+
+/* --------------------------------------------------------------------------
+   Cabecera de la sección Resumen
+   -------------------------------------------------------------------------- */
+.db-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Filtros
+   -------------------------------------------------------------------------- */
+.db-filtros {
+  display: flex;
+  gap: 8px;
+}
+
+.db-filtros__select {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  padding: 7px 10px;
+  color: var(--db-text-sec);
+  font-family: var(--db-font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.db-filtros__select:focus {
+  border-color: var(--db-primary-mid);
+}
+
+@media (max-width: 479px) {
+  .db-filtros { display: none; } /* se ocultan en móvil muy pequeño */
+}
+
+/* --------------------------------------------------------------------------
+   Botón de refresco
+   -------------------------------------------------------------------------- */
+.db-btn-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--db-border);
+  padding: 7px 10px;
+  color: var(--db-primary-mid);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  line-height: 1;
+}
+
+.db-btn-refresh:hover:not(:disabled) {
+  background: #EDF3F1;
+  color: var(--db-primary);
+}
+
+.db-btn-refresh:disabled {
+  opacity: .45;
+  cursor: default;
+  animation: db-spin .9s linear infinite;
+}
+
+@keyframes db-spin { to { transform: rotate(360deg); } }
+
+/* --------------------------------------------------------------------------
+   Banner de error
+   -------------------------------------------------------------------------- */
+.db-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FFF4F4;
+  border: 1px solid #F5C2C2;
+  border-left: 4px solid var(--db-error);
+  color: #7C1D1D;
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.db-error__btn {
+  margin-left: auto;
+  background: none;
+  border: 1px solid currentColor;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: inherit;
+  font-family: var(--db-mono);
+  transition: background .15s;
+  flex-shrink: 0;
+}
+
+.db-error__btn:hover { background: rgba(0,0,0,.06); }
+
+/* --------------------------------------------------------------------------
+   Cards base
+   -------------------------------------------------------------------------- */
+.db-card {
+  background: var(--db-surface);
+  border: 1px solid var(--db-border);
+  box-shadow: var(--db-shadow);
+  overflow: hidden;
+}
+
+.db-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--db-border-soft);
+}
+
+.db-card__title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--db-text);
+}
+
+.db-card__note {
+  font-family: var(--db-mono);
+  font-size: 10px;
+  color: var(--db-text-muted);
+  flex-shrink: 0;
+}
+
+.db-card__badge { flex-shrink: 0; }
+
+.db-card__body { padding: 18px; }
+
+/* --------------------------------------------------------------------------
+   Badge
+   -------------------------------------------------------------------------- */
+.db-badge {
+  font-family: var(--db-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  padding: 3px 8px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+.db-badge--activo {
+  color: var(--db-success);
+  border-color: #A3D4B2;
+  background: #F0FAF4;
+}
+
+/* --------------------------------------------------------------------------
+   Grilla de KPIs — 4 col / 2 col / 1 col
+   -------------------------------------------------------------------------- */
+.db-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 899px) { .db-kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 479px) { .db-kpis { grid-template-columns: 1fr; } }
+
+.db-kpi {
+  padding: 18px 18px 16px;
+  cursor: default;
+  transition: box-shadow .2s, transform .2s;
+}
+
+.db-kpi:hover {
+  box-shadow: 0 4px 14px rgba(15,86,75,.12);
+  transform: translateY(-1px);
+}
+
+.db-kpi__label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--db-mono);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--db-text-muted);
+}
+
+.db-kpi__icon {
+  color: var(--db-primary-mid);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.db-kpi__value {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--db-primary);
+  margin-top: 10px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-kpi__trend {
+  font-family: var(--db-mono);
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+.db-kpi__trend--up   { color: var(--db-success); }
+.db-kpi__trend--down { color: var(--db-error); }
+
+/* --------------------------------------------------------------------------
+   Grid de 2 columnas — colapsa a 1 en tablet/móvil
+   -------------------------------------------------------------------------- */
+.db-grid-2 {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 899px) {
+  .db-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* --------------------------------------------------------------------------
+   Gráfico de barras agrupadas (Reservas por semana)
+   -------------------------------------------------------------------------- */
+.db-barchart__bars {
+  height: 200px;
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  padding: 8px 8px 30px;
+  border-bottom: 1px solid var(--db-border-soft);
+}
+
+.db-barchart__group {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-end;
+  position: relative;
+}
+
+.db-barchart__bars-inner {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.db-barchart__bar {
+  flex: 1;
+  min-height: 4px;
+  transition: height .5s cubic-bezier(.4,0,.2,1);
+}
+
+.db-barchart__bar--conf { background: var(--db-accent); }
+.db-barchart__bar--canc { background: var(--db-accent-soft); }
+
+.db-barchart__label {
+  position: absolute;
+  bottom: -24px;
+  width: 100%;
+  text-align: center;
+  font-family: var(--db-mono);
+  font-size: 10px;
+  color: var(--db-text-muted);
+}
+
+.db-barchart__legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  font-family: var(--db-mono);
+  font-size: 10px;
+  color: var(--db-text-muted);
+}
+
+.db-barchart__legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.db-barchart__legend-dot--conf { background: var(--db-accent); }
+.db-barchart__legend-dot--canc { background: var(--db-accent-soft); }
+
+/* --------------------------------------------------------------------------
+   Ocupación por sede — barras horizontales
+   -------------------------------------------------------------------------- */
+.db-ocupacion {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.db-ocupacion__row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.db-ocupacion__nombre {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--db-text-sec);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.db-ocupacion__track {
+  height: 8px;
+  background: #EDF3F1;
+  overflow: hidden;
+}
+
+.db-ocupacion__fill {
+  height: 100%;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+
+.db-ocupacion__fill--high { background: var(--db-success); }
+.db-ocupacion__fill--mid  { background: var(--db-warning); }
+.db-ocupacion__fill--low  { background: var(--db-error); }
+
+.db-ocupacion__pct {
+  font-family: var(--db-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--db-text-sec);
+  text-align: right;
+}
+
+/* --------------------------------------------------------------------------
+   Proyección de demanda — grid de 4 tarjetas
+   -------------------------------------------------------------------------- */
+.db-proyeccion {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 639px) {
+  .db-proyeccion { grid-template-columns: repeat(2, 1fr); }
+}
+
+.db-proyeccion__week {
+  padding: 14px;
+  border: 1px solid var(--db-border-soft);
+  background: #FAFCFB;
+  transition: box-shadow .2s;
+}
+
+.db-proyeccion__week:hover {
+  box-shadow: 0 3px 10px rgba(15,86,75,.1);
+}
+
+.db-proyeccion__name {
+  font-family: var(--db-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--db-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.db-proyeccion__number {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--db-primary);
+  margin: 8px 0 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.db-proyeccion__sub {
+  font-size: 11px;
+  color: var(--db-text-muted);
+}
+
+.db-proyeccion__track {
+  height: 5px;
+  background: #E9F1EF;
+  margin-top: 14px;
+  overflow: hidden;
+}
+
+.db-proyeccion__fill {
+  display: block;
+  height: 100%;
+  background: var(--db-primary-dim);
+  transition: width .5s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Lista genérica (Canal + Chatbot)
+   -------------------------------------------------------------------------- */
+.db-list { display: flex; flex-direction: column; }
+
+.db-list__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--db-border-soft);
+  font-size: 12px;
+}
+
+.db-list__row:last-child { border-bottom: none; }
+
+.db-list__label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--db-text-sec);
+}
+
+.db-list__mono {
+  font-family: var(--db-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--db-text);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.db-list__mono--highlight {
+  color: var(--db-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Canal de reservas — barra proporcional Directo/OTA
+   -------------------------------------------------------------------------- */
+.db-canales__barra {
+  display: flex;
+  height: 6px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+
+.db-canales__seg {
+  height: 100%;
+  transition: width .5s ease;
+}
+
+.db-canales__seg--directo { background: var(--db-primary); }
+.db-canales__seg--ota     { background: var(--db-accent-soft); }
+
+.db-canales__dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.db-canales__dot--directo { background: var(--db-primary); }
+.db-canales__dot--ota     { background: var(--db-accent-soft); }
+
+/* --------------------------------------------------------------------------
+   Skeleton / Loading state
+   -------------------------------------------------------------------------- */
+@keyframes db-shimmer {
+  0%   { background-position: -500px 0; }
+  100% { background-position:  500px 0; }
+}
+
+.db-skeleton {
+  background: linear-gradient(90deg, #E8F0EE 25%, #F3FAF7 50%, #E8F0EE 75%);
+  background-size: 1000px 100%;
+  animation: db-shimmer 1.4s infinite;
+  border: none !important;
+  box-shadow: none !important;
+  min-height: 88px;
+  pointer-events: none;
+}
+
+.db-skeleton--tall { min-height: 260px; }
+
+/* --------------------------------------------------------------------------
+   Tabs (Confirmadas / Canceladas)
+   -------------------------------------------------------------------------- */
+.db-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--db-bg-subtle);
+  padding: 4px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.db-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--db-text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.db-tab:hover {
+  color: var(--db-text);
+}
+
+.db-tab--active {
+  background: #fff;
+  color: var(--db-primary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}

@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   listHabitaciones,
   createHabitacion,
@@ -10,8 +9,8 @@ import {
   type ComodidadDto,
   type SedeDto,
 } from './habitaciones.api'
-import logoCasaAndina from '@/assets/casa-andina.png'
 import './habitaciones.css'
+
 
 type FiltroEstado = 'Todas' | 'Disponible' | 'Ocupada' | 'Mantenimiento' | 'Bloqueada'
 
@@ -27,7 +26,6 @@ const emptyForm: CreateHabitacionPayload = {
 }
 
 export const Habitaciones = () => {
-  const navigate = useNavigate()
 
   const [habitaciones, setHabitaciones] = useState<HabitacionDto[]>([])
   const [isLoading, setIsLoading]       = useState(true)
@@ -186,60 +184,7 @@ export const Habitaciones = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="rooms-shell">
-      {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className="rooms-sidebar">
-        <div className="brand-lockup">
-          <img
-            src={logoCasaAndina}
-            alt="Casa Andina"
-            style={{
-              height: 'clamp(4.5rem, 6vw, 6.5rem)',
-              width: 'auto',
-              maxWidth: '100%',
-              objectFit: 'contain',
-              objectPosition: 'left'
-            }}
-          />
-          <span>ADMIN CONSOLE</span>
-        </div>
-        <nav className="rooms-nav" aria-label="Navegación principal">
-          {([
-            ['Resumen',     '/admin/dashboard'],
-            ['Reservas',    '/admin/calendario'],
-            ['Habitaciones','/admin/habitaciones'],
-            ['Servicios',   '/admin/servicios'],
-            ['Usuarios',    '/admin/usuarios'],
-          ] as [string, string][]).map(([item, path]) => (
-            <button
-              className={item === 'Habitaciones' ? 'nav-item active' : 'nav-item'}
-              key={item}
-              type="button"
-              onClick={() => navigate(path)}
-            >
-              <span aria-hidden="true">{item === 'Habitaciones' ? '▦' : '·'}</span>
-              {item}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-user">
-          <span className="avatar">AM</span>
-          <span><b>Admin User</b><small>Administrador</small></span>
-        </div>
-      </aside>
-
-      {/* ── Main ────────────────────────────────────────────────────────── */}
-      <main className="rooms-main">
-        <header className="rooms-topbar">
-          <div className="mobile-brand">Casa Andina</div>
-          <div className="topbar-actions">
-            <span>Ayuda</span>
-            <button type="button" aria-label="Abrir configuración">⚙</button>
-            <span className="avatar small">AM</span>
-          </div>
-        </header>
-
-        <div className="rooms-content">
+    <div className="rooms-content">
           {/* Encabezado */}
           <div className="page-heading">
             <div>
@@ -366,8 +311,6 @@ export const Habitaciones = () => {
               </div>
             </section>
           )}
-        </div>
-      </main>
 
       {/* ── Modal: Nueva Habitación ──────────────────────────────────────── */}
       {isModalOpen && (

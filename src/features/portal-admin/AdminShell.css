@@ -1,0 +1,197 @@
+/* ==========================================================================
+   AdminShell.css — Layout del Portal Admin (Sidebar + Topbar + Contenido)
+   Reutiliza la misma paleta y tipografía de habitaciones.css para coherencia.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Variables (mismo sistema que habitaciones.css)
+   -------------------------------------------------------------------------- */
+.shell {
+  --ink:      #173f35;
+  --ink-dark: #0d2820;   /* tono más oscuro para item activo */
+  --muted:    #667570;
+  --line:     #dae4e1;
+  --mint:     #f4fbf8;
+  --active-bg:#d4ede5;   /* fondo más oscuro / saturado que eaf5f1 */
+
+  min-height: 100vh;
+  display: flex;
+  background: var(--mint);
+  color: #19211f;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 13px;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar
+   -------------------------------------------------------------------------- */
+.shell-sidebar {
+  width: 248px;
+  flex: 0 0 248px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--line);
+  background: #fff;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+/* Logo / Brand */
+.shell-brand {
+  padding: 28px 25px 36px;
+  color: var(--ink);
+}
+
+.shell-brand__logo {
+  height: clamp(4rem, 6vw, 6rem);
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left;
+  display: block;
+}
+
+.shell-brand__label {
+  display: block;
+  margin-top: 8px;
+  color: #788984;
+  font-size: 10px;
+  letter-spacing: .13em;
+}
+
+/* Navegación */
+.shell-nav {
+  display: grid;
+  gap: 3px;
+  padding: 0 12px;
+}
+
+.shell-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 0;
+  border-left: 3px solid transparent;
+  padding: 13px 13px;
+  background: transparent;
+  color: #64716e;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.shell-nav__item:hover {
+  background: #eaf5f1;
+  color: var(--ink);
+}
+
+/* Estado ACTIVO — tono más oscuro para indicar página actual */
+.shell-nav__item--active {
+  border-left-color: var(--ink-dark);
+  background: var(--active-bg);
+  color: var(--ink-dark);
+  font-weight: 700;
+}
+
+.shell-nav__item--active:hover {
+  background: #c8e6de;
+}
+
+.shell-nav__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  flex-shrink: 0;
+  color: #a2aeaa;
+  transition: color .15s;
+}
+
+.shell-nav__item--active .shell-nav__icon {
+  color: var(--ink-dark);
+}
+
+/* Usuario en el pie del sidebar */
+.shell-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 20px 25px;
+  border-top: 1px solid var(--line);
+}
+
+.shell-user__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.shell-user__info b,
+.shell-user__info small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shell-user__info small {
+  margin-top: 3px;
+  color: #788984;
+  font-size: 10px;
+}
+
+/* Avatar */
+.shell-avatar {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: var(--ink);
+  color: #fff;
+  font: 700 11px 'Hanken Grotesk', sans-serif;
+  border-radius: 0;
+}
+
+.shell-avatar--sm {
+  width: 30px;
+  height: 30px;
+}
+
+/* --------------------------------------------------------------------------
+   Área principal
+   -------------------------------------------------------------------------- */
+.shell-main {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenido — slot donde se montan las páginas */
+.shell-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 800px) {
+  .shell-sidebar {
+    display: none;     /* igual que en habitaciones.css */
+  }
+
+  .shell-topbar {
+    padding: 0 20px;
+  }
+
+  .shell-topbar__actions > span:first-child {
+    display: none;
+  }
+}

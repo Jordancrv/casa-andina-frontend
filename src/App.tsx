@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useState } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminPanel } from '@/features/portal-admin/admin-panel'
+import { AdminShell } from '@/features/portal-admin/AdminShell'
 import { DashboardBI } from '@/features/portal-admin/dashboard-bi/DashboardBI'
 import { Calendario } from '@/features/portal-admin/calendario/Calendario'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
@@ -127,13 +128,13 @@ const AppContent = () => {
 
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Portal Admin — roles internos (Administrador, Recepcion, Operaciones, Mantenimiento) */}
-        <Route path="/admin" element={<RequireRole roles={ADMIN_ROLES}><AdminPanel /></RequireRole>} />
-        <Route path="/admin/dashboard" element={<RequireRole roles={ADMIN_ROLES}><DashboardBI /></RequireRole>} />
-        <Route path="/admin/habitaciones" element={<RequireRole roles={ADMIN_ROLES}><Habitaciones /></RequireRole>} />
-        <Route path="/admin/calendario" element={<RequireRole roles={ADMIN_ROLES}><Calendario /></RequireRole>} />
-        <Route path="/admin/servicios" element={<RequireRole roles={ADMIN_ROLES}><Servicios /></RequireRole>} />
-        <Route path="/admin/usuarios" element={<RequireRole roles={['Administrador']}><Usuarios /></RequireRole>} />
+        {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
+        <Route path="/admin" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />
+        <Route path="/admin/dashboard"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
+        <Route path="/admin/habitaciones" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
+        <Route path="/admin/calendario"   element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Calendario /></AdminShell></RequireRole>} />
+        <Route path="/admin/servicios"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Servicios /></AdminShell></RequireRole>} />
+        <Route path="/admin/usuarios"     element={<RequireRole roles={['Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}
         <Route
