@@ -54,9 +54,11 @@ GO
 -- Roles del personal interno (Hito 3: Administrador, Recepción, Operaciones, Mantenimiento)
 CREATE TABLE dbo.Rol (
     RolId           INT             IDENTITY(1,1)   NOT NULL,
+    Codigo          NVARCHAR(30)    NOT NULL,
     Nombre          NVARCHAR(50)    NOT NULL,
     Descripcion     NVARCHAR(200)   NULL,
     CONSTRAINT PK_Rol PRIMARY KEY (RolId),
+    CONSTRAINT UQ_Rol_Codigo UNIQUE (Codigo),
     CONSTRAINT UQ_Rol_Nombre UNIQUE (Nombre)
 );
 GO
@@ -309,11 +311,11 @@ GO
    9. DATOS SEMILLA (catálogos + sedes maestras según Restricción #2)
    ============================================================================ */
 
-INSERT INTO dbo.Rol (Nombre, Descripcion) VALUES
-    (N'Administrador', N'Acceso total al sistema y configuración'),
-    (N'Recepción', N'Gestión de reservas, calendario y clientes'),
-    (N'Operaciones', N'Gestión de habitaciones y servicios por sede'),
-    (N'Mantenimiento', N'Actualización de estado de habitaciones');
+INSERT INTO dbo.Rol (Codigo, Nombre, Descripcion) VALUES
+    (N'ADMINISTRADOR', N'Administrador', N'Acceso total al sistema y configuración'),
+    (N'RECEPCION', N'Recepción', N'Gestión de reservas, calendario y clientes'),
+    (N'OPERACIONES', N'Operaciones', N'Gestión de habitaciones y servicios por sede'),
+    (N'MANTENIMIENTO', N'Mantenimiento', N'Actualización de estado de habitaciones');
 GO
 
 INSERT INTO dbo.Comodidad (Nombre) VALUES

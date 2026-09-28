@@ -21,6 +21,7 @@ api.interceptors.response.use(
   (error: unknown) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       localStorage.removeItem('token')
+      localStorage.removeItem('usuario')
       window.location.href = '/login'
     }
     return Promise.reject(error)
