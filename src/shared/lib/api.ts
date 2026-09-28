@@ -1,4 +1,4 @@
-import axios, { type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, { type AxiosResponse } from 'axios'
 
 // VITE_API_URL se define en .env.local → http://localhost:51141/api
 const api = axios.create({
@@ -8,10 +8,10 @@ const api = axios.create({
   }
 })
 
-api.interceptors.request.use((config: AxiosRequestConfig) => {
+api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
-  if (token && config.headers) {
-    config.headers['Authorization'] = `Bearer ${token}`
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
   }
   return config
 })

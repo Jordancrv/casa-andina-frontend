@@ -1,6 +1,6 @@
 import { Button } from '@/shared/ui/Button'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
@@ -14,7 +14,7 @@ import { useAuth } from '@/app/providers/AuthProvider'
 const ADMIN_ROLES = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
-const RequireRole = ({ roles, children }: { roles: string[]; children: JSX.Element }) => {
+const RequireRole = ({ roles, children }: { roles: string[]; children: ReactElement }) => {
   const { usuario } = useAuth()
   if (!usuario) return <Navigate to="/login" replace />
   if (!roles.includes(usuario.rol)) {
