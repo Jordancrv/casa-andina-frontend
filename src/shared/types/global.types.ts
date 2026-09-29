@@ -74,6 +74,8 @@ export interface CatalogosResponse {
 
 export interface HabitacionDto {
   id: number
+  sedeId: number
+  tipoHabitacionId: number
   numero: string
   piso: number
   precioNoche: number
@@ -83,7 +85,9 @@ export interface HabitacionDto {
   tipoHabitacionNombre: string
   capacidadAdultos: number
   capacidadNinos: number
+  comodidadesIds: number[]
   comodidades: string[]
+  activo: boolean
 }
 
 /** Payload para crear habitación → CreateHabitacionCommand del backend */
@@ -97,6 +101,8 @@ export interface CreateHabitacionPayload {
   fotoUrl?: string
   comodidadesIds: number[]
 }
+
+export type UpdateHabitacionPayload = CreateHabitacionPayload
 
 // ---------------------------------------------------------------------------
 // Reservas — alineado con ReservaDto del backend
