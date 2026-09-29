@@ -1,22 +1,8 @@
-import { createContext, useContext, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { login as loginApi } from '@/features/auth/auth.api'
 import type { UsuarioSesion } from '@/features/auth/auth.types'
-
-type AuthContextProps = {
-  usuario: UsuarioSesion | null
-  login: (email: string, password: string) => Promise<void>
-  logout: () => void
-  isLoading: boolean
-}
-
-const AuthContext = createContext<AuthContextProps | undefined>(undefined)
-
-export const useAuth = () => {
-  const context = useContext(AuthContext)
-  if (!context) throw new Error('useAuth must be used within an AuthProvider')
-  return context
-}
+import { AuthContext } from './auth-context'
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(() => {

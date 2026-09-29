@@ -164,7 +164,8 @@ export function useDashboard(): UseDashboardReturn {
   }, [filtros])
 
   useEffect(() => {
-    load()
+    const timeoutId = window.setTimeout(() => void load(), 0)
+    return () => window.clearTimeout(timeoutId)
   }, [load])
 
   return { data, loading, error, filtros, setFiltros, refetch: load }

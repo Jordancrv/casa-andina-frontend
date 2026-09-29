@@ -1,8 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './AuthProvider'
+import { queryClient } from './queryClient'
 import type { ReactNode } from 'react'
-
-export const queryClient = new QueryClient()
 
 export function Providers({ children }: { children: ReactNode }) {
   return (

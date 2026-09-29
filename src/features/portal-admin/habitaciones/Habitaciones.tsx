@@ -87,7 +87,8 @@ export const Habitaciones = () => {
   }
 
   useEffect(() => {
-    loadData()
+    const timeoutId = window.setTimeout(() => void loadData(), 0)
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   // ── Tipo de Habitación seleccionado actualmente ───────────────────────────

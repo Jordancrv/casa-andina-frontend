@@ -1,6 +1,7 @@
 import { Button } from '@/shared/ui/Button'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, type ReactElement } from 'react'
+import axios from 'axios'
 import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
@@ -9,7 +10,7 @@ import { Calendario } from '@/features/portal-admin/calendario/Calendario'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
-import { useAuth } from '@/app/providers/AuthProvider'
+import { useAuth } from '@/app/providers/auth-context'
 import type { Rol } from '@/shared/types/global.types'
 
 const PERSONAL_INTERNO: Rol[] = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
@@ -53,9 +54,13 @@ const LoginPage = () => {
 
     try {
       await login(email, password)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+      const responseData = axios.isAxiosError(err)
+        ? err.response?.data as { detail?: string; message?: string; title?: string } | undefined
+        : undefined
+      const msg = responseData?.detail || responseData?.message || responseData?.title ||
+        'Error al iniciar sesión. Verifica tus credenciales.'
       setErrorMsg(msg)
     } finally {
       setIsSubmitting(false)
