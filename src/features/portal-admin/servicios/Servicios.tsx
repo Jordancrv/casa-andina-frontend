@@ -189,13 +189,16 @@ export const Servicios = () => {
           <section className="services-panel">
             <div className="services-toolbar">
               <div><h2>Catálogo operativo</h2><span>{filtered.length} resultados</span></div>
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Buscar por nombre o sede"
-                aria-label="Buscar servicios"
-              />
+              <label className="services-search">
+                <span aria-hidden="true">⌕</span>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Buscar servicio..."
+                  aria-label="Buscar servicios"
+                />
+              </label>
             </div>
             <div className="services-filters">
               <label>
@@ -225,8 +228,14 @@ export const Servicios = () => {
                       <td>{servicio.sedes.join(', ')}</td>
                       <td className="services-price">S/ {servicio.precio.toFixed(2)}</td>
                       <td>
-                        <button className="services-action" type="button" onClick={() => void openDetail(servicio.id)}>
-                          Ver detalle
+                        <button
+                          className="services-action"
+                          type="button"
+                          title="Ver detalle completo"
+                          aria-label={`Ver detalle de ${servicio.nombre}`}
+                          onClick={() => void openDetail(servicio.id)}
+                        >
+                          •••
                         </button>
                       </td>
                     </tr>
