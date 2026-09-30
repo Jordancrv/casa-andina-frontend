@@ -105,6 +105,27 @@ export interface CreateHabitacionPayload {
 export type UpdateHabitacionPayload = CreateHabitacionPayload
 
 // ---------------------------------------------------------------------------
+// Servicios
+// ---------------------------------------------------------------------------
+
+export interface ServicioDto {
+  id: number
+  nombre: string
+  descripcion: string | null
+  precio: number
+  sedesIds: number[]
+  sedes: string[]
+  activo: boolean
+}
+
+export interface ServicioPayload {
+  nombre: string
+  descripcion?: string
+  precio: number
+  sedesIds: number[]
+}
+
+// ---------------------------------------------------------------------------
 // Reservas — alineado con ReservaDto del backend
 // ---------------------------------------------------------------------------
 
