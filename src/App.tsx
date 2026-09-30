@@ -1,6 +1,7 @@
 import { Button } from '@/shared/ui/Button'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, type ReactElement } from 'react'
+import axios from 'axios'
 import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
@@ -9,12 +10,15 @@ import { Calendario } from '@/features/portal-admin/calendario/Calendario'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
-import { useAuth } from '@/app/providers/AuthProvider'
+import { useAuth } from '@/app/providers/auth-context'
+import type { Rol } from '@/shared/types/global.types'
 
-const ADMIN_ROLES = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
+const PERSONAL_INTERNO: Rol[] = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
+const GESTION_HABITACIONES: Rol[] = ['Administrador', 'Operaciones', 'Mantenimiento']
+const GESTION_SERVICIOS: Rol[] = ['Administrador', 'Operaciones']
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
-const RequireRole = ({ roles, children }: { roles: string[]; children: JSX.Element }) => {
+const RequireRole = ({ roles, children }: { roles: Rol[]; children: ReactElement }) => {
   const { usuario } = useAuth()
   if (!usuario) return <Navigate to="/login" replace />
   if (!roles.includes(usuario.rol)) {
@@ -50,9 +54,13 @@ const LoginPage = () => {
 
     try {
       await login(email, password)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.'
+      const responseData = axios.isAxiosError(err)
+        ? err.response?.data as { detail?: string; message?: string; title?: string } | undefined
+        : undefined
+      const msg = responseData?.detail || responseData?.message || responseData?.title ||
+        'Error al iniciar sesión. Verifica tus credenciales.'
       setErrorMsg(msg)
     } finally {
       setIsSubmitting(false)
@@ -129,11 +137,11 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
-        <Route path="/admin" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />
-        <Route path="/admin/dashboard"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
-        <Route path="/admin/habitaciones" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
-        <Route path="/admin/calendario"   element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Calendario /></AdminShell></RequireRole>} />
-        <Route path="/admin/servicios"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Servicios /></AdminShell></RequireRole>} />
+        <Route path="/admin" element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />
+        <Route path="/admin/dashboard"    element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
+        <Route path="/admin/habitaciones" element={<RequireRole roles={GESTION_HABITACIONES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
+        <Route path="/admin/calendario"   element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><Calendario /></AdminShell></RequireRole>} />
+        <Route path="/admin/servicios"    element={<RequireRole roles={GESTION_SERVICIOS}><AdminShell><Servicios /></AdminShell></RequireRole>} />
         <Route path="/admin/usuarios"     element={<RequireRole roles={['Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}

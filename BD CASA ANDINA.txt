@@ -46,16 +46,19 @@ CREATE TABLE dbo.Sede (
     CONSTRAINT PK_Sede PRIMARY KEY (SedeId),
     CONSTRAINT UQ_Sede_Codigo UNIQUE (Codigo),
     CONSTRAINT CK_Sede_Region CHECK (Region IN (N'Costa', N'Sierra', N'Selva')),
-    CONSTRAINT CK_Sede_Categoria CHECK (Categoria IN (N'Premium', N'Select', N'Standard'))
+    CONSTRAINT CK_Sede_Categoria CHECK (Categoria IN
+        (N'Premium', N'Select', N'Standard', N'Asociado'))
 );
 GO
 
 -- Roles del personal interno (Hito 3: Administrador, Recepción, Operaciones, Mantenimiento)
 CREATE TABLE dbo.Rol (
     RolId           INT             IDENTITY(1,1)   NOT NULL,
+    Codigo          NVARCHAR(30)    NOT NULL,
     Nombre          NVARCHAR(50)    NOT NULL,
     Descripcion     NVARCHAR(200)   NULL,
     CONSTRAINT PK_Rol PRIMARY KEY (RolId),
+    CONSTRAINT UQ_Rol_Codigo UNIQUE (Codigo),
     CONSTRAINT UQ_Rol_Nombre UNIQUE (Nombre)
 );
 GO
@@ -308,11 +311,11 @@ GO
    9. DATOS SEMILLA (catálogos + sedes maestras según Restricción #2)
    ============================================================================ */
 
-INSERT INTO dbo.Rol (Nombre, Descripcion) VALUES
-    (N'Administrador', N'Acceso total al sistema y configuración'),
-    (N'Recepción', N'Gestión de reservas, calendario y clientes'),
-    (N'Operaciones', N'Gestión de habitaciones y servicios por sede'),
-    (N'Mantenimiento', N'Actualización de estado de habitaciones');
+INSERT INTO dbo.Rol (Codigo, Nombre, Descripcion) VALUES
+    (N'ADMINISTRADOR', N'Administrador', N'Acceso total al sistema y configuración'),
+    (N'RECEPCION', N'Recepción', N'Gestión de reservas, calendario y clientes'),
+    (N'OPERACIONES', N'Operaciones', N'Gestión de habitaciones y servicios por sede'),
+    (N'MANTENIMIENTO', N'Mantenimiento', N'Actualización de estado de habitaciones');
 GO
 
 INSERT INTO dbo.Comodidad (Nombre) VALUES
@@ -326,17 +329,9 @@ INSERT INTO dbo.TipoHabitacion (Nombre, CapacidadAdultos, CapacidadNinos) VALUES
     (N'Matrimonial', 2, 1);
 GO
 
--- Sedes: dato maestro insertado directamente en BD (sin interfaz web),
--- según Restricción Técnica/Funcional #2 del Business Case.
-INSERT INTO dbo.Sede (Nombre, Codigo, Region, Ciudad, Categoria) VALUES
-    (N'Casa Andina Premium Miraflores', N'MIR', N'Costa',  N'Lima',     N'Premium'),
-    (N'Casa Andina Select Cusco Plaza',  N'CUS', N'Sierra', N'Cusco',    N'Select'),
-    (N'Casa Andina Premium Arequipa',    N'ARQ', N'Sierra', N'Arequipa', N'Premium'),
-    (N'Casa Andina Standard Puno',       N'PUN', N'Sierra', N'Puno',     N'Standard'),
-    (N'Casa Andina Select Piura',        N'PIU', N'Costa',  N'Piura',    N'Select'),
-    (N'Casa Andina Select Trujillo',     N'TRU', N'Costa',  N'Trujillo', N'Select'),
-    (N'Casa Andina Standard Tacna',      N'TAC', N'Costa',  N'Tacna',    N'Standard');
-GO
+-- Las sedes se cargan después de este DDL con el script canónico e idempotente:
+-- casa-andina-backend/scripts/seed-sedes.sql.
+-- Se mantienen fuera del esquema para evitar catálogos duplicados o divergentes.
 
 PRINT 'Modelo de base de datos CasaAndinaDB creado correctamente.';
 GO

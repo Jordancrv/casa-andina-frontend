@@ -106,7 +106,7 @@ const IconWarn = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
     aria-hidden="true">
-    <triangle points="12 2 22 21 2 21" />
+    <polygon points="12 2 22 21 2 21" />
     <line x1="12" y1="9" x2="12" y2="13" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
   </svg>

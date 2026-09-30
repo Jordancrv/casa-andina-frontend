@@ -2,6 +2,7 @@ import api from '@/shared/lib/api'
 import type {
   HabitacionDto,
   CreateHabitacionPayload,
+  UpdateHabitacionPayload,
   PaginatedList,
   CatalogosResponse,
   TipoHabitacionDto,
@@ -33,6 +34,9 @@ export const listHabitaciones = (
 ): Promise<PaginatedList<HabitacionDto>> =>
   api.get('/habitaciones', { params })
 
+export const getHabitacion = (id: number): Promise<HabitacionDto> =>
+  api.get(`/habitaciones/${id}`)
+
 /**
  * POST /api/habitaciones
  */
@@ -40,6 +44,15 @@ export const createHabitacion = (
   payload: CreateHabitacionPayload
 ): Promise<number> =>
   api.post('/habitaciones', payload)
+
+export const updateHabitacion = (
+  id: number,
+  payload: UpdateHabitacionPayload
+): Promise<void> =>
+  api.put(`/habitaciones/${id}`, payload)
+
+export const deactivateHabitacion = (id: number): Promise<void> =>
+  api.delete(`/habitaciones/${id}`)
 
 /**
  * GET /api/catalogos

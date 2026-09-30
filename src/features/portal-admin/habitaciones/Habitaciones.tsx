@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   listHabitaciones,
+  getHabitacion,
   createHabitacion,
+  updateHabitacion,
+  deactivateHabitacion,
   getCatalogos,
   type HabitacionDto,
   type CreateHabitacionPayload,
@@ -45,6 +48,8 @@ export const Habitaciones = () => {
   const [form, setForm]               = useState<CreateHabitacionPayload>(emptyForm)
   const [precioDisplay, setPrecioDisplay] = useState('S/ 0.00')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   // Modal para Ver Detalle (al hacer clic en los 3 puntos •••)
   const [detailHabitacion, setDetailHabitacion] = useState<HabitacionDto | null>(null)
@@ -54,11 +59,15 @@ export const Habitaciones = () => {
     setIsLoading(true)
     setError(null)
     try {
-      const [habData, catData] = await Promise.all([
-        listHabitaciones(),
+      const [firstPage, catData] = await Promise.all([
+        listHabitaciones({ pageSize: 100 }),
         getCatalogos(),
       ])
-      setHabitaciones(habData.items)
+      const pages = [firstPage]
+      for (let pageNumber = 2; pageNumber <= firstPage.totalPages; pageNumber += 1) {
+        pages.push(await listHabitaciones({ pageNumber, pageSize: 100 }))
+      }
+      setHabitaciones(pages.flatMap((page) => page.items))
       setTiposHabitacion(catData.tiposHabitacion)
       setComodidades(catData.comodidades)
       setSedesCatalog(catData.sedes)
@@ -78,7 +87,8 @@ export const Habitaciones = () => {
   }
 
   useEffect(() => {
-    loadData()
+    const timeoutId = window.setTimeout(() => void loadData(), 0)
+    return () => window.clearTimeout(timeoutId)
   }, [])
 
   // ── Tipo de Habitación seleccionado actualmente ───────────────────────────
@@ -149,7 +159,51 @@ export const Habitaciones = () => {
       tipoHabitacionId: initialTipo,
     })
     setPrecioDisplay('S/ 0.00')
+    setEditingId(null)
+    setActionError(null)
     setIsModalOpen(true)
+  }
+
+  const handleEdit = (habitacion: HabitacionDto) => {
+    setForm({
+      sedeId: habitacion.sedeId,
+      tipoHabitacionId: habitacion.tipoHabitacionId,
+      numero: habitacion.numero,
+      piso: habitacion.piso,
+      precioBase: habitacion.precioNoche,
+      estado: habitacion.estado,
+      fotoUrl: habitacion.fotoUrl ?? '',
+      comodidadesIds: habitacion.comodidadesIds,
+    })
+    setPrecioDisplay(`S/ ${habitacion.precioNoche.toFixed(2)}`)
+    setEditingId(habitacion.id)
+    setActionError(null)
+    setDetailHabitacion(null)
+    setIsModalOpen(true)
+  }
+
+  const handleOpenDetail = async (id: number) => {
+    setActionError(null)
+    try {
+      setDetailHabitacion(await getHabitacion(id))
+    } catch {
+      setActionError('No se pudo consultar el detalle actualizado de la habitación.')
+    }
+  }
+
+  const handleDeactivate = async (habitacion: HabitacionDto) => {
+    if (!window.confirm(`¿Desactivar la habitación ${habitacion.numero}? Esta acción no elimina su historial.`)) return
+    setIsSubmitting(true)
+    setActionError(null)
+    try {
+      await deactivateHabitacion(habitacion.id)
+      setDetailHabitacion(null)
+      await loadData()
+    } catch {
+      setActionError('No se pudo desactivar. Verifique que la habitación no tenga reservas activas o futuras.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -161,11 +215,15 @@ export const Habitaciones = () => {
 
     setIsSubmitting(true)
     try {
-      await createHabitacion(form)
+      if (editingId) {
+        await updateHabitacion(editingId, form)
+      } else {
+        await createHabitacion(form)
+      }
       await loadData()
       setIsModalOpen(false)
     } catch {
-      alert('Error al crear la habitación. Verifique los datos e intente nuevamente.')
+      setActionError(`No se pudo ${editingId ? 'actualizar' : 'crear'} la habitación. Verifique los datos y permisos.`)
     } finally {
       setIsSubmitting(false)
     }
@@ -200,6 +258,7 @@ export const Habitaciones = () => {
           {/* Estado de carga / error */}
           {isLoading && <div className="empty-state">Cargando habitaciones y catálogos…</div>}
           {error    && <div className="empty-state" style={{ color: 'var(--error, #e53e3e)' }}>{error}</div>}
+          {actionError && <div className="empty-state" style={{ color: 'var(--error, #e53e3e)' }}>{actionError}</div>}
 
           {/* Métricas */}
           {!isLoading && !error && (
@@ -296,7 +355,7 @@ export const Habitaciones = () => {
                             className="more-button"
                             type="button"
                             title="Ver Detalle Completo"
-                            onClick={() => setDetailHabitacion(h)}
+                            onClick={() => handleOpenDetail(h.id)}
                           >
                             •••
                           </button>
@@ -322,8 +381,8 @@ export const Habitaciones = () => {
           <section className="room-modal" role="dialog" aria-modal="true" aria-labelledby="new-room-title">
             <div className="modal-heading">
               <div>
-                <span className="eyebrow">NUEVO REGISTRO</span>
-                <h2 id="new-room-title">Crear habitación</h2>
+                <span className="eyebrow">{editingId ? 'ACTUALIZACIÓN' : 'NUEVO REGISTRO'}</span>
+                <h2 id="new-room-title">{editingId ? 'Editar habitación' : 'Crear habitación'}</h2>
               </div>
               <button className="close-button" type="button" onClick={() => setIsModalOpen(false)} aria-label="Cerrar">
                 ×
@@ -470,7 +529,7 @@ export const Habitaciones = () => {
                   Cancelar
                 </button>
                 <button className="primary-button" type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? 'Guardando…' : 'Guardar habitación'}
+                  {isSubmitting ? 'Guardando…' : editingId ? 'Actualizar habitación' : 'Guardar habitación'}
                 </button>
               </div>
             </form>
@@ -557,6 +616,12 @@ export const Habitaciones = () => {
             </div>
 
             <div className="modal-actions">
+              <button className="clear-button" type="button" disabled={isSubmitting} onClick={() => handleDeactivate(detailHabitacion)}>
+                Desactivar
+              </button>
+              <button className="secondary-button" type="button" onClick={() => handleEdit(detailHabitacion)}>
+                Editar
+              </button>
               <button className="primary-button" type="button" onClick={() => setDetailHabitacion(null)}>
                 Cerrar
               </button>
