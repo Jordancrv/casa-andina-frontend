@@ -22,3 +22,11 @@ export interface LoginApiResponse {
   nombreCompleto: string
   rol: Rol
 }
+
+export interface RegisterClientRequest {
+  nombreCompleto: string
+  dni: string
+  email: string
+  telefono: string | null
+  password: string
+}

@@ -19,18 +19,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
+  const completeLogin = (data: { nombreCompleto: string; rol: UsuarioSesion['rol']; token: string }) => {
+    const sesion: UsuarioSesion = {
+      nombreCompleto: data.nombreCompleto,
+      rol: data.rol,
+      token: data.token
+    }
+    setUsuario(sesion)
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('usuario', JSON.stringify(sesion))
+  }
+
   const login = async (email: string, password: string) => {
     setIsLoading(true)
     try {
       const data = await loginApi(email, password)
-      const sesion: UsuarioSesion = {
-        nombreCompleto: data.nombreCompleto,
-        rol: data.rol,
-        token: data.token
-      }
-      setUsuario(sesion)
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('usuario', JSON.stringify(sesion))
+      completeLogin(data)
     } finally {
       setIsLoading(false)
     }
@@ -43,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ usuario, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ usuario, login, completeLogin, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   )

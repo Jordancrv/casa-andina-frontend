@@ -1,7 +1,5 @@
-import { Button } from '@/shared/ui/Button'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, type ReactElement } from 'react'
-import axios from 'axios'
+import type { ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
@@ -12,6 +10,7 @@ import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
 import { useAuth } from '@/app/providers/auth-context'
 import type { Rol } from '@/shared/types/global.types'
+import { AuthPage } from '@/features/auth/AuthPage'
 
 const PERSONAL_INTERNO: Rol[] = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
 const GESTION_HABITACIONES: Rol[] = ['Administrador', 'Operaciones', 'Mantenimiento']
@@ -32,100 +31,6 @@ const RequireRole = ({ roles, children }: { roles: Rol[]; children: ReactElement
   return children
 }
 
-const LoginPage = () => {
-  const { usuario, login } = useAuth()
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  if (usuario) {
-    if (usuario.rol === 'Cliente') {
-      return <Navigate to="/cliente" replace />
-    }
-    return <Navigate to="/admin/dashboard" replace />
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setErrorMsg(null)
-    setIsSubmitting(true)
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    try {
-      await login(email, password)
-    } catch (err: unknown) {
-      console.error('Login error:', err)
-      const responseData = axios.isAxiosError(err)
-        ? err.response?.data as { detail?: string; message?: string; title?: string } | undefined
-        : undefined
-      const msg = responseData?.detail || responseData?.message || responseData?.title ||
-        'Error al iniciar sesión. Verifica tus credenciales.'
-      setErrorMsg(msg)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Iniciar Sesión
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Casa Andina - Sistema de Gestión
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {errorMsg && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-              {errorMsg}
-            </div>
-          )}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  name="email"
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-              <div className="mt-1">
-                <input
-                  type="password"
-                  name="password"
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Ingresando...' : 'Entrar'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const AppContent = () => {
   const { usuario } = useAuth()
 
@@ -134,7 +39,8 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<LandingPage />} />
 
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/registro" element={<AuthPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
         <Route path="/admin" element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />

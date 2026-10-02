@@ -1,5 +1,5 @@
 import api from '@/shared/lib/api'
-import type { LoginApiResponse } from './auth.types'
+import type { LoginApiResponse, RegisterClientRequest } from './auth.types'
 
 /**
  * POST /api/auth/login
@@ -8,3 +8,6 @@ import type { LoginApiResponse } from './auth.types'
  */
 export const login = (email: string, password: string): Promise<LoginApiResponse> =>
   api.post('/auth/login', { email, password })
+
+export const registerClient = (request: RegisterClientRequest): Promise<LoginApiResponse> =>
+  api.post('/auth/register', request)

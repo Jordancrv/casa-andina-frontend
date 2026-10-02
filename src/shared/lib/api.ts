@@ -19,7 +19,8 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response: AxiosResponse) => response.data,
   (error: unknown) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
+    const isLoginRequest = axios.isAxiosError(error) && error.config?.url?.endsWith('/auth/login')
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
       window.location.href = '/login'

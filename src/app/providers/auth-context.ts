@@ -1,9 +1,10 @@
 import { createContext, useContext } from 'react'
-import type { UsuarioSesion } from '@/features/auth/auth.types'
+import type { LoginApiResponse, UsuarioSesion } from '@/features/auth/auth.types'
 
 export interface AuthContextValue {
   usuario: UsuarioSesion | null
   login: (email: string, password: string) => Promise<void>
+  completeLogin: (response: LoginApiResponse) => void
   logout: () => void
   isLoading: boolean
 }
