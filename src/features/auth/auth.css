@@ -45,13 +45,13 @@
 .auth-field { display: grid; gap: 8px; }
 .auth-field > span { color: #31433e; font-size: .78rem; font-weight: 700; }
 .auth-field small { color: #7b8985; font-weight: 400; }
-.auth-field input {
+.auth-field input, .auth-field select {
   width: 100%; min-height: 46px; padding: 10px 12px;
   border: 1px solid #c9d4d0; border-radius: 4px;
-  background: #fff; color: #19211f; outline: none;
+  background: #fff; color: #19211f; outline: none; font-size: .78rem;
   transition: border-color .18s, box-shadow .18s;
 }
-.auth-field input:focus { border-color: #176b57; box-shadow: 0 0 0 3px rgba(23,107,87,.12); }
+.auth-field input:focus, .auth-field select:focus { border-color: #176b57; box-shadow: 0 0 0 3px rgba(23,107,87,.12); }
 .auth-checkbox { display: inline-flex; align-items: center; gap: 9px; width: fit-content; color: #53625e; font-size: .78rem; cursor: pointer; }
 .auth-checkbox input { accent-color: #176b57; }
 .auth-submit {

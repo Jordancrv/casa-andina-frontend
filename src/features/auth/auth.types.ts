@@ -24,9 +24,19 @@ export interface LoginApiResponse {
 }
 
 export interface RegisterClientRequest {
+  tipoPersona: 'N' | 'J'
+  tipoDocumento: string
+  numeroDocumento: string
   nombreCompleto: string
-  dni: string
+  nombreComercial: string | null
   email: string
   telefono: string | null
   password: string
+}
+
+export interface DocumentTypeOption {
+  codigo: string
+  nombre: string
+  longitudMinima: number
+  longitudMaxima: number
 }

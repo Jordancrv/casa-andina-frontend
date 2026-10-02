@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
-import { registerClient } from './auth.api'
-import type { RegisterClientRequest } from './auth.types'
+import { getDocumentTypes, registerClient } from './auth.api'
+import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
 import logo from '@/assets/casa-andina.png'
 import './auth.css'
 
@@ -54,6 +54,24 @@ export const AuthPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [personType, setPersonType] = useState<'N' | 'J'>('N')
+  const [documentTypes, setDocumentTypes] = useState<DocumentTypeOption[]>([])
+  const [documentCode, setDocumentCode] = useState('')
+
+  useEffect(() => {
+    if (!isRegister) return
+    let active = true
+    getDocumentTypes(personType)
+      .then((types) => {
+        if (!active) return
+        setDocumentTypes(types)
+        setDocumentCode(types[0]?.codigo ?? '')
+      })
+      .catch(() => {
+        if (active) setErrorMessage('No pudimos cargar los tipos de documento.')
+      })
+    return () => { active = false }
+  }, [isRegister, personType])
 
   if (usuario) {
     return <Navigate to={usuario.rol === 'Cliente' ? '/cliente' : '/admin/dashboard'} replace />
@@ -86,8 +104,11 @@ export const AuthPage = () => {
     }
 
     const request: RegisterClientRequest = {
+      tipoPersona: personType,
+      tipoDocumento: documentCode,
+      numeroDocumento: String(data.get('numeroDocumento')),
       nombreCompleto: String(data.get('nombreCompleto')),
-      dni: String(data.get('dni')),
+      nombreComercial: personType === 'J' ? String(data.get('nombreComercial')) || null : null,
       email: String(data.get('email')),
       telefono: String(data.get('telefono')) || null,
       password
@@ -136,12 +157,38 @@ export const AuthPage = () => {
             {isRegister && (
               <div className="auth-field-grid">
                 <label className="auth-field auth-field-wide">
-                  <span>Nombre completo</span>
+                  <span>Tipo de persona</span>
+                  <select value={personType} onChange={(event) => setPersonType(event.target.value as 'N' | 'J')}>
+                    <option value="N">Persona natural</option>
+                    <option value="J">Persona jurídica</option>
+                  </select>
+                </label>
+                <label className="auth-field auth-field-wide">
+                  <span>{personType === 'N' ? 'Nombre completo' : 'Razón social'}</span>
                   <input name="nombreCompleto" autoComplete="name" minLength={3} maxLength={200} required />
                 </label>
+                {personType === 'J' && (
+                  <label className="auth-field auth-field-wide">
+                    <span>Nombre comercial <small>Opcional</small></span>
+                    <input name="nombreComercial" maxLength={150} />
+                  </label>
+                )}
                 <label className="auth-field">
-                  <span>DNI</span>
-                  <input name="dni" inputMode="numeric" autoComplete="off" pattern="[0-9]{8}" maxLength={8} required />
+                  <span>Tipo de documento</span>
+                  <select value={documentCode} onChange={(event) => setDocumentCode(event.target.value)} required>
+                    {documentTypes.map((type) => <option key={type.codigo} value={type.codigo}>{type.nombre}</option>)}
+                  </select>
+                </label>
+                <label className="auth-field">
+                  <span>Número de documento</span>
+                  <input
+                    name="numeroDocumento"
+                    inputMode={documentCode === 'PASAPORTE' || documentCode === 'CE' ? 'text' : 'numeric'}
+                    autoComplete="off"
+                    minLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMinima}
+                    maxLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMaxima ?? 20}
+                    required
+                  />
                 </label>
                 <label className="auth-field">
                   <span>Teléfono <small>Opcional</small></span>

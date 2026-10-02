@@ -1,5 +1,5 @@
 import api from '@/shared/lib/api'
-import type { LoginApiResponse, RegisterClientRequest } from './auth.types'
+import type { DocumentTypeOption, LoginApiResponse, RegisterClientRequest } from './auth.types'
 
 /**
  * POST /api/auth/login
@@ -11,3 +11,6 @@ export const login = (email: string, password: string): Promise<LoginApiResponse
 
 export const registerClient = (request: RegisterClientRequest): Promise<LoginApiResponse> =>
   api.post('/auth/register', request)
+
+export const getDocumentTypes = (personType: 'N' | 'J'): Promise<DocumentTypeOption[]> =>
+  api.get('/auth/document-types', { params: { personType } })
