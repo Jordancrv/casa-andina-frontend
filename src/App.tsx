@@ -11,6 +11,9 @@ import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
 import { useAuth } from '@/app/providers/auth-context'
 import type { Rol } from '@/shared/types/global.types'
 import { AuthPage } from '@/features/auth/AuthPage'
+import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
+import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
+import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
 
 const PERSONAL_INTERNO: Rol[] = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
 const GESTION_HABITACIONES: Rol[] = ['Administrador', 'Operaciones', 'Mantenimiento']
@@ -32,8 +35,6 @@ const RequireRole = ({ roles, children }: { roles: Rol[]; children: ReactElement
 }
 
 const AppContent = () => {
-  const { usuario } = useAuth()
-
   return (
     <Router>
       <Routes>
@@ -54,13 +55,10 @@ const AppContent = () => {
         <Route
           path="/cliente"
           element={
-            usuario?.rol === 'Cliente' ? (
-              <AdminPanel />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <RequireRole roles={['Cliente']}><ClienteShell><CompraReserva /></ClienteShell></RequireRole>
           }
         />
+        <Route path="/cliente/reservas" element={<RequireRole roles={['Cliente']}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
       </Routes>
     </Router>
   )
