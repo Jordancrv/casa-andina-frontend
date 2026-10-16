@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/shared/lib/api'
+import { useAuth } from '@/app/providers/auth-context'
+import { getSedeIdFromToken } from '@/shared/lib/jwt'
 import type { SedeDto } from '@/shared/types/global.types'
 import './calendario.css'
 
@@ -31,8 +33,12 @@ const initialRange = () => {
 }
 
 export const Calendario = () => {
+  const { usuario } = useAuth()
   const [sedeSeleccionada, setSedeSeleccionada] = useState('')
   const [rango, setRango] = useState(initialRange)
+  const sedeAsignada = usuario ? getSedeIdFromToken(usuario.token) : null
+  const puedeVerTodasLasSedes = usuario?.rol === 'Administrador' || usuario?.rol === 'Superadministrador'
+  const faltaSedeAsignada = !puedeVerTodasLasSedes && sedeAsignada === null
   const diasRango = rango.desde && rango.hasta
     ? (Date.parse(`${rango.hasta}T00:00:00Z`) - Date.parse(`${rango.desde}T00:00:00Z`)) / 86_400_000
     : 0
@@ -41,8 +47,13 @@ export const Calendario = () => {
     queryKey: ['calendario', 'sedes'],
     queryFn: async () => await api.get('/catalogos') as unknown as { sedes: SedeDto[] }
   })
-  const sedes = sedesQuery.data?.sedes ?? []
-  const sedeId = sedeSeleccionada || String(sedes[0]?.id ?? '')
+  const sedesDisponibles = sedesQuery.data?.sedes ?? []
+  const sedes = faltaSedeAsignada
+    ? []
+    : sedesDisponibles.filter(sede => sedeAsignada === null || sede.id === sedeAsignada)
+  const sedeId = sedes.some(sede => String(sede.id) === sedeSeleccionada)
+    ? sedeSeleccionada
+    : String(sedes[0]?.id ?? '')
   const ocupacionQuery = useQuery({
     queryKey: ['calendario', 'ocupacion', sedeId, rango.desde, rango.hasta],
     enabled: Boolean(sedeId) && rangoValido,
@@ -51,8 +62,10 @@ export const Calendario = () => {
     }) as unknown as HabitacionCalendario[]
   })
   const habitaciones = ocupacionQuery.data ?? []
-  const error = sedesQuery.isError
-    ? 'No se pudieron cargar las sedes.'
+  const error = faltaSedeAsignada
+    ? 'Tu cuenta no tiene una sede asignada. Contacta a la administración.'
+    : sedesQuery.isError
+      ? 'No se pudieron cargar las sedes.'
     : ocupacionQuery.isError
       ? 'No se pudo consultar la ocupación. Verifica tu acceso y el rango de fechas.'
       : ''
@@ -69,7 +82,7 @@ export const Calendario = () => {
 
       <div className="cal-filters">
         <label>Sede<select value={sedeId} onChange={event => setSedeSeleccionada(event.target.value)}>
-          {sedes.length === 0 && <option value="">Sin sedes</option>}
+          {sedes.length === 0 && <option value="">{faltaSedeAsignada ? 'Sin sede asignada' : 'Sin sedes'}</option>}
           {sedes.map(sede => <option key={sede.id} value={sede.id}>{sede.nombre} · {sede.ciudad}</option>)}
         </select></label>
         <label>Desde<input type="date" value={rango.desde} onChange={event => setRango(current => ({ ...current, desde: event.target.value }))} /></label>
