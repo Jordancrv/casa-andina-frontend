@@ -1,5 +1,6 @@
 import './DashboardBI.css'
 import { KPICard } from './components/KPICard'
+import { DashboardCharts } from './components/DashboardCharts'
 import { useDashboard, formatSoles } from './useDashboard'
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
@@ -24,9 +25,10 @@ export const DashboardBI = () => {
           <KPICard label="Importe reservado este mes" value={formatSoles(data.importeReservadoMesActual)} variacion="Reservas no canceladas · no equivale a pagos aprobados" icono={<Icon><><circle cx="12" cy="12" r="9"/><path d="M16 8.5c-.7-.8-1.8-1.2-3-1.2-1.7 0-3 .9-3 2.2s1.3 2 3 2.4 3 1.1 3 2.4-1.3 2.2-3 2.2c-1.2 0-2.3-.4-3-1.2M13 5.5v13"/></></Icon>} />
         </section>
       ) : !error ? <p className="db-empty" role="status">No hay datos disponibles para mostrar.</p> : null}
+      {!loading && data && <DashboardCharts data={data} />}
       <section className="db-note" aria-label="Alcance de este resumen">
         <h2>Alcance actual</h2>
-        <p>Estos indicadores corresponden al resumen disponible en el API. Los gráficos históricos, la comparación entre periodos y las métricas de IA se habilitarán cuando existan consultas verificables para esos datos.</p>
+        <p>Las gráficas muestran ocupación y reservas actuales de la sede autorizada. No se presentan tendencias históricas ni proyecciones porque todavía no existen consultas verificables para esos datos.</p>
       </section>
     </main>
   )

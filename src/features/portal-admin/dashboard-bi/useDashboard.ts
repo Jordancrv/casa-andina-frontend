@@ -6,6 +6,8 @@ export interface DashboardResumen {
   habitacionesDisponibles: number
   reservasActivas: number
   importeReservadoMesActual: number
+  reservasPendientes: number
+  reservasConfirmadas: number
 }
 
 export function useDashboard() {
