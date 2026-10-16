@@ -6,15 +6,18 @@ import type { SedeDto } from '@/shared/types/global.types'
 import { getReservas } from './reservas.api'
 import '../cliente.css'
 
-const dateValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-const nextDateValue = (value: string) => {
-  if (!value) return dateValue(new Date())
-  const date = new Date(`${value}T00:00:00`)
-  date.setDate(date.getDate() + 1)
-  return dateValue(date)
+const peruToday = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date())
+  const part = (type: string) => parts.find(item => item.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
 }
-const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
-const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2)
+const addDays = (value: string, days: number) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+const nightsBetween = (start: string, end: string) => Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000)
+const nextDateValue = (value: string) => addDays(value || peruToday(), 1)
+const guestNamePattern = /^[\p{L}\p{M}]+(?:[ '\u2019-][\p{L}\p{M}]+)*$/u
 const money = (amount: number) => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount)
 const emptyGuest = (titular = false): HuespedCompra => ({ nombres: '', apellidos: '', correo: '', telefono: '', esTitular: titular })
 
@@ -22,8 +25,8 @@ export function CompraReserva() {
   const navigate = useNavigate()
   const [sedes, setSedes] = useState<SedeDto[]>([])
   const [sedeId, setSedeId] = useState(0)
-  const [checkIn, setCheckIn] = useState(dateValue(tomorrow))
-  const [checkOut, setCheckOut] = useState(dateValue(dayAfter))
+  const [checkIn, setCheckIn] = useState(() => addDays(peruToday(), 1))
+  const [checkOut, setCheckOut] = useState(() => addDays(peruToday(), 2))
   const [habitaciones, setHabitaciones] = useState<HabitacionDisponible[]>([])
   const [seleccion, setSeleccion] = useState<Record<number, HuespedCompra[]>>({})
   const [servicios, setServicios] = useState<ServicioReserva[]>([])
@@ -38,7 +41,8 @@ export function CompraReserva() {
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmacion, setConfirmacion] = useState<{ data: ReservaCompraRespuesta; codigo: string; fechas: string; habitacionNombres: string[] } | null>(null)
-  const rangoFechasValido = checkIn >= dateValue(new Date()) && checkOut > checkIn
+  const noches = Math.max(1, nightsBetween(checkIn, checkOut))
+  const rangoFechasValido = checkIn >= peruToday() && checkOut > checkIn && noches <= 90
 
   useEffect(() => {
     Promise.all([getSedesCliente(), getMetodosPago()])
@@ -50,7 +54,6 @@ export function CompraReserva() {
       })
       .catch(() => setError('No se pudieron cargar las opciones para la reserva.'))
   }, [])
-  const noches = Math.max(1, Math.round((new Date(`${checkOut}T00:00:00`).getTime() - new Date(`${checkIn}T00:00:00`).getTime()) / 86400000))
   const costoHabitaciones = useMemo(() => Object.keys(seleccion).reduce((sum, id) => sum + (habitaciones.find(room => room.habitacionId === Number(id))?.precioNoche ?? 0) * noches, 0), [habitaciones, seleccion, noches])
   const costoExtras = useMemo(() => Object.entries(extras).reduce((sum, [id, qty]) => sum + (servicios.find(service => service.id === Number(id))?.precio ?? 0) * qty, 0), [extras, servicios])
 
@@ -59,7 +62,8 @@ export function CompraReserva() {
   }
 
   const buscar = async () => {
-    if (!rangoFechasValido) { setError('La salida debe ser posterior a la entrada y ambas fechas no pueden estar en el pasado.'); return }
+    if (checkIn < peruToday() || checkOut <= checkIn) { setError('La entrada no puede estar en el pasado y la salida debe ser posterior a la entrada.'); return }
+    if (noches > 90) { setError('La estadía no puede superar 90 noches.'); return }
     setError(null); setSearching(true); setStep(1); setSeleccion({}); setExtras({})
     try {
       const [rooms, services] = await Promise.all([getDisponibilidad(sedeId, checkIn, checkOut), getServiciosDeSede(sedeId)])
@@ -83,12 +87,18 @@ export function CompraReserva() {
   const submit = async () => {
     if (!rangoFechasValido) { setError('Revisa el rango de fechas: la salida debe ser posterior a la entrada.'); return }
     if (!Object.keys(seleccion).length) { setError('Selecciona al menos una habitación.'); return }
+    const guestEmails = new Set<string>()
     for (const [roomId, guests] of Object.entries(seleccion)) {
       const room = habitaciones.find(item => item.habitacionId === Number(roomId))
       const capacity = room ? room.capacidadAdultos + room.capacidadNinos : 0
       if (!room || guests.length > capacity) { setError('La cantidad de huéspedes supera la capacidad de una habitación.'); return }
-      if (guests.some(guest => !guest.nombres.trim() || guest.nombres.length > 200 || !guest.apellidos.trim() || guest.apellidos.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.correo.trim()) || (guest.telefono.trim() && !/^\+?[1-9]\d{7,14}$/.test(guest.telefono.trim())))) {
+      if (guests.some(guest => !guestNamePattern.test(guest.nombres.trim()) || guest.nombres.length > 200 || !guestNamePattern.test(guest.apellidos.trim()) || guest.apellidos.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.correo.trim()) || (guest.telefono.trim() && !/^\+?[1-9]\d{7,14}$/.test(guest.telefono.trim())))) {
         setError('Completa los nombres, apellidos, correos y teléfonos de huéspedes con un formato válido.'); return
+      }
+      for (const guest of guests) {
+        const email = guest.correo.trim().toLowerCase()
+        if (guestEmails.has(email)) { setError('Cada huésped debe tener un correo único dentro de la reserva.'); return }
+        guestEmails.add(email)
       }
     }
     if (tipoComprobante === 'Factura' && (!razonSocial.trim() || razonSocial.length > 200 || !/^\d{11}$/.test(ruc))) { setError('Para emitir factura, ingresa razón social y un RUC de 11 dígitos.'); return }
@@ -104,8 +114,11 @@ export function CompraReserva() {
       const response = await comprarReserva(payload)
       setConfirmacion({ data: response, codigo: response.codigoReserva, fechas: `${checkIn} - ${checkOut}`, habitacionNombres: Object.keys(seleccion).map(id => `Hab. ${habitaciones.find(room => room.habitacionId === Number(id))?.numero ?? id}`) })
     } catch (e) {
-      const message = (e as { response?: { data?: { message?: string; title?: string } } }).response?.data
-      setError(message?.message ?? message?.title ?? 'No se pudo completar la reserva. La disponibilidad pudo cambiar; vuelve a buscar.')
+      const response = (e as { response?: { data?: { message?: string; title?: string; errors?: Record<string, string[] | string> } } }).response?.data
+      const validationMessage = Object.values(response?.errors ?? {}).flat()[0]
+      setError((typeof validationMessage === 'string' ? validationMessage : null)
+        ?? response?.message ?? response?.title
+        ?? 'No se pudo completar la reserva. La disponibilidad pudo cambiar; vuelve a buscar.')
     } finally { setLoading(false) }
   }
 
@@ -121,10 +134,11 @@ export function CompraReserva() {
     <div className="booking-progress" aria-label="Pasos de reserva">{['Estadía', 'Huéspedes', 'Confirmación'].map((label, index) => <div key={label} className={step >= index ? 'current' : ''}><i>{index + 1}</i><span>{label}</span></div>)}</div>
     <form className="booking-search" onSubmit={e => { e.preventDefault(); void buscar() }}>
       <label>Sede<select disabled={searching || loading} value={sedeId} onChange={e => { setSedeId(Number(e.target.value)); invalidarDisponibilidad() }} required><option value={0} disabled>Selecciona una sede</option>{sedes.map(sede => <option key={sede.id} value={sede.id}>{sede.nombre} · {sede.ciudad}</option>)}</select></label>
-      <label>Entrada<input disabled={searching || loading} type="date" min={dateValue(new Date())} value={checkIn} onChange={e => { const value = e.target.value; setCheckIn(value); if (checkOut <= value) setCheckOut(nextDateValue(value)); invalidarDisponibilidad() }} required /></label>
+      <label>Entrada<input disabled={searching || loading} type="date" min={peruToday()} value={checkIn} onChange={e => { const value = e.target.value; setCheckIn(value); if (checkOut <= value) setCheckOut(nextDateValue(value)); invalidarDisponibilidad() }} required /></label>
       <label>Salida<input disabled={searching || loading} type="date" min={nextDateValue(checkIn)} value={checkOut} onChange={e => { setCheckOut(e.target.value); invalidarDisponibilidad() }} required /></label>
       <button className="client-primary" type="submit" disabled={!sedeId || searching || !rangoFechasValido}>{searching ? 'Buscando…' : 'Buscar habitaciones'}</button>
     </form>
+    {checkOut > checkIn && noches > 90 && <div className="client-alert" role="alert">La estadía no puede superar 90 noches.</div>}
     {error && <div className="client-alert" role="alert">{error}</div>}
     {step > 0 && <>
       <div className="section-heading"><div><p className="cliente-eyebrow">{sedes.find(x => x.id === sedeId)?.nombre}</p><h2>Habitaciones disponibles</h2></div><span>{noches} {noches === 1 ? 'noche' : 'noches'}</span></div>
@@ -137,7 +151,7 @@ export function CompraReserva() {
       })}</div>}
       {habitaciones.length > 0 && <>
         <div className="section-heading extras-heading"><div><p className="cliente-eyebrow">OPCIONAL</p><h2>Servicios adicionales</h2></div><span>Por reserva</span></div>
-        <div className="service-options">{servicios.map(service => <div className="service-option" key={service.id}><div><strong>{service.nombre}</strong><p>{service.descripcion}</p></div><b>{money(service.precio)}</b><input disabled={loading} type="number" min="0" max="20" aria-label={`Cantidad de ${service.nombre}`} value={extras[service.id] ?? 0} onChange={e => setExtras(current => ({ ...current, [service.id]: Math.min(20, Math.max(0, Number(e.target.value))) }))} /></div>)}</div>
+        <div className="service-options">{servicios.map(service => <div className="service-option" key={service.id}><div><strong>{service.nombre}</strong><p>{service.descripcion}</p></div><b>{money(service.precio)}</b><input disabled={loading} type="number" min="0" max="20" step="1" inputMode="numeric" aria-label={`Cantidad de ${service.nombre}`} value={extras[service.id] ?? 0} onChange={e => setExtras(current => ({ ...current, [service.id]: Math.min(20, Math.max(0, Math.trunc(Number(e.target.value)))) }))} /></div>)}</div>
         <div className="checkout"><div className="checkout-form"><div className="section-heading"><div><p className="cliente-eyebrow">ÚLTIMO PASO</p><h2>Comprobante</h2></div></div><div className="receipt-toggle"><label><input disabled={loading} type="radio" checked={tipoComprobante === 'Boleta'} onChange={() => setTipoComprobante('Boleta')} /> Boleta</label><label><input disabled={loading} type="radio" checked={tipoComprobante === 'Factura'} onChange={() => setTipoComprobante('Factura')} /> Factura</label></div>{tipoComprobante === 'Factura' && <div className="invoice-fields"><label>Razón social<input disabled={loading} maxLength={200} value={razonSocial} onChange={e => setRazonSocial(e.target.value)} required /></label><label>RUC registrado<input disabled={loading} inputMode="numeric" maxLength={11} value={ruc} onChange={e => setRuc(e.target.value.replace(/\D/g, ''))} required /></label><small>La factura requiere que razón social y RUC coincidan con tu perfil jurídico.</small></div>}<div className="section-heading"><div><p className="cliente-eyebrow">REGISTRO SIMULADO</p><h2>Método de pago</h2></div></div><div className="receipt-toggle">{metodosPago.map(method => <label key={method.codigo}><input disabled={loading} type="radio" name="metodoPago" value={method.codigo} checked={metodoPagoCodigo === method.codigo} onChange={() => setMetodoPagoCodigo(method.codigo)} /> {method.nombre}</label>)}</div><p className="simulation-note">Solo se registra el método seleccionado. No ingreses números de tarjeta, CVV ni PIN; no se realizará un cobro real.</p></div><div className="checkout-total"><div className="total-row"><span>Habitaciones · {noches} noches</span><b>{money(costoHabitaciones)}</b></div><div className="total-row"><span>Servicios</span><b>{money(costoExtras)}</b></div><div className="total-row total-final"><strong>Total</strong><strong>{money(costoHabitaciones + costoExtras)}</strong></div><button className="client-primary" disabled={!Object.keys(seleccion).length || !metodoPagoCodigo || loading || (tipoComprobante === 'Factura' && (!razonSocial.trim() || ruc.length !== 11))} onClick={() => void submit()}>{loading ? 'Confirmando…' : 'Confirmar compra simulada'}</button></div></div>
       </>}
     </>}
