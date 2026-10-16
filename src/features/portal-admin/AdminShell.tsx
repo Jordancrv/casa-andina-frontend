@@ -14,6 +14,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/app/providers/auth-context'
 import type { Rol } from '@/shared/types/global.types'
+import { ROLE_ACCESS } from '@/shared/constants/role-access'
 import logoCasaAndina from '@/assets/casa-andina.png'
 import './AdminShell.css'
 
@@ -82,12 +83,12 @@ const IcoUsuarios = () => (
 // Ítems de navegación con SVG icon como ReactNode
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: Rol[] }[] = [
-  { label: 'Resumen',      path: '/admin/dashboard',    icon: <IcoResumen />, roles: ['Administrador'] },
-  { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas />, roles: ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento'] },
-  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento'] },
-  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ['Superadministrador', 'Administrador', 'Operaciones'] },
-  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ['Administrador'] },
+const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: readonly Rol[] }[] = [
+  { label: 'Resumen',      path: '/admin/dashboard',    icon: <IcoResumen />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas />, roles: ROLE_ACCESS.internal },
+  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ROLE_ACCESS.rooms },
+  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ROLE_ACCESS.services },
+  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ROLE_ACCESS.users },
 ]
 
 // ---------------------------------------------------------------------------

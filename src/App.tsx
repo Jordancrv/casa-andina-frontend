@@ -13,14 +13,10 @@ import { AuthPage } from '@/features/auth/AuthPage'
 import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
 import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
 import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
-
-const PERSONAL_INTERNO: Rol[] = ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
-const GESTION_HABITACIONES: Rol[] = ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento']
-const GESTION_SERVICIOS: Rol[] = ['Superadministrador', 'Administrador', 'Operaciones']
-const DASHBOARD_ROLES: Rol[] = ['Administrador']
+import { ROLE_ACCESS } from '@/shared/constants/role-access'
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
-const RequireRole = ({ roles, children }: { roles: Rol[]; children: ReactElement }) => {
+const RequireRole = ({ roles, children }: { roles: readonly Rol[]; children: ReactElement }) => {
   const { usuario } = useAuth()
   const location = useLocation()
   if (!usuario) return <Navigate to="/login" replace />
@@ -50,21 +46,21 @@ const AppContent = () => {
         <Route path="/registro" element={<AuthPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
-        <Route path="/admin" element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
-        <Route path="/admin/dashboard"    element={<RequireRole roles={DASHBOARD_ROLES}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
-        <Route path="/admin/habitaciones" element={<RequireRole roles={GESTION_HABITACIONES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
-        <Route path="/admin/calendario"   element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><Calendario /></AdminShell></RequireRole>} />
-        <Route path="/admin/servicios"    element={<RequireRole roles={GESTION_SERVICIOS}><AdminShell><Servicios /></AdminShell></RequireRole>} />
-        <Route path="/admin/usuarios"     element={<RequireRole roles={['Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
+        <Route path="/admin" element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
+        <Route path="/admin/dashboard"    element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
+        <Route path="/admin/habitaciones" element={<RequireRole roles={ROLE_ACCESS.rooms}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
+        <Route path="/admin/calendario"   element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><Calendario /></AdminShell></RequireRole>} />
+        <Route path="/admin/servicios"    element={<RequireRole roles={ROLE_ACCESS.services}><AdminShell><Servicios /></AdminShell></RequireRole>} />
+        <Route path="/admin/usuarios"     element={<RequireRole roles={ROLE_ACCESS.users}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}
         <Route
           path="/cliente"
           element={
-            <RequireRole roles={['Cliente']}><ClienteShell><CompraReserva /></ClienteShell></RequireRole>
+            <RequireRole roles={ROLE_ACCESS.client}><ClienteShell><CompraReserva /></ClienteShell></RequireRole>
           }
         />
-        <Route path="/cliente/reservas" element={<RequireRole roles={['Cliente']}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
+        <Route path="/cliente/reservas" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
       </Routes>
     </Router>
   )
