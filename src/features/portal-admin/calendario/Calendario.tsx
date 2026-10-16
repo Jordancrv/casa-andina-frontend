@@ -22,18 +22,22 @@ interface HabitacionCalendario {
   reservas: ReservaCalendario[]
 }
 
-const isoDate = (date: Date) => {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
-  return local.toISOString().slice(0, 10)
-}
-
-const initialRange = () => {
-  const start = new Date()
-  const end = new Date()
-  end.setDate(end.getDate() + 30)
-  return { desde: isoDate(start), hasta: isoDate(end) }
-}
 const DAY_MS = 86_400_000
+const peruToday = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit'
+  }).formatToParts(new Date())
+  const part = (type: string) => parts.find(item => item.type === type)?.value ?? ''
+  return `${part('year')}-${part('month')}-${part('day')}`
+}
+const addDays = (value: string, days: number) => {
+  const [year, month, day] = value.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+const initialRange = () => {
+  const desde = peruToday()
+  return { desde, hasta: addDays(desde, 30) }
+}
 const utcDate = (value: string) => new Date(`${value.slice(0, 10)}T00:00:00Z`)
 const daysApart = (from: string, to: string) => Math.round((utcDate(to).getTime() - utcDate(from).getTime()) / DAY_MS)
 const dayLabel = (date: Date, options: Intl.DateTimeFormatOptions) =>
