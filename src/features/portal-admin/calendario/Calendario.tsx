@@ -10,7 +10,7 @@ interface ReservaCalendario {
   fechaCheckIn: string
   fechaCheckOut: string
   estado: string
-  nombreReservante: string
+  nombreReservante: string | null
 }
 
 interface HabitacionCalendario {
