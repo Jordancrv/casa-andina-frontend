@@ -39,6 +39,7 @@
 .users-permissions { padding-top: 16px; border-top: 1px solid #dae4e1; }
 .users-permissions h3 { margin: 0 0 7px; font-size: 14px; }
 .users-permissions p { margin: 0; color: #667570; font-size: 12px; line-height: 1.6; }
+.users-permissions ul { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; padding-left: 18px; color: #315c45; font-size: 12px; }
 .users-edit { display: grid; align-content: start; gap: 16px; }
 .users-edit label { display: grid; gap: 6px; color: #52645b; font-size: 12px; }
 .users-edit input { height: 40px; padding: 0 10px; border: 1px solid #cddbd4; color: #173f35; font: inherit; }
