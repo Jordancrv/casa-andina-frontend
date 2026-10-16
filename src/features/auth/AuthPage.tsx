@@ -17,6 +17,15 @@ type ApiError = {
   errors?: Record<string, string[]>
 }
 
+const passwordRequirements = (value: string) => [
+  value.length >= 10,
+  /[A-Z]/.test(value),
+  /[a-z]/.test(value),
+  /\d/.test(value),
+  /[^a-zA-Z0-9]/.test(value),
+]
+const isPasswordValid = (value: string) => passwordRequirements(value).every(Boolean)
+
 const getErrorMessage = (error: unknown) => {
   if (!axios.isAxiosError<ApiError>(error)) {
     return 'No pudimos completar la solicitud. Inténtalo nuevamente.'
@@ -32,13 +41,14 @@ const getErrorMessage = (error: unknown) => {
 }
 
 const PasswordRequirements = ({ password }: { password: string }) => {
-  const rules = useMemo(() => [
-    ['10 caracteres', password.length >= 10],
-    ['Una mayúscula', /[A-Z]/.test(password)],
-    ['Una minúscula', /[a-z]/.test(password)],
-    ['Un número', /\d/.test(password)],
-    ['Un símbolo', /[^a-zA-Z0-9]/.test(password)]
-  ] as const, [password])
+  const validity = useMemo(() => passwordRequirements(password), [password])
+  const rules = [
+    ['10 caracteres', validity[0]],
+    ['Una mayúscula', validity[1]],
+    ['Una minúscula', validity[2]],
+    ['Un número', validity[3]],
+    ['Un símbolo', validity[4]],
+  ] as const
 
   return (
     <ul className="auth-password-rules" aria-label="Requisitos de contraseña">
@@ -115,6 +125,10 @@ export const AuthPage = () => {
 
     if (password !== confirmation) {
       setErrorMessage('Las contraseñas no coinciden.')
+      return
+    }
+    if (!isPasswordValid(password)) {
+      setErrorMessage('La contraseña debe cumplir todos los requisitos indicados.')
       return
     }
 
@@ -248,7 +262,7 @@ export const AuthPage = () => {
               <span>Mostrar contraseña</span>
             </label>
 
-            <button className="auth-submit" type="submit" disabled={isSubmitting}>
+            <button className="auth-submit" type="submit" disabled={isSubmitting || (isRegister && !isPasswordValid(password))}>
               {isSubmitting ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Ingresar'}
             </button>
           </form>
