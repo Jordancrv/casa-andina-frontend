@@ -15,6 +15,7 @@ export function ClienteShell({ children }: { children: React.ReactNode }) {
       <nav aria-label="Navegación del cliente">
         <button className={pathname === '/cliente' ? 'active' : ''} onClick={() => navigate('/cliente')}>Buscar estadía</button>
         <button className={pathname.startsWith('/cliente/reservas') ? 'active' : ''} onClick={() => navigate('/cliente/reservas')}>Mis reservas</button>
+        <button className={pathname === '/cliente/asistente' ? 'active' : ''} onClick={() => navigate('/cliente/asistente')}>Asistente</button>
       </nav>
       <div className="cliente-profile"><span className="cliente-avatar">{initials}</span><span><b>{usuario?.nombreCompleto}</b><small>Cliente</small></span></div>
     </aside>

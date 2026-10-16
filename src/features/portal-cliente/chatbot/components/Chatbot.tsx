@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useChatbot } from '../useChatbot'
 import type { NivelPresupuesto, TipoClima } from '@/shared/types/global.types'
-import '../cliente.css'
+import '../../cliente.css'
 
 const presupuestos: { valor: NivelPresupuesto; texto: string }[] = [
   { valor: 1, texto: 'Económico' },
