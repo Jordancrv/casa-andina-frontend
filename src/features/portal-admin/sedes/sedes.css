@@ -1,0 +1,19 @@
+.sites-page { display: grid; align-content: start; gap: 18px; min-height: 100%; padding: 28px 30px; background: #f4fbf8; color: #173f35; font-family: 'Hanken Grotesk', Arial, sans-serif; }
+.sites-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
+.sites-heading p { margin: 0 0 5px; color: #54816b; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.sites-heading h1 { margin: 0; font-size: 28px; }
+.sites-heading div > span { display: block; margin-top: 6px; color: #667570; font-size: 13px; }
+.sites-heading label { display: grid; gap: 5px; color: #52645b; font-size: 11px; }
+.sites-heading input { width: min(300px, 36vw); height: 38px; padding: 0 10px; border: 1px solid #cddbd4; background: white; color: #173f35; font: inherit; }
+.sites-summary { display: flex; align-items: baseline; gap: 8px; color: #667570; font-size: 12px; }
+.sites-summary strong { color: #173f35; font-size: 19px; }
+.sites-table-wrap { overflow-x: auto; border-top: 1px solid #dae4e1; border-bottom: 1px solid #dae4e1; background: white; }
+.sites-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.sites-table th { padding: 11px 13px; background: #f7faf8; color: #667570; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.sites-table td { padding: 12px 13px; border-top: 1px solid #edf1ee; color: #52645b; }
+.sites-table td strong { color: #315c45; }
+.sites-message { padding: 18px 0; color: #667570; font-size: 13px; }
+.sites-message--error { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: #9f342c; }
+.sites-message button { padding: 7px 11px; border: 1px solid currentColor; background: white; color: inherit; font: inherit; cursor: pointer; }
+.sites-footnote { margin: 0; color: #667570; font-size: 10px; }
+@media (max-width: 700px) { .sites-page { padding: 20px 14px; }.sites-heading { align-items: start; flex-direction: column; }.sites-heading label, .sites-heading input { width: 100%; } }

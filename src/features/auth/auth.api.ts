@@ -6,8 +6,8 @@ import type { DocumentTypeOption, LoginApiResponse, RegisterClientRequest } from
  * El backend espera: { Email, Password } (LoginCommand — record de C#, case-insensitive en JSON).
  * Devuelve: { token, nombreCompleto, rol }
  */
-export const login = (email: string, password: string): Promise<LoginApiResponse> =>
-  api.post('/auth/login', { email, password })
+export const login = (email: string, password: string, captchaToken?: string | null): Promise<LoginApiResponse> =>
+  api.post('/auth/login', { email, password, captchaToken })
 
 export const registerClient = (request: RegisterClientRequest): Promise<LoginApiResponse> =>
   api.post('/auth/register', request)

@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
 import { getRoleHomeRoute } from '@/shared/constants/role-access'
 import { getDocumentTypes, registerClient } from './auth.api'
 import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
+import { RecaptchaCheckbox } from './RecaptchaCheckbox'
+import { isRecaptchaConfigured } from './recaptcha.config'
 import logo from '@/assets/casa-andina.png'
 import './auth.css'
 
@@ -61,6 +63,9 @@ export const AuthPage = () => {
   const [personType, setPersonType] = useState<'N' | 'J'>('N')
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeOption[]>([])
   const [documentCode, setDocumentCode] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaAttempt, setCaptchaAttempt] = useState(0)
+  const handleCaptchaToken = useCallback((token: string | null) => setCaptchaToken(token), [])
 
   useEffect(() => {
     if (!isRegister) return
@@ -84,15 +89,21 @@ export const AuthPage = () => {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
+    if (isRecaptchaConfigured && !captchaToken) {
+      setErrorMessage('Completa la verificación reCAPTCHA antes de iniciar sesión.')
+      return
+    }
     setIsSubmitting(true)
     const data = new FormData(event.currentTarget)
 
     try {
-      await login(String(data.get('email')), String(data.get('password')))
+      await login(String(data.get('email')), String(data.get('password')), captchaToken)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {
       setIsSubmitting(false)
+      setCaptchaToken(null)
+      setCaptchaAttempt(value => value + 1)
     }
   }
 
@@ -219,6 +230,8 @@ export const AuthPage = () => {
                 required
               />
             </label>
+
+            {!isRegister && <RecaptchaCheckbox onToken={handleCaptchaToken} resetKey={captchaAttempt} />}
 
             {isRegister && (
               <>

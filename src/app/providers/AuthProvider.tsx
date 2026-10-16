@@ -100,10 +100,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('usuario', JSON.stringify(sesion))
   }
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, captchaToken?: string | null) => {
     setIsLoading(true)
     try {
-      const data = await loginApi(email, password)
+      const data = await loginApi(email, password, captchaToken)
       completeLogin(data)
     } finally {
       setIsLoading(false)

@@ -63,6 +63,8 @@
 .auth-submit:active:not(:disabled) { transform: translateY(1px); }
 .auth-submit:disabled { opacity: .58; cursor: wait; }
 .auth-alert { margin-bottom: 20px; padding: 12px 14px; border-left: 3px solid #ae3f37; background: #fff0ed; color: #802c27; font: 600 .82rem/1.45 'Hanken Grotesk', sans-serif; }
+.auth-captcha { min-height: 78px; overflow: auto; }
+.auth-captcha-note { margin: 0; color: #667570; font-size: 11px; }
 .auth-switch { margin: 24px 0 0; text-align: center; color: #62706c; font: 400 .88rem/1.5 'Hanken Grotesk', sans-serif; }
 .auth-switch a, .auth-back { color: #145a49; font-weight: 700; }
 .auth-back { display: block; width: fit-content; margin: 16px auto 0; font-size: .75rem; }

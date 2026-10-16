@@ -9,6 +9,8 @@ import './calendario.css'
 interface ReservaCalendario {
   fechaCheckIn: string
   fechaCheckOut: string
+  estado: string
+  nombreReservante: string
 }
 
 interface HabitacionCalendario {
@@ -44,7 +46,7 @@ export const Calendario = () => {
   const [sedeSeleccionada, setSedeSeleccionada] = useState('')
   const [rango, setRango] = useState(initialRange)
   const sedeAsignada = usuario ? getSedeIdFromToken(usuario.token) : null
-  const puedeVerTodasLasSedes = usuario?.rol === 'Administrador' || usuario?.rol === 'Superadministrador'
+  const puedeVerTodasLasSedes = usuario?.rol === 'Superadministrador'
   const faltaSedeAsignada = !puedeVerTodasLasSedes && sedeAsignada === null
   const diasRango = rango.desde && rango.hasta
     ? (Date.parse(`${rango.hasta}T00:00:00Z`) - Date.parse(`${rango.desde}T00:00:00Z`)) / 86_400_000
@@ -106,7 +108,8 @@ export const Calendario = () => {
       {rangoValido && !consultando && !error && sedes.length > 0 && habitaciones.length === 0 && <p className="cal-message">No hay habitaciones registradas para esta sede.</p>}
 
       {rangoValido && !consultando && !error && habitaciones.length > 0 && <>
-        <div className="cal-legend"><span><i /> Habitación reservada</span><span>La fecha de salida no cuenta como noche ocupada.</span></div>
+        <div className="cal-legend"><span><i className="is-confirmada" /> Confirmada</span><span><i className="is-pendiente" /> Pendiente</span><span>La fecha de salida no cuenta como noche ocupada. Solo se muestra el titular, sin datos de contacto.</span></div>
+        <p className="cal-message cal-block-note">Los bloqueos por arreglo o mantenimiento aún no aparecen en la línea de tiempo: el modelo actual no guarda periodo ni motivo del bloqueo.</p>
         <div className="cal-timeline-scroll" role="region" aria-label="Calendario de habitaciones reservadas" tabIndex={0}>
           <div className="cal-timeline" style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
             <div className="cal-timeline-room-head">HABITACIÓN</div>
@@ -118,8 +121,11 @@ export const Calendario = () => {
                 const start = Math.max(0, daysApart(rango.desde, reserva.fechaCheckIn))
                 const end = Math.min(dias.length, daysApart(rango.desde, reserva.fechaCheckOut))
                 if (end <= start) return null
-                return <div className="cal-booking-bar" key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`Reservada: ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
-                  {bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}
+                const estadoReserva = reserva.estado?.toLowerCase() ?? ''
+                const estado = estadoReserva === 'confirmada' ? 'confirmada' : estadoReserva === 'pendiente' ? 'pendiente' : 'otro'
+                const nombreReservante = reserva.nombreReservante || 'Titular no disponible'
+                return <div className={`cal-booking-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.estado || 'Estado no informado'}: ${nombreReservante} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
+                  <span>{nombreReservante}</span><small>{bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}</small>
                 </div>
               })}
             </div>)}
