@@ -31,6 +31,13 @@ const initialRange = () => {
   end.setDate(end.getDate() + 30)
   return { desde: isoDate(start), hasta: isoDate(end) }
 }
+const DAY_MS = 86_400_000
+const utcDate = (value: string) => new Date(`${value.slice(0, 10)}T00:00:00Z`)
+const daysApart = (from: string, to: string) => Math.round((utcDate(to).getTime() - utcDate(from).getTime()) / DAY_MS)
+const dayLabel = (date: Date, options: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat('es-PE', { ...options, timeZone: 'UTC' }).format(date)
+const bookingLabel = (start: string, end: string) =>
+  `${dayLabel(utcDate(start), { day: 'numeric', month: 'short' })} – ${dayLabel(utcDate(end), { day: 'numeric', month: 'short' })}`
 
 export const Calendario = () => {
   const { usuario } = useAuth()
@@ -72,12 +79,15 @@ export const Calendario = () => {
   const consultando = sedesQuery.isLoading || ocupacionQuery.isFetching
 
   const habitacionesReservadas = habitaciones.filter(habitacion => habitacion.reservas.length > 0).length
+  const dias = rangoValido
+    ? Array.from({ length: diasRango }, (_, index) => new Date(utcDate(rango.desde).getTime() + index * DAY_MS))
+    : []
 
   return (
     <section className="cal-page">
       <header className="cal-heading">
         <div><p className="cal-eyebrow">OPERACIÓN HOTELERA</p><h1>Reservas y ocupación</h1><p>Consulta qué habitaciones están reservadas por sede y fechas.</p></div>
-        <span className="cal-range-count">{habitacionesReservadas} habitaciones reservadas</span>
+        <div className="cal-summary"><strong>{habitacionesReservadas}</strong><span>de {habitaciones.length} habitaciones ocupadas</span><span>{habitaciones.reduce((total, room) => total + room.reservas.length, 0)} reservas en el rango</span></div>
       </header>
 
       <div className="cal-filters">
@@ -95,21 +105,27 @@ export const Calendario = () => {
       {rangoValido && !consultando && !error && sedes.length === 0 && <p className="cal-message">No hay sedes disponibles.</p>}
       {rangoValido && !consultando && !error && sedes.length > 0 && habitaciones.length === 0 && <p className="cal-message">No hay habitaciones registradas para esta sede.</p>}
 
-      {rangoValido && !consultando && !error && habitaciones.length > 0 && <div className="cal-table-wrap"><table className="cal-table">
-        <thead><tr><th>Habitación</th><th>Tipo</th><th>Estado</th><th>Reservas dentro del rango</th></tr></thead>
-        <tbody>{habitaciones.map(habitacion => <tr key={habitacion.habitacionId}>
-          <td><strong>{habitacion.numero}</strong><small>Piso {habitacion.piso}</small></td>
-          <td>{habitacion.tipoHabitacion}</td>
-          <td><span className={`cal-status ${habitacion.reservas.length ? 'is-booked' : `is-${habitacion.estadoHabitacion.toLowerCase()}`}`}>
-            {habitacion.reservas.length ? 'Reservada' : habitacion.estadoHabitacion}
-          </span></td>
-          <td>{habitacion.reservas.length === 0 ? <span className="cal-free">Sin reservas en este rango</span> : <ul className="cal-bookings">
-            {habitacion.reservas.map(reserva => <li key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`}>
-              <span>{new Date(`${reserva.fechaCheckIn.slice(0, 10)}T00:00:00`).toLocaleDateString('es-PE')} – {new Date(`${reserva.fechaCheckOut.slice(0, 10)}T00:00:00`).toLocaleDateString('es-PE')}</span>
-            </li>)}
-          </ul>}</td>
-        </tr>)}</tbody>
-      </table></div>}
+      {rangoValido && !consultando && !error && habitaciones.length > 0 && <>
+        <div className="cal-legend"><span><i /> Habitación reservada</span><span>La fecha de salida no cuenta como noche ocupada.</span></div>
+        <div className="cal-timeline-scroll" role="region" aria-label="Calendario de habitaciones reservadas" tabIndex={0}>
+          <div className="cal-timeline" style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
+            <div className="cal-timeline-room-head">HABITACIÓN</div>
+            {dias.map(day => <div className="cal-day-head" key={day.toISOString()}><span>{dayLabel(day, { weekday: 'short' }).replace('.', '')}</span><strong>{dayLabel(day, { day: '2-digit' })}</strong></div>)}
+            {habitaciones.map(habitacion => <div className="cal-timeline-row" key={habitacion.habitacionId} style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
+              <div className="cal-room-cell"><strong>{habitacion.numero}</strong><span>{habitacion.tipoHabitacion} · Piso {habitacion.piso}</span><small>{habitacion.estadoHabitacion}</small></div>
+              {dias.map(day => <div className="cal-day-cell" key={day.toISOString()} />)}
+              {habitacion.reservas.map(reserva => {
+                const start = Math.max(0, daysApart(rango.desde, reserva.fechaCheckIn))
+                const end = Math.min(dias.length, daysApart(rango.desde, reserva.fechaCheckOut))
+                if (end <= start) return null
+                return <div className="cal-booking-bar" key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`Reservada: ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
+                  {bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}
+                </div>
+              })}
+            </div>)}
+          </div>
+        </div>
+      </>}
     </section>
   )
 }

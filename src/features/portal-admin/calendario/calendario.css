@@ -22,4 +22,23 @@
 .cal-bookings span, .cal-bookings small, .cal-free { color: #6e7a73; font-size: 12px; }
 .cal-message { padding: 18px 0; color: #68766e; }
 .cal-error { color: #a03d35; }
+.cal-summary { display: grid; justify-items: end; gap: 3px; color: #64716a; font-size: 11px; }
+.cal-summary strong { color: #234f40; font: 600 25px/1 'Hanken Grotesk', sans-serif; }
+.cal-legend { display: flex; justify-content: space-between; gap: 16px; color: #6e7a73; font-size: 11px; }
+.cal-legend span:first-child { display: flex; align-items: center; gap: 7px; color: #40594d; }
+.cal-legend i { width: 12px; height: 12px; background: #39735d; }
+.cal-timeline-scroll { overflow: auto; max-height: calc(100vh - 290px); border: 1px solid #e1e7e3; background: #fff; }
+.cal-timeline { display: grid; width: max-content; }
+.cal-timeline-room-head, .cal-day-head { position: sticky; top: 0; z-index: 3; display: grid; place-content: center; height: 54px; border-bottom: 1px solid #dce5df; background: #f5f8f6; color: #5b6c62; text-align: center; }
+.cal-timeline-room-head { position: sticky; left: 0; z-index: 5; justify-content: start; padding-left: 16px; font-size: 10px; font-weight: 700; }
+.cal-day-head { gap: 2px; border-left: 1px solid #e9eeeb; }
+.cal-day-head span { color: #75837b; font-size: 9px; text-transform: uppercase; }
+.cal-day-head strong { color: #344b3f; font-size: 11px; }
+.cal-timeline-row { position: relative; display: grid; grid-column: 1 / -1; min-height: 68px; }
+.cal-room-cell { position: sticky; left: 0; z-index: 2; display: grid; align-content: center; gap: 3px; padding: 8px 14px; border-bottom: 1px solid #e9eeeb; background: #fff; }
+.cal-room-cell strong { color: #244d3e; font: 600 14px 'Hanken Grotesk', sans-serif; }
+.cal-room-cell span, .cal-room-cell small { overflow: hidden; color: #738078; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.cal-day-cell { grid-row: 1; min-height: 68px; border-left: 1px solid #edf1ee; border-bottom: 1px solid #e9eeeb; }
+.cal-booking-bar { position: absolute; top: 28px; z-index: 1; overflow: hidden; height: 24px; padding: 5px 7px; background: #39735d; color: #fff; font-size: 9px; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 700px) { .cal-heading { align-items: start; flex-direction: column; } .cal-filters { grid-template-columns: 1fr; } .cal-table { min-width: 700px; } }
+@media (max-width: 700px) { .cal-summary { justify-items: start; }.cal-legend { flex-direction: column; gap: 6px; }.cal-timeline-scroll { max-height: calc(100vh - 360px); } }
