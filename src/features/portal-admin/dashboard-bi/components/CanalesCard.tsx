@@ -55,7 +55,7 @@ export function CanalesCard({ canales }: CanalesCardProps) {
           </span>
         </div>
         <div className="db-list__row">
-          <span className="db-list__label">Ticket Promedio</span>
+          <span className="db-list__label">Importe promedio reservado</span>
           <span className="db-list__mono">S/ {ticketPromedioSoles.toFixed(2)}</span>
         </div>
         <div className="db-list__row">

@@ -175,23 +175,18 @@ export interface DestinoRecomendadoDto {
 // Dashboard BI — DTOs alineados con los endpoints del backend
 // ---------------------------------------------------------------------------
 
-/** GET /api/dashboard/kpis
- *  Devuelve los 4 KPIs principales del período seleccionado.
- *  Params: periodo ('7d' | '30d' | 'mes') + sedeId? (null = todas) */
+/** Métricas devueltas por GET /api/dashboard/bi para el periodo y sede autorizada. */
 export interface DashboardKpisDto {
   totalReservas: number
-  totalReservasPeriodoAnterior: number   // para calcular variación %
-  ingresosTotalSoles: number
-  ingresosPeriodoAnterior: number
-  ocupacionPromedioPct: number
-  ocupacionPeriodoAnterior: number
+  totalReservasPeriodoAnterior: number
+  importeReservadoSoles: number
+  importeReservadoPeriodoAnterior: number
+  ocupacionActualPct: number
   totalClientesActivos: number
-  nuevosClientesPct: number
+  clientesPeriodoAnterior: number
 }
 
-/** GET /api/dashboard/reservas-semana
- *  Series de reservas confirmadas + canceladas para las últimas N semanas.
- *  Params: semanas (default 6) + sedeId? */
+/** Serie de reservas confirmadas y canceladas de las últimas seis semanas. */
 export interface ReservaSemanaSerie {
   semanaLabel: string        // "S-5", "S-4" … "Actual"
   confirmadas: number
@@ -200,9 +195,7 @@ export interface ReservaSemanaSerie {
   alturaPctCanceladas: number
 }
 
-/** GET /api/dashboard/ocupacion-sedes
- *  Porcentaje de ocupación actual por sede, ordenado desc.
- *  Params: sedeId? (null = todas → devuelve array) */
+/** Ocupación actual de la sede del usuario autenticado. */
 export interface OcupacionSedeDto {
   sedeNombre: string
   ciudad: string
@@ -228,9 +221,7 @@ export interface ProyeccionSemanaDto {
   confianzaPct: number       // barra de confianza 0-100
 }
 
-/** GET /api/dashboard/canales
- *  Desglose por canal (Directo / OTA) + métricas derivadas.
- *  Params: periodo + sedeId? */
+/** Desglose de canales y promedios reservados en el periodo seleccionado. */
 export interface CanalReservasDto {
   reservasDirectas: number
   reservasOTA: number
