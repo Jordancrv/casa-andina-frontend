@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { login as loginApi } from '@/features/auth/auth.api'
 import type { UsuarioSesion } from '@/features/auth/auth.types'
@@ -55,6 +55,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [usuario, setUsuario] = useState<UsuarioSesion | null>(restaurarSesion)
   const [isLoading, setIsLoading] = useState(false)
 
+  const logout = useCallback(() => {
+    setUsuario(null)
+    localStorage.removeItem('token')
+    localStorage.removeItem('usuario')
+  }, [])
+
+  useEffect(() => {
+    if (!usuario) return
+
+    const expiresAt = claimsToken(usuario.token)?.exp
+    const timeLeft = typeof expiresAt === 'number'
+      ? expiresAt * 1000 - Date.now()
+      : 0
+
+    const expirationTimer = window.setTimeout(logout, Math.max(timeLeft, 0))
+    const syncSession = (event: StorageEvent) => {
+      if (event.key !== 'token') return
+      if (!event.newValue) logout()
+      else setUsuario(restaurarSesion())
+    }
+
+    window.addEventListener('storage', syncSession)
+    return () => {
+      window.clearTimeout(expirationTimer)
+      window.removeEventListener('storage', syncSession)
+    }
+  }, [usuario, logout])
+
   const completeLogin = (data: { nombreCompleto: string; rol: UsuarioSesion['rol']; token: string }) => {
     if (!data.nombreCompleto.trim() || !ROLES_VALIDOS.includes(data.rol) || !tokenPermiteRol(data.token, data.rol)) {
       throw new Error('El servidor devolvió una sesión inválida.')
@@ -77,12 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const logout = () => {
-    setUsuario(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuario')
   }
 
   return (
