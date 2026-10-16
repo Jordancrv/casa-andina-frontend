@@ -141,6 +141,17 @@ export interface ReservaDto {
   sedeNombre: string
   ciudad: string
   habitacionesNumeros: string[]
+  pagos: PagoReservaDto[]
+}
+
+export interface PagoReservaDto {
+  pagoId: number
+  metodoPago: string
+  estado: string
+  importe: number
+  moneda: string
+  fechaCreacion: string
+  montoAplicado: number
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getSedesCliente, getDisponibilidad, getServiciosDeSede, comprarReserva } from './compra.api'
-import type { CrearReservaPayload, HabitacionDisponible, HuespedCompra, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
+import { getSedesCliente, getDisponibilidad, getServiciosDeSede, comprarReserva, getMetodosPago } from './compra.api'
+import type { CrearReservaPayload, HabitacionDisponible, HuespedCompra, MetodoPago, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
 import type { SedeDto } from '@/shared/types/global.types'
 import { getReservas } from './reservas.api'
 import '../cliente.css'
@@ -21,6 +21,8 @@ export function CompraReserva() {
   const [habitaciones, setHabitaciones] = useState<HabitacionDisponible[]>([])
   const [seleccion, setSeleccion] = useState<Record<number, HuespedCompra[]>>({})
   const [servicios, setServicios] = useState<ServicioReserva[]>([])
+  const [metodosPago, setMetodosPago] = useState<MetodoPago[]>([])
+  const [metodoPagoCodigo, setMetodoPagoCodigo] = useState('')
   const [extras, setExtras] = useState<Record<number, number>>({})
   const [step, setStep] = useState(0)
   const [tipoComprobante, setTipoComprobante] = useState<'Boleta' | 'Factura'>('Boleta')
@@ -31,7 +33,16 @@ export function CompraReserva() {
   const [error, setError] = useState<string | null>(null)
   const [confirmacion, setConfirmacion] = useState<{ data: ReservaCompraRespuesta; codigo: string; fechas: string; habitacionNombres: string[] } | null>(null)
 
-  useEffect(() => { getSedesCliente().then(data => { setSedes(data); if (data[0]) setSedeId(data[0].id) }).catch(() => setError('No se pudieron cargar las sedes.')) }, [])
+  useEffect(() => {
+    Promise.all([getSedesCliente(), getMetodosPago()])
+      .then(([catalog, methods]) => {
+        setSedes(catalog)
+        if (catalog[0]) setSedeId(catalog[0].id)
+        setMetodosPago(methods)
+        if (methods[0]) setMetodoPagoCodigo(methods[0].codigo)
+      })
+      .catch(() => setError('No se pudieron cargar las opciones para la reserva.'))
+  }, [])
   const noches = Math.max(1, Math.round((new Date(`${checkOut}T00:00:00`).getTime() - new Date(`${checkIn}T00:00:00`).getTime()) / 86400000))
   const costoHabitaciones = useMemo(() => Object.keys(seleccion).reduce((sum, id) => sum + (habitaciones.find(room => room.habitacionId === Number(id))?.precioNoche ?? 0) * noches, 0), [habitaciones, seleccion, noches])
   const costoExtras = useMemo(() => Object.entries(extras).reduce((sum, [id, qty]) => sum + (servicios.find(service => service.id === Number(id))?.precio ?? 0) * qty, 0), [extras, servicios])
@@ -64,7 +75,8 @@ export function CompraReserva() {
         sedeId, fechaCheckIn: checkIn, fechaCheckOut: checkOut,
         habitaciones: Object.entries(seleccion).map(([id, guests]) => ({ habitacionId: Number(id), huespedes: guests })),
         servicios: Object.entries(extras).filter(([, count]) => count > 0).map(([id, cantidad]) => ({ servicioId: Number(id), cantidad })),
-        tipoComprobante, razonSocial: tipoComprobante === 'Factura' ? razonSocial : null, ruc: tipoComprobante === 'Factura' ? ruc : null
+        tipoComprobante, razonSocial: tipoComprobante === 'Factura' ? razonSocial : null, ruc: tipoComprobante === 'Factura' ? ruc : null,
+        metodoPagoCodigo
       }
       const response = await comprarReserva(payload)
       setConfirmacion({ data: response, codigo: response.codigoReserva, fechas: `${checkIn} - ${checkOut}`, habitacionNombres: Object.keys(seleccion).map(id => `Hab. ${habitaciones.find(room => room.habitacionId === Number(id))?.numero ?? id}`) })
@@ -79,7 +91,7 @@ export function CompraReserva() {
     navigate('/cliente/reservas')
   }
 
-  if (confirmacion) return <section className="cliente-content"><div className="booking-success"><span className="success-mark">✓</span><p className="cliente-eyebrow">RESERVA CONFIRMADA</p><h1>Tu estadía ya está reservada</h1><p className="muted">Código de reserva <strong>{confirmacion.codigo}</strong></p><p className="muted">{confirmacion.fechas} · {confirmacion.habitacionNombres.join(', ')}</p><div className="success-total"><span>Total de la reserva</span><strong>{money(confirmacion.data.precioTotal)}</strong></div><p className="notice">{confirmacion.data.mensajePago}</p><button className="client-primary" onClick={goToReservations}>Ver mis reservas</button></div></section>
+  if (confirmacion) return <section className="cliente-content"><div className="booking-success"><span className="success-mark">✓</span><p className="cliente-eyebrow">RESERVA CONFIRMADA</p><h1>Tu estadía ya está reservada</h1><p className="muted">Código de reserva <strong>{confirmacion.codigo}</strong></p><p className="muted">{confirmacion.fechas} · {confirmacion.habitacionNombres.join(', ')}</p><div className="success-total"><span>Total de la reserva</span><strong>{money(confirmacion.data.precioTotal)}</strong></div><p className="muted">Pago: {confirmacion.data.metodoPago} · {confirmacion.data.estadoPago} (simulado)</p><p className="notice">{confirmacion.data.mensajePago}</p><button className="client-primary" onClick={goToReservations}>Ver mis reservas</button></div></section>
 
   return <section className="cliente-content">
     <div className="client-heading"><div><p className="cliente-eyebrow">CASA ANDINA · RESERVAS DIRECTAS</p><h1>Encuentra tu próxima estadía</h1><p>Elige una sede, tus fechas y las habitaciones para tu viaje.</p></div></div>
@@ -103,7 +115,7 @@ export function CompraReserva() {
       {habitaciones.length > 0 && <>
         <div className="section-heading extras-heading"><div><p className="cliente-eyebrow">OPCIONAL</p><h2>Servicios adicionales</h2></div><span>Por reserva</span></div>
         <div className="service-options">{servicios.map(service => <div className="service-option" key={service.id}><div><strong>{service.nombre}</strong><p>{service.descripcion}</p></div><b>{money(service.precio)}</b><input type="number" min="0" max="20" aria-label={`Cantidad de ${service.nombre}`} value={extras[service.id] ?? 0} onChange={e => setExtras(current => ({ ...current, [service.id]: Math.min(20, Math.max(0, Number(e.target.value))) }))} /></div>)}</div>
-        <div className="checkout"><div className="checkout-form"><div className="section-heading"><div><p className="cliente-eyebrow">ÚLTIMO PASO</p><h2>Comprobante</h2></div></div><div className="receipt-toggle"><label><input type="radio" checked={tipoComprobante === 'Boleta'} onChange={() => setTipoComprobante('Boleta')} /> Boleta</label><label><input type="radio" checked={tipoComprobante === 'Factura'} onChange={() => setTipoComprobante('Factura')} /> Factura</label></div>{tipoComprobante === 'Factura' && <div className="invoice-fields"><label>Razón social<input value={razonSocial} onChange={e => setRazonSocial(e.target.value)} required /></label><label>RUC registrado<input inputMode="numeric" maxLength={11} value={ruc} onChange={e => setRuc(e.target.value.replace(/\D/g, ''))} required /></label><small>La factura requiere que razón social y RUC coincidan con tu perfil jurídico.</small></div>}<p className="simulation-note">Este flujo confirma una compra simulada. No se realizará un cobro.</p></div><div className="checkout-total"><div className="total-row"><span>Habitaciones · {noches} noches</span><b>{money(costoHabitaciones)}</b></div><div className="total-row"><span>Servicios</span><b>{money(costoExtras)}</b></div><div className="total-row total-final"><strong>Total</strong><strong>{money(costoHabitaciones + costoExtras)}</strong></div><button className="client-primary" disabled={!Object.keys(seleccion).length || loading || (tipoComprobante === 'Factura' && (!razonSocial.trim() || ruc.length !== 11))} onClick={() => void submit()}>{loading ? 'Confirmando…' : 'Confirmar compra simulada'}</button></div></div>
+        <div className="checkout"><div className="checkout-form"><div className="section-heading"><div><p className="cliente-eyebrow">ÚLTIMO PASO</p><h2>Comprobante</h2></div></div><div className="receipt-toggle"><label><input type="radio" checked={tipoComprobante === 'Boleta'} onChange={() => setTipoComprobante('Boleta')} /> Boleta</label><label><input type="radio" checked={tipoComprobante === 'Factura'} onChange={() => setTipoComprobante('Factura')} /> Factura</label></div>{tipoComprobante === 'Factura' && <div className="invoice-fields"><label>Razón social<input value={razonSocial} onChange={e => setRazonSocial(e.target.value)} required /></label><label>RUC registrado<input inputMode="numeric" maxLength={11} value={ruc} onChange={e => setRuc(e.target.value.replace(/\D/g, ''))} required /></label><small>La factura requiere que razón social y RUC coincidan con tu perfil jurídico.</small></div>}<div className="section-heading"><div><p className="cliente-eyebrow">REGISTRO SIMULADO</p><h2>Método de pago</h2></div></div><div className="receipt-toggle">{metodosPago.map(method => <label key={method.codigo}><input type="radio" name="metodoPago" value={method.codigo} checked={metodoPagoCodigo === method.codigo} onChange={() => setMetodoPagoCodigo(method.codigo)} /> {method.nombre}</label>)}</div><p className="simulation-note">Solo se registra el método seleccionado. No ingreses números de tarjeta, CVV ni PIN; no se realizará un cobro real.</p></div><div className="checkout-total"><div className="total-row"><span>Habitaciones · {noches} noches</span><b>{money(costoHabitaciones)}</b></div><div className="total-row"><span>Servicios</span><b>{money(costoExtras)}</b></div><div className="total-row total-final"><strong>Total</strong><strong>{money(costoHabitaciones + costoExtras)}</strong></div><button className="client-primary" disabled={!Object.keys(seleccion).length || !metodoPagoCodigo || loading || (tipoComprobante === 'Factura' && (!razonSocial.trim() || ruc.length !== 11))} onClick={() => void submit()}>{loading ? 'Confirmando…' : 'Confirmar compra simulada'}</button></div></div>
       </>}
     </>}
   </section>

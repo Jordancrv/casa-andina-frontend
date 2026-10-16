@@ -36,6 +36,7 @@ export interface CrearReservaPayload {
   tipoComprobante: 'Boleta' | 'Factura'
   razonSocial: string | null
   ruc: string | null
+  metodoPagoCodigo: string
 }
 
 export interface ReservaCompraRespuesta {
@@ -44,5 +45,13 @@ export interface ReservaCompraRespuesta {
   estado: string
   precioTotal: number
   tipoComprobante: 'Boleta' | 'Factura'
+  metodoPago: string
+  estadoPago: string
   mensajePago: string
+}
+
+export interface MetodoPago {
+  codigo: string
+  nombre: string
+  categoria: string
 }

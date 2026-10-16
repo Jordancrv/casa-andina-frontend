@@ -1,6 +1,6 @@
 import api from '@/shared/lib/api'
 import type { SedeDto, ServicioDto } from '@/shared/types/global.types'
-import type { CrearReservaPayload, HabitacionDisponible, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
+import type { CrearReservaPayload, HabitacionDisponible, MetodoPago, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
 
 export const getSedesCliente = async (): Promise<SedeDto[]> => {
   const response = await api.get<{ sedes: SedeDto[] }>('/catalogos') as unknown as { sedes: SedeDto[] }
@@ -17,3 +17,6 @@ export const getServiciosDeSede = async (sedeId: number): Promise<ServicioReserv
 
 export const comprarReserva = (payload: CrearReservaPayload): Promise<ReservaCompraRespuesta> =>
   api.post('/reservas', payload)
+
+export const getMetodosPago = (): Promise<MetodoPago[]> =>
+  api.get('/reservas/metodos-pago')
