@@ -18,6 +18,8 @@ const addDays = (value: string, days: number) => {
 const nightsBetween = (start: string, end: string) => Math.round((Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) / 86400000)
 const nextDateValue = (value: string) => addDays(value || peruToday(), 1)
 const guestNamePattern = /^[\p{L}\p{M}]+(?:[ '\u2019-][\p{L}\p{M}]+)*$/u
+const maxRoomsPerReservation = 8
+const maxGuestsPerRoom = 10
 const money = (amount: number) => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount)
 const emptyGuest = (titular = false): HuespedCompra => ({ nombres: '', apellidos: '', correo: '', telefono: '', esTitular: titular })
 
@@ -56,6 +58,7 @@ export function CompraReserva() {
   }, [])
   const costoHabitaciones = useMemo(() => Object.keys(seleccion).reduce((sum, id) => sum + (habitaciones.find(room => room.habitacionId === Number(id))?.precioNoche ?? 0) * noches, 0), [habitaciones, seleccion, noches])
   const costoExtras = useMemo(() => Object.entries(extras).reduce((sum, [id, qty]) => sum + (servicios.find(service => service.id === Number(id))?.precio ?? 0) * qty, 0), [extras, servicios])
+  const selectedRoomCount = Object.keys(seleccion).length
 
   const invalidarDisponibilidad = () => {
     setHabitaciones([]); setServicios([]); setSeleccion({}); setExtras({}); setStep(0); setError(null)
@@ -73,6 +76,10 @@ export function CompraReserva() {
   }
 
   const toggleRoom = (room: HabitacionDisponible) => {
+    if (!seleccion[room.habitacionId] && selectedRoomCount >= maxRoomsPerReservation) {
+      setError(`Una reserva admite como máximo ${maxRoomsPerReservation} habitaciones.`)
+      return
+    }
     setSeleccion(current => {
       if (current[room.habitacionId]) { const next = { ...current }; delete next[room.habitacionId]; return next }
       return { ...current, [room.habitacionId]: [emptyGuest(true)] }
@@ -82,15 +89,22 @@ export function CompraReserva() {
     ...current,
     [roomId]: current[roomId].map((guest, guestIndex) => guestIndex === index ? { ...guest, [field]: value } : guest)
   }))
-  const addGuest = (room: HabitacionDisponible) => setSeleccion(current => ({ ...current, [room.habitacionId]: [...current[room.habitacionId], emptyGuest()] }))
+  const addGuest = (room: HabitacionDisponible) => {
+    if (seleccion[room.habitacionId].length >= maxGuestsPerRoom) {
+      setError(`Una habitación admite como máximo ${maxGuestsPerRoom} huéspedes por reserva.`)
+      return
+    }
+    setSeleccion(current => ({ ...current, [room.habitacionId]: [...current[room.habitacionId], emptyGuest()] }))
+  }
 
   const submit = async () => {
     if (!rangoFechasValido) { setError('Revisa el rango de fechas: la salida debe ser posterior a la entrada.'); return }
     if (!Object.keys(seleccion).length) { setError('Selecciona al menos una habitación.'); return }
+    if (selectedRoomCount > maxRoomsPerReservation) { setError(`Una reserva admite como máximo ${maxRoomsPerReservation} habitaciones.`); return }
     const guestEmails = new Set<string>()
     for (const [roomId, guests] of Object.entries(seleccion)) {
       const room = habitaciones.find(item => item.habitacionId === Number(roomId))
-      const capacity = room ? room.capacidadAdultos + room.capacidadNinos : 0
+      const capacity = room ? Math.min(room.capacidadAdultos + room.capacidadNinos, maxGuestsPerRoom) : 0
       if (!room || guests.length > capacity) { setError('La cantidad de huéspedes supera la capacidad de una habitación.'); return }
       if (guests.some(guest => !guestNamePattern.test(guest.nombres.trim()) || guest.nombres.length > 200 || !guestNamePattern.test(guest.apellidos.trim()) || guest.apellidos.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.correo.trim()) || (guest.telefono.trim() && !/^\+?[1-9]\d{7,14}$/.test(guest.telefono.trim())))) {
         setError('Completa los nombres, apellidos, correos y teléfonos de huéspedes con un formato válido.'); return

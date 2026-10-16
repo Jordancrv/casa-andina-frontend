@@ -25,6 +25,17 @@ const passwordRequirements = (value: string) => [
   /[^a-zA-Z0-9]/.test(value),
 ]
 const isPasswordValid = (value: string) => passwordRequirements(value).every(Boolean)
+const naturalPersonNamePattern = /^[\p{L}][\p{L}\s.'-]*$/u
+
+const isDocumentNumberValid = (code: string, value: string) => {
+  switch (code) {
+    case 'DNI': return /^\d{8}$/.test(value)
+    case 'CE': return /^[A-Za-z0-9]{9,12}$/.test(value)
+    case 'PASAPORTE': return /^[A-Za-z0-9]{6,20}$/.test(value)
+    case 'RUC': return /^\d{11}$/.test(value)
+    default: return false
+  }
+}
 
 const getErrorMessage = (error: unknown) => {
   if (!axios.isAxiosError<ApiError>(error)) {
@@ -122,6 +133,8 @@ export const AuthPage = () => {
     setErrorMessage(null)
     const data = new FormData(event.currentTarget)
     const confirmation = String(data.get('confirmPassword'))
+    const fullName = String(data.get('nombreCompleto') ?? '').trim()
+    const documentNumber = String(data.get('numeroDocumento') ?? '').trim().toUpperCase()
 
     if (password !== confirmation) {
       setErrorMessage('Las contraseñas no coinciden.')
@@ -131,15 +144,32 @@ export const AuthPage = () => {
       setErrorMessage('La contraseña debe cumplir todos los requisitos indicados.')
       return
     }
+    if (fullName.length < 3 || fullName.length > 200) {
+      setErrorMessage('El nombre o razón social debe tener entre 3 y 200 caracteres.')
+      return
+    }
+    if (personType === 'N' && !naturalPersonNamePattern.test(fullName)) {
+      setErrorMessage('El nombre solo puede contener letras y separadores habituales.')
+      return
+    }
+    if (!isDocumentNumberValid(documentCode, documentNumber)) {
+      const message = documentCode === 'DNI' ? 'El DNI debe contener exactamente 8 dígitos.'
+        : documentCode === 'CE' ? 'El carné de extranjería debe contener entre 9 y 12 letras o números.'
+          : documentCode === 'PASAPORTE' ? 'El pasaporte debe contener entre 6 y 20 letras o números.'
+            : documentCode === 'RUC' ? 'El RUC debe contener exactamente 11 dígitos.'
+              : 'Selecciona un tipo de documento válido.'
+      setErrorMessage(message)
+      return
+    }
 
     const request: RegisterClientRequest = {
       tipoPersona: personType,
       tipoDocumento: documentCode,
-      numeroDocumento: String(data.get('numeroDocumento')),
-      nombreCompleto: String(data.get('nombreCompleto')),
-      nombreComercial: personType === 'J' ? String(data.get('nombreComercial')) || null : null,
-      email: String(data.get('email')),
-      telefono: String(data.get('telefono')) || null,
+      numeroDocumento: documentNumber,
+      nombreCompleto: fullName,
+      nombreComercial: personType === 'J' ? String(data.get('nombreComercial') ?? '').trim() || null : null,
+      email: String(data.get('email') ?? '').trim().toLowerCase(),
+      telefono: String(data.get('telefono') ?? '').trim() || null,
       password
     }
 
