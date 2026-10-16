@@ -139,6 +139,16 @@
   text-overflow: ellipsis;
 }
 
+.shell-logout {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #52645b;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
 .shell-user__info small {
   margin-top: 3px;
   color: #788984;

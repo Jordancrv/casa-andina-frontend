@@ -19,7 +19,7 @@ export interface PaginatedList<T> {
 }
 
 // Roles — deben coincidir con RolUsuario enum del backend
-export type Rol = 'Administrador' | 'Recepcion' | 'Operaciones' | 'Mantenimiento' | 'Cliente'
+export type Rol = 'Superadministrador' | 'Administrador' | 'Recepcion' | 'Operaciones' | 'Mantenimiento' | 'Cliente'
 
 // ---------------------------------------------------------------------------
 // Auth

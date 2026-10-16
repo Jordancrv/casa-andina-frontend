@@ -74,7 +74,12 @@ export const AuthPage = () => {
   }, [isRegister, personType])
 
   if (usuario) {
-    return <Navigate to={usuario.rol === 'Cliente' ? '/cliente' : '/admin/dashboard'} replace />
+    const destino = usuario.rol === 'Cliente'
+      ? '/cliente'
+      : usuario.rol === 'Administrador'
+        ? '/admin/dashboard'
+        : '/admin/calendario'
+    return <Navigate to={destino} replace />
   }
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {

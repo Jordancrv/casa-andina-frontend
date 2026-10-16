@@ -12,6 +12,8 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/app/providers/auth-context'
+import type { Rol } from '@/shared/types/global.types'
 import logoCasaAndina from '@/assets/casa-andina.png'
 import './AdminShell.css'
 
@@ -80,12 +82,12 @@ const IcoUsuarios = () => (
 // Ítems de navegación con SVG icon como ReactNode
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
-  { label: 'Resumen',      path: '/admin/dashboard',    icon: <IcoResumen /> },
-  { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas /> },
-  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones /> },
-  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios /> },
-  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios /> },
+const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: Rol[] }[] = [
+  { label: 'Resumen',      path: '/admin/dashboard',    icon: <IcoResumen />, roles: ['Administrador'] },
+  { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas />, roles: ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento'] },
+  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento'] },
+  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ['Superadministrador', 'Administrador', 'Operaciones'] },
+  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ['Superadministrador', 'Administrador'] },
 ]
 
 // ---------------------------------------------------------------------------
@@ -107,6 +109,8 @@ export function AdminShell({
 }: AdminShellProps) {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
+  const { usuario, logout } = useAuth()
+  const navItems = NAV_ITEMS.filter(item => usuario && item.roles.includes(usuario.rol))
 
   return (
     <div className="shell">
@@ -124,10 +128,10 @@ export function AdminShell({
 
         {/* Navegación */}
         <nav className="shell-nav" aria-label="Menú del portal">
-          {NAV_ITEMS.map(({ label, path, icon }) => {
+          {navItems.map(({ label, path, icon }) => {
             const isActive = pathname === path || pathname.startsWith(path + '/')
             return (
-              <button
+            <button
                 key={path}
                 type="button"
                 className={`shell-nav__item${isActive ? ' shell-nav__item--active' : ''}`}
@@ -145,9 +149,10 @@ export function AdminShell({
         <div className="shell-user">
           <span className="shell-avatar">{iniciales}</span>
           <span className="shell-user__info">
-            <b>{nombreUsuario}</b>
-            <small>{rolUsuario}</small>
+            <b>{usuario?.nombreCompleto ?? nombreUsuario}</b>
+            <small>{usuario?.rol ?? rolUsuario}</small>
           </span>
+          <button type="button" className="shell-logout" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => { logout(); navigate('/login') }}>Salir</button>
         </div>
       </aside>
 

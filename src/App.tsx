@@ -1,7 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
-import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
 import { DashboardBI } from '@/features/portal-admin/dashboard-bi/DashboardBI'
 import { Calendario } from '@/features/portal-admin/calendario/Calendario'
@@ -15,15 +14,21 @@ import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
 import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
 import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
 
-const PERSONAL_INTERNO: Rol[] = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
-const GESTION_HABITACIONES: Rol[] = ['Administrador', 'Operaciones', 'Mantenimiento']
-const GESTION_SERVICIOS: Rol[] = ['Administrador', 'Operaciones']
+const PERSONAL_INTERNO: Rol[] = ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
+const GESTION_HABITACIONES: Rol[] = ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento']
+const GESTION_SERVICIOS: Rol[] = ['Superadministrador', 'Administrador', 'Operaciones']
+const DASHBOARD_ROLES: Rol[] = ['Administrador']
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
 const RequireRole = ({ roles, children }: { roles: Rol[]; children: ReactElement }) => {
   const { usuario } = useAuth()
+  const location = useLocation()
   if (!usuario) return <Navigate to="/login" replace />
   if (!roles.includes(usuario.rol)) {
+    if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace state={{ from: location }} />
+    if (location.pathname === '/admin' || location.pathname === '/admin/dashboard') {
+      return <Navigate to="/admin/calendario" replace />
+    }
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-red-600 mb-2">Acceso No Autorizado</h2>
@@ -39,17 +44,18 @@ const AppContent = () => {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="*" element={<RoleHome />} />
 
         <Route path="/login" element={<AuthPage />} />
         <Route path="/registro" element={<AuthPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
-        <Route path="/admin" element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />
-        <Route path="/admin/dashboard"    element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
+        <Route path="/admin" element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
+        <Route path="/admin/dashboard"    element={<RequireRole roles={DASHBOARD_ROLES}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
         <Route path="/admin/habitaciones" element={<RequireRole roles={GESTION_HABITACIONES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
         <Route path="/admin/calendario"   element={<RequireRole roles={PERSONAL_INTERNO}><AdminShell><Calendario /></AdminShell></RequireRole>} />
         <Route path="/admin/servicios"    element={<RequireRole roles={GESTION_SERVICIOS}><AdminShell><Servicios /></AdminShell></RequireRole>} />
-        <Route path="/admin/usuarios"     element={<RequireRole roles={['Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
+        <Route path="/admin/usuarios"     element={<RequireRole roles={['Superadministrador', 'Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}
         <Route
@@ -62,6 +68,23 @@ const AppContent = () => {
       </Routes>
     </Router>
   )
+}
+
+const RoleHome = () => {
+  const { usuario } = useAuth()
+  if (!usuario) return <Navigate to="/" replace />
+  const destino = usuario.rol === 'Cliente'
+    ? '/cliente'
+    : usuario.rol === 'Administrador'
+      ? '/admin/dashboard'
+      : '/admin/calendario'
+  return <Navigate to={destino} replace />
+}
+
+const AdminRoleHome = () => {
+  const { usuario } = useAuth()
+  const destino = usuario?.rol === 'Administrador' ? '/admin/dashboard' : '/admin/calendario'
+  return <Navigate to={destino} replace />
 }
 
 const App = () => {

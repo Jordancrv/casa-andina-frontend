@@ -1,0 +1,25 @@
+.cal-page { display: grid; gap: 22px; color: #26352f; }
+.cal-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+.cal-heading h1 { margin: 3px 0 7px; font-size: 28px; line-height: 1.2; }
+.cal-heading p { margin: 0; color: #6d7973; }
+.cal-eyebrow { color: #54816b !important; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.cal-range-count { padding: 8px 0; color: #52645b; font-size: 13px; white-space: nowrap; }
+.cal-filters { display: grid; grid-template-columns: minmax(220px, 1.6fr) repeat(2, minmax(150px, .7fr)); gap: 14px; padding: 17px 0; border-top: 1px solid #e2e8e4; border-bottom: 1px solid #e2e8e4; }
+.cal-filters label { display: grid; gap: 7px; color: #46564d; font-size: 12px; font-weight: 650; }
+.cal-filters select, .cal-filters input { min-width: 0; height: 40px; padding: 0 11px; border: 1px solid #d5ded8; border-radius: 4px; background: white; color: #26352f; font: inherit; }
+.cal-table-wrap { overflow: auto; border: 1px solid #e1e7e3; border-radius: 5px; background: white; }
+.cal-table { width: 100%; border-collapse: collapse; text-align: left; }
+.cal-table th { padding: 12px 15px; background: #f5f8f6; color: #5b6c62; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+.cal-table td { padding: 14px 15px; border-top: 1px solid #edf0ee; vertical-align: top; font-size: 13px; }
+.cal-table td:first-child strong, .cal-table td:first-child small { display: block; }
+.cal-table td:first-child small { margin-top: 4px; color: #7b8981; }
+.cal-status { display: inline-block; padding: 5px 8px; border-radius: 3px; background: #edf4ee; color: #386b4c; font-size: 11px; font-weight: 700; }
+.cal-status.is-booked { background: #f8eee9; color: #98533c; }
+.cal-status.is-mantenimiento, .cal-status.is-bloqueada { background: #f2f1ec; color: #6d6956; }
+.cal-bookings { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.cal-bookings li { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; }
+.cal-bookings strong { color: #315c45; }
+.cal-bookings span, .cal-bookings small, .cal-free { color: #6e7a73; font-size: 12px; }
+.cal-message { padding: 18px 0; color: #68766e; }
+.cal-error { color: #a03d35; }
+@media (max-width: 700px) { .cal-heading { align-items: start; flex-direction: column; } .cal-filters { grid-template-columns: 1fr; } .cal-table { min-width: 700px; } }
