@@ -87,7 +87,7 @@ const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: Ro
   { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas />, roles: ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento'] },
   { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento'] },
   { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ['Superadministrador', 'Administrador', 'Operaciones'] },
-  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ['Superadministrador', 'Administrador'] },
+  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ['Administrador'] },
 ]
 
 // ---------------------------------------------------------------------------
