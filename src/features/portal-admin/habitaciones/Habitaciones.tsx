@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import axios from 'axios'
 import {
   listHabitaciones,
   getHabitacion,
@@ -16,6 +17,20 @@ import './habitaciones.css'
 
 
 type FiltroEstado = 'Todas' | 'Disponible' | 'Ocupada' | 'Mantenimiento' | 'Bloqueada'
+
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError(error)) return fallback
+  const data = error.response?.data as {
+    title?: string
+    detail?: string
+    message?: string
+    errors?: Record<string, string[] | string>
+  } | undefined
+  const validationMessage = data?.errors
+    ? Object.values(data.errors).flat().find(Boolean)
+    : undefined
+  return validationMessage ?? data?.detail ?? data?.message ?? data?.title ?? fallback
+}
 
 const emptyForm: CreateHabitacionPayload = {
   sedeId: 0,
@@ -79,8 +94,8 @@ export const Habitaciones = () => {
           tipoHabitacionId: prev.tipoHabitacionId || catData.tiposHabitacion[0].id,
         }))
       }
-    } catch {
-      setError('No se pudieron cargar los datos de habitaciones y catálogos.')
+    } catch (loadError) {
+      setError(getApiErrorMessage(loadError, 'No se pudieron cargar los datos de habitaciones y catálogos.'))
     } finally {
       setIsLoading(false)
     }
@@ -186,8 +201,8 @@ export const Habitaciones = () => {
     setActionError(null)
     try {
       setDetailHabitacion(await getHabitacion(id))
-    } catch {
-      setActionError('No se pudo consultar el detalle actualizado de la habitación.')
+    } catch (detailError) {
+      setActionError(getApiErrorMessage(detailError, 'No se pudo consultar el detalle actualizado de la habitación.'))
     }
   }
 
@@ -199,8 +214,8 @@ export const Habitaciones = () => {
       await deactivateHabitacion(habitacion.id)
       setDetailHabitacion(null)
       await loadData()
-    } catch {
-      setActionError('No se pudo desactivar. Verifique que la habitación no tenga reservas activas o futuras.')
+    } catch (deactivateError) {
+      setActionError(getApiErrorMessage(deactivateError, 'No se pudo desactivar. Verifique que la habitación no tenga reservas activas o futuras.'))
     } finally {
       setIsSubmitting(false)
     }
@@ -222,8 +237,11 @@ export const Habitaciones = () => {
       }
       await loadData()
       setIsModalOpen(false)
-    } catch {
-      setActionError(`No se pudo ${editingId ? 'actualizar' : 'crear'} la habitación. Verifique los datos y permisos.`)
+    } catch (submitError) {
+      setActionError(getApiErrorMessage(
+        submitError,
+        `No se pudo ${editingId ? 'actualizar' : 'crear'} la habitación. Verifique los datos y permisos.`
+      ))
     } finally {
       setIsSubmitting(false)
     }
