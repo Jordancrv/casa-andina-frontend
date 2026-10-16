@@ -21,6 +21,9 @@ const getErrorMessage = (error: unknown) => {
   }
 
   const data = error.response?.data
+  if (error.response?.status === 429) {
+    return data?.detail || 'Se alcanzó el límite de registros desde esta conexión. Espera unos minutos antes de intentarlo otra vez.'
+  }
   const validationMessage = data?.errors && Object.values(data.errors).flat()[0]
   return validationMessage || data?.detail || data?.message || data?.title ||
     'No pudimos completar la solicitud. Revisa tus datos.'
@@ -38,7 +41,7 @@ const PasswordRequirements = ({ password }: { password: string }) => {
   return (
     <ul className="auth-password-rules" aria-label="Requisitos de contraseña">
       {rules.map(([label, isValid]) => (
-        <li key={label} className={isValid ? 'is-valid' : ''}>
+        <li key={label} className={isValid ? 'is-valid' : 'is-pending'}>
           <span aria-hidden="true">{isValid ? '✓' : '○'}</span> {label}
         </li>
       ))}

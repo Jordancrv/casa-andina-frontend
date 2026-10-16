@@ -66,8 +66,8 @@
 .auth-switch { margin: 24px 0 0; text-align: center; color: #62706c; font: 400 .88rem/1.5 'Hanken Grotesk', sans-serif; }
 .auth-switch a, .auth-back { color: #145a49; font-weight: 700; }
 .auth-back { display: block; width: fit-content; margin: 16px auto 0; font-size: .75rem; }
-.auth-password-rules { margin: -7px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px 12px; list-style: none; color: #7b8985; font-size: .68rem; }
-.auth-password-rules .is-valid { color: #176b57; }
+.auth-password-rules { margin: -7px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; list-style: none; color: #7b8985; font-size: .72rem; }
+.auth-password-rules .is-valid { color: #0b6b3a; font-weight: 700; }
 
 @media (max-width: 820px) {
   .auth-page { grid-template-columns: 1fr; }
