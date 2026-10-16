@@ -23,6 +23,7 @@ api.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token')
       localStorage.removeItem('usuario')
+      window.dispatchEvent(new Event('auth:unauthorized'))
       window.location.href = '/login'
     }
     return Promise.reject(error)

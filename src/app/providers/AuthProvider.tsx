@@ -75,11 +75,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!event.newValue) logout()
       else setUsuario(restaurarSesion())
     }
+    const handleUnauthorized = () => logout()
 
     window.addEventListener('storage', syncSession)
+    window.addEventListener('auth:unauthorized', handleUnauthorized)
     return () => {
       window.clearTimeout(expirationTimer)
       window.removeEventListener('storage', syncSession)
+      window.removeEventListener('auth:unauthorized', handleUnauthorized)
     }
   }, [usuario, logout])
 
