@@ -13,7 +13,7 @@ import { AuthPage } from '@/features/auth/AuthPage'
 import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
 import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
 import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
-import { ROLE_ACCESS } from '@/shared/constants/role-access'
+import { getRoleHomeRoute, ROLE_ACCESS } from '@/shared/constants/role-access'
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
 const RequireRole = ({ roles, children }: { roles: readonly Rol[]; children: ReactElement }) => {
@@ -69,18 +69,13 @@ const AppContent = () => {
 const RoleHome = () => {
   const { usuario } = useAuth()
   if (!usuario) return <Navigate to="/" replace />
-  const destino = usuario.rol === 'Cliente'
-    ? '/cliente'
-    : usuario.rol === 'Administrador'
-      ? '/admin/dashboard'
-      : '/admin/calendario'
-  return <Navigate to={destino} replace />
+  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
 }
 
 const AdminRoleHome = () => {
   const { usuario } = useAuth()
-  const destino = usuario?.rol === 'Administrador' ? '/admin/dashboard' : '/admin/calendario'
-  return <Navigate to={destino} replace />
+  if (!usuario) return <Navigate to="/login" replace />
+  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
 }
 
 const App = () => {

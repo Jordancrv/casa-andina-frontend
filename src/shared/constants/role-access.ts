@@ -8,3 +8,8 @@ export const ROLE_ACCESS = {
   users: ['Administrador'],
   client: ['Cliente']
 } as const satisfies Record<string, readonly Rol[]>
+
+export function getRoleHomeRoute(role: Rol): string {
+  if (role === 'Cliente') return '/cliente'
+  return role === 'Administrador' ? '/admin/dashboard' : '/admin/calendario'
+}

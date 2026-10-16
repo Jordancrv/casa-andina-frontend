@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
+import { getRoleHomeRoute } from '@/shared/constants/role-access'
 import { getDocumentTypes, registerClient } from './auth.api'
 import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
 import logo from '@/assets/casa-andina.png'
@@ -74,12 +75,7 @@ export const AuthPage = () => {
   }, [isRegister, personType])
 
   if (usuario) {
-    const destino = usuario.rol === 'Cliente'
-      ? '/cliente'
-      : usuario.rol === 'Administrador'
-        ? '/admin/dashboard'
-        : '/admin/calendario'
-    return <Navigate to={destino} replace />
+    return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
   }
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -123,7 +119,7 @@ export const AuthPage = () => {
     try {
       const session = await registerClient(request)
       completeLogin(session)
-      navigate('/cliente', { replace: true })
+      navigate(getRoleHomeRoute(session.rol), { replace: true })
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {
