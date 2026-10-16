@@ -17,8 +17,8 @@ export function MisReservas() {
   const [vista, setVista] = useState<'proximas' | 'historial'>('proximas')
   const hoy = today()
   const visibles = reservas.filter(reserva => vista === 'proximas'
-    ? reserva.fechaCheckOut.slice(0, 10) >= hoy && (reserva.estado === 'Confirmada' || reserva.estado === 'Pendiente')
-    : reserva.fechaCheckOut.slice(0, 10) < hoy || ['Bloqueada', 'Cancelada', 'Completada'].includes(reserva.estado))
+    ? reserva.fechaCheckOut.slice(0, 10) >= hoy && !['Cancelada', 'Completada'].includes(reserva.estado)
+    : reserva.fechaCheckOut.slice(0, 10) < hoy || ['Cancelada', 'Completada'].includes(reserva.estado))
   if (isLoading) return <section className="cliente-content"><p className="client-state">Cargando tus reservas…</p></section>
   return <section className="cliente-content">
     <div className="client-heading"><div><p className="cliente-eyebrow">TU HISTORIAL</p><h1>Mis reservas</h1><p>Consulta las fechas y habitaciones de tus estadías.</p></div></div>
