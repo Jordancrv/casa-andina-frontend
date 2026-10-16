@@ -1,22 +1,59 @@
 import './modulos-pendientes.css'
 
-type Modulo = 'reportes'
+export function ModulosPendientes({ modulo }: { modulo: 'reportes' }) {
+  if (modulo !== 'reportes') return null
 
-const CONFIG: Record<Modulo, { title: string; eyebrow: string; description: string }> = {
-  reportes: { title: 'Reportes', eyebrow: 'ANÁLISIS', description: 'Diseño de reportes asistidos por IA.' },
-}
-
-export function ModulosPendientes({ modulo }: { modulo: Modulo }) {
-  const config = CONFIG[modulo]
   return (
-    <main className="admin-module">
+    <main className="admin-module report-page">
       <header className="admin-module__heading">
-        <div><p>{config.eyebrow}</p><h1>{config.title}</h1><span>{config.description}</span></div>
-        <span className="admin-module__badge">{modulo === 'reportes' ? 'PROTOTIPO DE DISEÑO' : 'INTERFAZ EN PREPARACIÓN'}</span>
+        <div>
+          <p>ANÁLISIS OPERATIVO</p>
+          <h1>Reportes</h1>
+          <span>Vista de reporte asistido para Casa Andina.</span>
+        </div>
+        <span className="admin-module__badge">PROTOTIPO DE DISEÑO</span>
       </header>
-      <section className="report-preview" aria-label="Prototipo de reporte">
-          <div className="report-preview__toolbar"><span>Vista previa del reporte</span><span>Sin datos generados</span></div>
-          <div className="report-preview__body"><div className="report-preview__mark" aria-hidden="true">CA</div><p>CASA ANDINA · REPORTE OPERATIVO</p><h2>Elige un periodo para analizar</h2><span>Este prototipo no consulta datos ni genera conclusiones reales.</span><div className="report-preview__skeletons"><i /><i /><i /></div></div>
+
+      <div className="report-controls" aria-label="Controles de vista previa">
+        <label>
+          Periodo
+          <select disabled value="">
+            <option value="">Disponible al conectar los datos</option>
+          </select>
+        </label>
+        <button type="button" disabled>Generar reporte</button>
+      </div>
+
+      <section className="report-preview" aria-label="Vista previa vacía del reporte">
+        <header className="report-preview__toolbar">
+          <div><strong>Casa Andina</strong><span> · Reporte operativo</span></div>
+          <span className="report-preview__status">Sin generar</span>
+        </header>
+
+        <div className="report-preview__body">
+          <div className="report-preview__intro">
+            <p>RESUMEN EJECUTIVO</p>
+            <h2>El análisis aparecerá aquí</h2>
+            <span>La generación con IA y las fuentes de datos aún no están conectadas.</span>
+          </div>
+
+          <div className="report-preview__metrics" aria-label="Indicadores pendientes">
+            <section><span>Ocupación</span><strong>—</strong><small>Sin datos</small></section>
+            <section><span>Reservas</span><strong>—</strong><small>Sin datos</small></section>
+            <section><span>Importe reservado</span><strong>—</strong><small>Sin datos</small></section>
+          </div>
+
+          <section className="report-preview__chart">
+            <div><h3>Tendencia del periodo</h3><span>Visualización pendiente de conexión</span></div>
+            <div className="report-preview__chart-empty" aria-hidden="true"><i /><i /><i /><i /><i /><i /><i /></div>
+          </section>
+
+          <section className="report-preview__observations">
+            <h3>Observaciones</h3>
+            <p>Las conclusiones se mostrarán cuando exista generación habilitada y datos disponibles.</p>
+          </section>
+          <p className="report-preview__disclaimer">Prototipo: no contiene cifras, tendencias ni recomendaciones reales.</p>
+        </div>
       </section>
     </main>
   )
