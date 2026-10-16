@@ -7,6 +7,12 @@ import { getReservas } from './reservas.api'
 import '../cliente.css'
 
 const dateValue = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+const nextDateValue = (value: string) => {
+  if (!value) return dateValue(new Date())
+  const date = new Date(`${value}T00:00:00`)
+  date.setDate(date.getDate() + 1)
+  return dateValue(date)
+}
 const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1)
 const dayAfter = new Date(); dayAfter.setDate(dayAfter.getDate() + 2)
 const money = (amount: number) => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount)
@@ -32,6 +38,7 @@ export function CompraReserva() {
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmacion, setConfirmacion] = useState<{ data: ReservaCompraRespuesta; codigo: string; fechas: string; habitacionNombres: string[] } | null>(null)
+  const rangoFechasValido = checkIn >= dateValue(new Date()) && checkOut > checkIn
 
   useEffect(() => {
     Promise.all([getSedesCliente(), getMetodosPago()])
@@ -47,7 +54,12 @@ export function CompraReserva() {
   const costoHabitaciones = useMemo(() => Object.keys(seleccion).reduce((sum, id) => sum + (habitaciones.find(room => room.habitacionId === Number(id))?.precioNoche ?? 0) * noches, 0), [habitaciones, seleccion, noches])
   const costoExtras = useMemo(() => Object.entries(extras).reduce((sum, [id, qty]) => sum + (servicios.find(service => service.id === Number(id))?.precio ?? 0) * qty, 0), [extras, servicios])
 
+  const invalidarDisponibilidad = () => {
+    setHabitaciones([]); setServicios([]); setSeleccion({}); setExtras({}); setStep(0); setError(null)
+  }
+
   const buscar = async () => {
+    if (!rangoFechasValido) { setError('La salida debe ser posterior a la entrada y ambas fechas no pueden estar en el pasado.'); return }
     setError(null); setSearching(true); setStep(1); setSeleccion({}); setExtras({})
     try {
       const [rooms, services] = await Promise.all([getDisponibilidad(sedeId, checkIn, checkOut), getServiciosDeSede(sedeId)])
@@ -69,6 +81,17 @@ export function CompraReserva() {
   const addGuest = (room: HabitacionDisponible) => setSeleccion(current => ({ ...current, [room.habitacionId]: [...current[room.habitacionId], emptyGuest()] }))
 
   const submit = async () => {
+    if (!rangoFechasValido) { setError('Revisa el rango de fechas: la salida debe ser posterior a la entrada.'); return }
+    if (!Object.keys(seleccion).length) { setError('Selecciona al menos una habitación.'); return }
+    for (const [roomId, guests] of Object.entries(seleccion)) {
+      const room = habitaciones.find(item => item.habitacionId === Number(roomId))
+      const capacity = room ? room.capacidadAdultos + room.capacidadNinos : 0
+      if (!room || guests.length > capacity) { setError('La cantidad de huéspedes supera la capacidad de una habitación.'); return }
+      if (guests.some(guest => !guest.nombres.trim() || guest.nombres.length > 200 || !guest.apellidos.trim() || guest.apellidos.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.correo.trim()) || (guest.telefono.trim() && !/^\+?[1-9]\d{7,14}$/.test(guest.telefono.trim())))) {
+        setError('Completa los nombres, apellidos, correos y teléfonos de huéspedes con un formato válido.'); return
+      }
+    }
+    if (tipoComprobante === 'Factura' && (!razonSocial.trim() || razonSocial.length > 200 || !/^\d{11}$/.test(ruc))) { setError('Para emitir factura, ingresa razón social y un RUC de 11 dígitos.'); return }
     setError(null); setLoading(true)
     try {
       const payload: CrearReservaPayload = {
@@ -97,10 +120,10 @@ export function CompraReserva() {
     <div className="client-heading"><div><p className="cliente-eyebrow">CASA ANDINA · RESERVAS DIRECTAS</p><h1>Encuentra tu próxima estadía</h1><p>Elige una sede, tus fechas y las habitaciones para tu viaje.</p></div></div>
     <div className="booking-progress" aria-label="Pasos de reserva">{['Estadía', 'Huéspedes', 'Confirmación'].map((label, index) => <div key={label} className={step >= index ? 'current' : ''}><i>{index + 1}</i><span>{label}</span></div>)}</div>
     <form className="booking-search" onSubmit={e => { e.preventDefault(); void buscar() }}>
-      <label>Sede<select value={sedeId} onChange={e => setSedeId(Number(e.target.value))} required><option value={0} disabled>Selecciona una sede</option>{sedes.map(sede => <option key={sede.id} value={sede.id}>{sede.nombre} · {sede.ciudad}</option>)}</select></label>
-      <label>Entrada<input type="date" min={dateValue(new Date())} value={checkIn} onChange={e => setCheckIn(e.target.value)} required /></label>
-      <label>Salida<input type="date" min={checkIn} value={checkOut} onChange={e => setCheckOut(e.target.value)} required /></label>
-      <button className="client-primary" type="submit" disabled={!sedeId || searching}>{searching ? 'Buscando…' : 'Buscar habitaciones'}</button>
+      <label>Sede<select disabled={searching} value={sedeId} onChange={e => { setSedeId(Number(e.target.value)); invalidarDisponibilidad() }} required><option value={0} disabled>Selecciona una sede</option>{sedes.map(sede => <option key={sede.id} value={sede.id}>{sede.nombre} · {sede.ciudad}</option>)}</select></label>
+      <label>Entrada<input disabled={searching} type="date" min={dateValue(new Date())} value={checkIn} onChange={e => { const value = e.target.value; setCheckIn(value); if (checkOut <= value) setCheckOut(nextDateValue(value)); invalidarDisponibilidad() }} required /></label>
+      <label>Salida<input disabled={searching} type="date" min={nextDateValue(checkIn)} value={checkOut} onChange={e => { setCheckOut(e.target.value); invalidarDisponibilidad() }} required /></label>
+      <button className="client-primary" type="submit" disabled={!sedeId || searching || !rangoFechasValido}>{searching ? 'Buscando…' : 'Buscar habitaciones'}</button>
     </form>
     {error && <div className="client-alert" role="alert">{error}</div>}
     {step > 0 && <>
@@ -109,7 +132,7 @@ export function CompraReserva() {
         const selected = Boolean(seleccion[room.habitacionId]); const capacity = room.capacidadAdultos + room.capacidadNinos
         return <article key={room.habitacionId} className={`room-option ${selected ? 'selected' : ''}`}>
           <div className="room-option-main"><div><span className="room-category">{room.tipoHabitacion} · HABITACIÓN {room.numero}</span><h3>{room.sedeNombre}</h3><p>{room.capacidadAdultos} adultos{room.capacidadNinos ? ` · hasta ${room.capacidadNinos} niños` : ''} · {room.comodidades.slice(0, 3).join(' · ') || 'Confort Casa Andina'}</p></div><div className="room-price"><strong>{money(room.precioNoche)}</strong><small>por noche</small></div><button type="button" className={selected ? 'client-secondary' : 'client-primary'} onClick={() => toggleRoom(room)}>{selected ? 'Quitar' : 'Elegir'}</button></div>
-          {selected && <div className="guest-list"><div className="guest-list-title"><strong>Huéspedes de habitación {room.numero}</strong><span>Máximo {capacity} · incluye huésped principal</span></div>{seleccion[room.habitacionId].map((guest, index) => <div className="guest-fields" key={`${room.habitacionId}-${index}`}><label>Nombre<input value={guest.nombres} onChange={e => updateGuest(room.habitacionId, index, 'nombres', e.target.value)} required /></label><label>Apellido<input value={guest.apellidos} onChange={e => updateGuest(room.habitacionId, index, 'apellidos', e.target.value)} required /></label><label>Correo<input type="email" value={guest.correo} onChange={e => updateGuest(room.habitacionId, index, 'correo', e.target.value)} required /></label><label>Teléfono<input type="tel" inputMode="tel" maxLength={16} pattern="\+?[1-9][0-9]{7,14}" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={guest.telefono} onChange={e => updateGuest(room.habitacionId, index, 'telefono', e.target.value)} /></label>{guest.esTitular && <span className="guest-owner">Huésped principal</span>}{!guest.esTitular && <button type="button" className="remove-guest" onClick={() => setSeleccion(current => ({ ...current, [room.habitacionId]: current[room.habitacionId].filter((_, guestIndex) => guestIndex !== index) }))}>Quitar huésped</button>}</div>)}{seleccion[room.habitacionId].length < capacity && <button type="button" className="add-guest" onClick={() => addGuest(room)}>+ Agregar huésped</button>}</div>}
+          {selected && <div className="guest-list"><div className="guest-list-title"><strong>Huéspedes de habitación {room.numero}</strong><span>Máximo {capacity} · incluye huésped principal</span></div>{seleccion[room.habitacionId].map((guest, index) => <div className="guest-fields" key={`${room.habitacionId}-${index}`}><label>Nombre<input maxLength={200} value={guest.nombres} onChange={e => updateGuest(room.habitacionId, index, 'nombres', e.target.value)} required /></label><label>Apellido<input maxLength={100} value={guest.apellidos} onChange={e => updateGuest(room.habitacionId, index, 'apellidos', e.target.value)} required /></label><label>Correo<input type="email" maxLength={150} value={guest.correo} onChange={e => updateGuest(room.habitacionId, index, 'correo', e.target.value)} required /></label><label>Teléfono<input type="tel" inputMode="tel" maxLength={16} pattern="\+?[1-9][0-9]{7,14}" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={guest.telefono} onChange={e => updateGuest(room.habitacionId, index, 'telefono', e.target.value)} /></label>{guest.esTitular && <span className="guest-owner">Huésped principal</span>}{!guest.esTitular && <button type="button" className="remove-guest" onClick={() => setSeleccion(current => ({ ...current, [room.habitacionId]: current[room.habitacionId].filter((_, guestIndex) => guestIndex !== index) }))}>Quitar huésped</button>}</div>)}{seleccion[room.habitacionId].length < capacity && <button type="button" className="add-guest" onClick={() => addGuest(room)}>+ Agregar huésped</button>}</div>}
         </article>
       })}</div>}
       {habitaciones.length > 0 && <>
