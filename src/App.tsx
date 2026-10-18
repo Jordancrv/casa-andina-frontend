@@ -87,12 +87,6 @@ const AdminRoleHome = () => {
 }
 
 const App = () => {
-  const { isLoading } = useAuth()
-
-  if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>
-  }
-
   return <AppContent />
 }
 

@@ -18,6 +18,13 @@ import './habitaciones.css'
 
 type FiltroEstado = 'Todas' | 'Disponible' | 'Ocupada' | 'Mantenimiento' | 'Bloqueada'
 
+const GuestIcon = ({ child = false }: { child?: boolean }) => (
+  <svg className="room-guest-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy={child ? 9 : 7} r={child ? 3 : 4} />
+    <path d={child ? 'M6 21v-2a6 6 0 0 1 12 0v2' : 'M4 21v-2a8 8 0 0 1 16 0v2'} />
+  </svg>
+)
+
 function getApiErrorMessage(error: unknown, fallback: string): string {
   if (!axios.isAxiosError(error)) return fallback
   const data = error.response?.data as {
@@ -291,6 +298,7 @@ export const Habitaciones = () => {
                 </strong>
               </div>
               <div><span>Sedes activas</span><strong>{sedesList.length - 1}</strong></div>
+              <div><span>Habitaciones disponibles</span><strong>{habitaciones.filter(h => h.estado.toLowerCase() === 'disponible').length}</strong><small>Según estado del inventario</small></div>
             </section>
           )}
 
@@ -513,10 +521,10 @@ export const Habitaciones = () => {
                   </p>
                   <div className="capacity-badges">
                     <div className="capacity-badge">
-                      <span>👤 Adultos:</span> <strong>{selectedTipo.capacidadAdultos}</strong>
+                      <span className="room-capacity-label"><GuestIcon /> Adultos:</span> <strong>{selectedTipo.capacidadAdultos}</strong>
                     </div>
                     <div className="capacity-badge">
-                      <span>👶 Niños:</span> <strong>{selectedTipo.capacidadNinos}</strong>
+                      <span className="room-capacity-label"><GuestIcon child /> Niños:</span> <strong>{selectedTipo.capacidadNinos}</strong>
                     </div>
                   </div>
                 </div>
@@ -602,7 +610,7 @@ export const Habitaciones = () => {
               </div>
               <div className="detail-item">
                 <label>Capacidad Permitida</label>
-                <span>👤 Adultos: <b>{detailHabitacion.capacidadAdultos}</b> | 👶 Niños: <b>{detailHabitacion.capacidadNinos}</b></span>
+                <span className="room-capacity-details"><span className="room-capacity-label"><GuestIcon /> Adultos: <b>{detailHabitacion.capacidadAdultos}</b></span><span className="room-capacity-label"><GuestIcon child /> Niños: <b>{detailHabitacion.capacidadNinos}</b></span></span>
               </div>
 
               <div className="detail-item full-width">

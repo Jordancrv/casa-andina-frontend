@@ -20,15 +20,17 @@ const SCRIPT_ID = 'google-recaptcha-api'
 export function RecaptchaCheckbox({ onToken, resetKey }: { onToken: (token: string | null) => void; resetKey: number }) {
   const container = useRef<HTMLDivElement>(null)
   const widgetIdRef = useRef<number | null>(null)
+  const activeRef = useRef(false)
   const [loadError, setLoadError] = useState(false)
   const [loadAttempt, setLoadAttempt] = useState(0)
 
   useEffect(() => {
     const siteKey = RECAPTCHA_SITE_KEY
     if (!siteKey || !container.current) return
+    activeRef.current = true
     let mounted = true
     const reportFailure = () => {
-      if (!mounted) return
+      if (!activeRef.current) return
       setLoadError(true)
       onToken(null)
     }
@@ -42,12 +44,12 @@ export function RecaptchaCheckbox({ onToken, resetKey }: { onToken: (token: stri
         widgetIdRef.current = window.grecaptcha.render(container.current, {
           sitekey: siteKey,
           callback: token => {
-            if (!mounted) return
+            if (!activeRef.current) return
             setLoadError(false)
             onToken(token)
           },
           'expired-callback': () => {
-            if (mounted) onToken(null)
+            if (activeRef.current) onToken(null)
           },
           'error-callback': reportFailure,
         })
@@ -71,6 +73,7 @@ export function RecaptchaCheckbox({ onToken, resetKey }: { onToken: (token: stri
     renderWidget()
     return () => {
       mounted = false
+      activeRef.current = false
       window.clearTimeout(timeoutId)
       script?.removeEventListener('load', renderWidget)
       script?.removeEventListener('error', reportFailure)
