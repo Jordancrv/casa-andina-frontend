@@ -1,23 +1,34 @@
-import { Button } from '@/shared/ui/Button'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import type { ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
-import { AdminPanel } from '@/features/portal-admin/admin-panel'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
 import { DashboardBI } from '@/features/portal-admin/dashboard-bi/DashboardBI'
 import { Calendario } from '@/features/portal-admin/calendario/Calendario'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
-import { useAuth } from '@/app/providers/AuthProvider'
-
-const ADMIN_ROLES = ['Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento']
+import { Clientes } from '@/features/portal-admin/clientes/Clientes'
+import { Sedes } from '@/features/portal-admin/sedes/Sedes'
+import { ModulosPendientes } from '@/features/portal-admin/ModulosPendientes'
+import { useAuth } from '@/app/providers/auth-context'
+import type { Rol } from '@/shared/types/global.types'
+import { AuthPage } from '@/features/auth/AuthPage'
+import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
+import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
+import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
+import { Chatbot } from '@/features/portal-cliente/chatbot/components/Chatbot'
+import { getRoleHomeRoute, ROLE_ACCESS } from '@/shared/constants/role-access'
 
 // Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
-const RequireRole = ({ roles, children }: { roles: string[]; children: JSX.Element }) => {
+const RequireRole = ({ roles, children }: { roles: readonly Rol[]; children: ReactElement }) => {
   const { usuario } = useAuth()
+  const location = useLocation()
   if (!usuario) return <Navigate to="/login" replace />
   if (!roles.includes(usuario.rol)) {
+    if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace state={{ from: location }} />
+    if (location.pathname === '/admin' || location.pathname === '/admin/dashboard') {
+      return <Navigate to="/admin/calendario" replace />
+    }
     return (
       <div className="p-8 text-center">
         <h2 className="text-xl font-bold text-red-600 mb-2">Acceso No Autorizado</h2>
@@ -28,128 +39,51 @@ const RequireRole = ({ roles, children }: { roles: string[]; children: JSX.Eleme
   return children
 }
 
-const LoginPage = () => {
-  const { usuario, login } = useAuth()
-  const [errorMsg, setErrorMsg] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  if (usuario) {
-    if (usuario.rol === 'Cliente') {
-      return <Navigate to="/cliente" replace />
-    }
-    return <Navigate to="/admin/dashboard" replace />
-  }
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setErrorMsg(null)
-    setIsSubmitting(true)
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    try {
-      await login(email, password)
-    } catch (err: any) {
-      console.error('Login error:', err)
-      const msg = err.response?.data?.detail || err.response?.data?.message || 'Error al iniciar sesión. Verifica tus credenciales.'
-      setErrorMsg(msg)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Iniciar Sesión
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Casa Andina - Sistema de Gestión
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {errorMsg && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
-              {errorMsg}
-            </div>
-          )}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Correo Electrónico</label>
-              <div className="mt-1">
-                <input
-                  type="email"
-                  name="email"
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-              <div className="mt-1">
-                <input
-                  type="password"
-                  name="password"
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {isSubmitting ? 'Ingresando...' : 'Entrar'}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const AppContent = () => {
-  const { usuario } = useAuth()
-
   return (
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="*" element={<RoleHome />} />
 
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/registro" element={<AuthPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
-        <Route path="/admin" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><AdminPanel /></AdminShell></RequireRole>} />
-        <Route path="/admin/dashboard"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
-        <Route path="/admin/habitaciones" element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
-        <Route path="/admin/calendario"   element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Calendario /></AdminShell></RequireRole>} />
-        <Route path="/admin/servicios"    element={<RequireRole roles={ADMIN_ROLES}><AdminShell><Servicios /></AdminShell></RequireRole>} />
-        <Route path="/admin/usuarios"     element={<RequireRole roles={['Administrador']}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
+        <Route path="/admin" element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
+        <Route path="/admin/dashboard"    element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
+        <Route path="/admin/habitaciones" element={<RequireRole roles={ROLE_ACCESS.rooms}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
+        <Route path="/admin/calendario"   element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><Calendario /></AdminShell></RequireRole>} />
+        <Route path="/admin/servicios"    element={<RequireRole roles={ROLE_ACCESS.services}><AdminShell><Servicios /></AdminShell></RequireRole>} />
+        <Route path="/admin/usuarios"     element={<RequireRole roles={ROLE_ACCESS.users}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
+        <Route path="/admin/sedes"        element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Sedes /></AdminShell></RequireRole>} />
+        <Route path="/admin/clientes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Clientes /></AdminShell></RequireRole>} />
+        <Route path="/admin/reportes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><ModulosPendientes modulo="reportes" /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}
         <Route
           path="/cliente"
           element={
-            usuario?.rol === 'Cliente' ? (
-              <AdminPanel />
-            ) : (
-              <Navigate to="/login" replace />
-            )
+            <RequireRole roles={ROLE_ACCESS.client}><ClienteShell><CompraReserva /></ClienteShell></RequireRole>
           }
         />
+        <Route path="/cliente/reservas" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
+        <Route path="/cliente/asistente" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><Chatbot /></ClienteShell></RequireRole>} />
       </Routes>
     </Router>
   )
+}
+
+const RoleHome = () => {
+  const { usuario } = useAuth()
+  if (!usuario) return <Navigate to="/" replace />
+  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
+}
+
+const AdminRoleHome = () => {
+  const { usuario } = useAuth()
+  if (!usuario) return <Navigate to="/login" replace />
+  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
 }
 
 const App = () => {

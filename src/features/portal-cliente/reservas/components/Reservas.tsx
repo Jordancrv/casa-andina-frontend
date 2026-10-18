@@ -1,7 +1,15 @@
 import React from 'react'
 
+interface ReservaResumen {
+  id: number
+  hotelNombre: string
+  fechaInicio: string
+  fechaFin: string
+  precio: number
+}
+
 export const Reservas = () => {
-  const [reservas, setReservas] = React.useState<any[]>([])
+  const [reservas, setReservas] = React.useState<ReservaResumen[]>([])
   const [loading, setLoading] = React.useState(true)
 
   React.useEffect(() => {

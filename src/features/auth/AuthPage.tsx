@@ -1,0 +1,311 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useAuth } from '@/app/providers/auth-context'
+import { getRoleHomeRoute } from '@/shared/constants/role-access'
+import { getDocumentTypes, registerClient } from './auth.api'
+import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
+import { RecaptchaCheckbox } from './RecaptchaCheckbox'
+import { isRecaptchaConfigured } from './recaptcha.config'
+import logo from '@/assets/casa-andina.png'
+import './auth.css'
+
+type ApiError = {
+  title?: string
+  detail?: string
+  message?: string
+  errors?: Record<string, string[]>
+}
+
+const passwordRequirements = (value: string) => [
+  value.length >= 10,
+  /[A-Z]/.test(value),
+  /[a-z]/.test(value),
+  /\d/.test(value),
+  /[^a-zA-Z0-9]/.test(value),
+]
+const isPasswordValid = (value: string) => passwordRequirements(value).every(Boolean)
+const naturalPersonNamePattern = /^[\p{L}][\p{L}\s.'-]*$/u
+
+const isDocumentNumberValid = (code: string, value: string) => {
+  switch (code) {
+    case 'DNI': return /^\d{8}$/.test(value)
+    case 'CE': return /^[A-Za-z0-9]{9,12}$/.test(value)
+    case 'PASAPORTE': return /^[A-Za-z0-9]{6,20}$/.test(value)
+    case 'RUC': return /^\d{11}$/.test(value)
+    default: return false
+  }
+}
+
+const getErrorMessage = (error: unknown) => {
+  if (!axios.isAxiosError<ApiError>(error)) {
+    return 'No pudimos completar la solicitud. Inténtalo nuevamente.'
+  }
+
+  const data = error.response?.data
+  if (error.response?.status === 429) {
+    return data?.detail || 'Se alcanzó el límite de registros desde esta conexión. Espera unos minutos antes de intentarlo otra vez.'
+  }
+  const validationMessage = data?.errors && Object.values(data.errors).flat()[0]
+  return validationMessage || data?.detail || data?.message || data?.title ||
+    'No pudimos completar la solicitud. Revisa tus datos.'
+}
+
+const PasswordRequirements = ({ password }: { password: string }) => {
+  const validity = useMemo(() => passwordRequirements(password), [password])
+  const rules = [
+    ['10 caracteres', validity[0]],
+    ['Una mayúscula', validity[1]],
+    ['Una minúscula', validity[2]],
+    ['Un número', validity[3]],
+    ['Un símbolo', validity[4]],
+  ] as const
+
+  return (
+    <ul className="auth-password-rules" aria-label="Requisitos de contraseña">
+      {rules.map(([label, isValid]) => (
+        <li key={label} className={isValid ? 'is-valid' : 'is-pending'}>
+          <span aria-hidden="true">{isValid ? '✓' : '○'}</span> {label}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export const AuthPage = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
+  const { usuario, login, completeLogin } = useAuth()
+  const isRegister = location.pathname === '/registro'
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [personType, setPersonType] = useState<'N' | 'J'>('N')
+  const [documentTypes, setDocumentTypes] = useState<DocumentTypeOption[]>([])
+  const [documentCode, setDocumentCode] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaAttempt, setCaptchaAttempt] = useState(0)
+  const handleCaptchaToken = useCallback((token: string | null) => setCaptchaToken(token), [])
+
+  useEffect(() => {
+    if (!isRegister) return
+    let active = true
+    getDocumentTypes(personType)
+      .then((types) => {
+        if (!active) return
+        setDocumentTypes(types)
+        setDocumentCode(types[0]?.codigo ?? '')
+      })
+      .catch(() => {
+        if (active) setErrorMessage('No pudimos cargar los tipos de documento.')
+      })
+    return () => { active = false }
+  }, [isRegister, personType])
+
+  if (usuario) {
+    return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
+  }
+
+  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage(null)
+    if (isRecaptchaConfigured && !captchaToken) {
+      setErrorMessage('Completa la verificación reCAPTCHA antes de iniciar sesión.')
+      return
+    }
+    setIsSubmitting(true)
+    const data = new FormData(event.currentTarget)
+
+    try {
+      await login(String(data.get('email')), String(data.get('password')), captchaToken)
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
+      setCaptchaToken(null)
+      setCaptchaAttempt(value => value + 1)
+    }
+  }
+
+  const handleRegister = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setErrorMessage(null)
+    const data = new FormData(event.currentTarget)
+    const confirmation = String(data.get('confirmPassword'))
+    const fullName = String(data.get('nombreCompleto') ?? '').trim()
+    const documentNumber = String(data.get('numeroDocumento') ?? '').trim().toUpperCase()
+
+    if (password !== confirmation) {
+      setErrorMessage('Las contraseñas no coinciden.')
+      return
+    }
+    if (!isPasswordValid(password)) {
+      setErrorMessage('La contraseña debe cumplir todos los requisitos indicados.')
+      return
+    }
+    if (fullName.length < 3 || fullName.length > 200) {
+      setErrorMessage('El nombre o razón social debe tener entre 3 y 200 caracteres.')
+      return
+    }
+    if (personType === 'N' && !naturalPersonNamePattern.test(fullName)) {
+      setErrorMessage('El nombre solo puede contener letras y separadores habituales.')
+      return
+    }
+    if (!isDocumentNumberValid(documentCode, documentNumber)) {
+      const message = documentCode === 'DNI' ? 'El DNI debe contener exactamente 8 dígitos.'
+        : documentCode === 'CE' ? 'El carné de extranjería debe contener entre 9 y 12 letras o números.'
+          : documentCode === 'PASAPORTE' ? 'El pasaporte debe contener entre 6 y 20 letras o números.'
+            : documentCode === 'RUC' ? 'El RUC debe contener exactamente 11 dígitos.'
+              : 'Selecciona un tipo de documento válido.'
+      setErrorMessage(message)
+      return
+    }
+
+    const request: RegisterClientRequest = {
+      tipoPersona: personType,
+      tipoDocumento: documentCode,
+      numeroDocumento: documentNumber,
+      nombreCompleto: fullName,
+      nombreComercial: personType === 'J' ? String(data.get('nombreComercial') ?? '').trim() || null : null,
+      email: String(data.get('email') ?? '').trim().toLowerCase(),
+      telefono: String(data.get('telefono') ?? '').trim() || null,
+      password
+    }
+
+    setIsSubmitting(true)
+    try {
+      const session = await registerClient(request)
+      completeLogin(session)
+      navigate(getRoleHomeRoute(session.rol), { replace: true })
+    } catch (error) {
+      setErrorMessage(getErrorMessage(error))
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return (
+    <main className="auth-page">
+      <section className="auth-brand" aria-label="Casa Andina">
+        <Link className="auth-logo" to="/">
+          <img src={logo} alt="Casa Andina" />
+        </Link>
+        <div className="auth-brand-copy">
+          <p>Una estadía pensada para ti</p>
+          <h1>{isRegister ? 'Empieza tu próxima experiencia' : 'Bienvenido de nuevo'}</h1>
+          <span>Gestiona tus reservas, servicios y preferencias desde un solo lugar.</span>
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-form-container">
+          <header>
+            <p className="auth-eyebrow">Portal de clientes</p>
+            <h2>{isRegister ? 'Crear una cuenta' : 'Iniciar sesión'}</h2>
+            <p className="auth-intro">
+              {isRegister
+                ? 'Completa tus datos para reservar en Casa Andina.'
+                : 'Ingresa con el correo asociado a tu cuenta.'}
+            </p>
+          </header>
+
+          {errorMessage && <div className="auth-alert" role="alert">{errorMessage}</div>}
+
+          <form onSubmit={isRegister ? handleRegister : handleLogin} className="auth-form">
+            {isRegister && (
+              <div className="auth-field-grid">
+                <label className="auth-field auth-field-wide">
+                  <span>Tipo de persona</span>
+                  <select value={personType} onChange={(event) => setPersonType(event.target.value as 'N' | 'J')}>
+                    <option value="N">Persona natural</option>
+                    <option value="J">Persona jurídica</option>
+                  </select>
+                </label>
+                <label className="auth-field auth-field-wide">
+                  <span>{personType === 'N' ? 'Nombre completo' : 'Razón social'}</span>
+                  <input name="nombreCompleto" autoComplete="name" minLength={3} maxLength={200} required />
+                </label>
+                {personType === 'J' && (
+                  <label className="auth-field auth-field-wide">
+                    <span>Nombre comercial <small>Opcional</small></span>
+                    <input name="nombreComercial" maxLength={150} />
+                  </label>
+                )}
+                <label className="auth-field">
+                  <span>Tipo de documento</span>
+                  <select value={documentCode} onChange={(event) => setDocumentCode(event.target.value)} required>
+                    {documentTypes.map((type) => <option key={type.codigo} value={type.codigo}>{type.nombre}</option>)}
+                  </select>
+                </label>
+                <label className="auth-field">
+                  <span>Número de documento</span>
+                  <input
+                    name="numeroDocumento"
+                    inputMode={documentCode === 'PASAPORTE' || documentCode === 'CE' ? 'text' : 'numeric'}
+                    autoComplete="off"
+                    minLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMinima}
+                    maxLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMaxima ?? 20}
+                    required
+                  />
+                </label>
+                <label className="auth-field">
+                  <span>Teléfono <small>Opcional</small></span>
+                  <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" pattern="\+?[0-9]{7,15}" />
+                </label>
+              </div>
+            )}
+
+            <label className="auth-field">
+              <span>Correo electrónico</span>
+              <input name="email" type="email" autoComplete="email" maxLength={150} required />
+            </label>
+
+            <label className="auth-field">
+              <span>Contraseña</span>
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete={isRegister ? 'new-password' : 'current-password'}
+                minLength={isRegister ? 10 : 6}
+                maxLength={72}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+              />
+            </label>
+
+            {!isRegister && <RecaptchaCheckbox onToken={handleCaptchaToken} resetKey={captchaAttempt} />}
+
+            {isRegister && (
+              <>
+                <PasswordRequirements password={password} />
+                <label className="auth-field">
+                  <span>Confirmar contraseña</span>
+                  <input name="confirmPassword" type={showPassword ? 'text' : 'password'} autoComplete="new-password" minLength={10} maxLength={72} required />
+                </label>
+              </>
+            )}
+
+            <label className="auth-checkbox">
+              <input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />
+              <span>Mostrar contraseña</span>
+            </label>
+
+            <button className="auth-submit" type="submit" disabled={isSubmitting || (isRegister && !isPasswordValid(password))}>
+              {isSubmitting ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Ingresar'}
+            </button>
+          </form>
+
+          <p className="auth-switch">
+            {isRegister ? '¿Ya tienes una cuenta?' : '¿Aún no tienes una cuenta?'}{' '}
+            <Link to={isRegister ? '/login' : '/registro'}>
+              {isRegister ? 'Inicia sesión' : 'Regístrate'}
+            </Link>
+          </p>
+          <Link className="auth-back" to="/">Volver al inicio</Link>
+        </div>
+      </section>
+    </main>
+  )
+}

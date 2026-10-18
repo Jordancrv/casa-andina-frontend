@@ -1,0 +1,41 @@
+.clients-page { display: grid; align-content: start; gap: 18px; min-height: 100%; padding: 28px 30px; background: #f4fbf8; color: #173f35; font-family: 'Hanken Grotesk', Arial, sans-serif; }
+.clients-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
+.clients-heading p { margin: 0 0 5px; color: #54816b; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
+.clients-heading h1 { margin: 0; font-size: 28px; }
+.clients-heading div > span { display: block; margin-top: 6px; color: #667570; font-size: 13px; }
+.clients-search { display: grid; gap: 5px; color: #52645b; font-size: 11px; }
+.clients-search input { width: min(300px, 36vw); height: 38px; padding: 0 10px; border: 1px solid #cddbd4; background: #fff; color: #173f35; font: inherit; }
+.clients-summary { display: flex; align-items: baseline; gap: 8px; color: #667570; font-size: 12px; }
+.clients-summary strong { color: #173f35; font-size: 19px; }
+.clients-table-wrap { overflow-x: auto; border-top: 1px solid #dae4e1; border-bottom: 1px solid #dae4e1; background: #fff; }
+.clients-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+.clients-table th { padding: 11px 13px; background: #f7faf8; color: #667570; font-size: 10px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.clients-table td { padding: 12px 13px; border-top: 1px solid #edf1ee; color: #52645b; white-space: nowrap; }
+.clients-table td strong { color: #173f35; }
+.clients-icon-btn { display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid #cddbd4; background: #fff; color: #315c45; cursor: pointer; }
+.clients-icon-btn:hover { background: #eaf5f1; }
+.clients-message { padding: 18px 0; color: #667570; font-size: 13px; }
+.clients-message--error { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #9f342c; }
+.clients-message button, .clients-pagination button { padding: 7px 11px; border: 1px solid #cddbd4; background: white; color: #315c45; font: inherit; font-size: 11px; cursor: pointer; }
+.clients-pagination { display: flex; align-items: center; justify-content: space-between; color: #667570; font-size: 11px; }
+.clients-pagination div { display: flex; gap: 6px; }
+.clients-pagination button:disabled { opacity: .45; cursor: not-allowed; }
+.clients-footnote { margin: 0; color: #667570; font-size: 10px; }
+.clients-overlay { position: fixed; inset: 0; z-index: 20; display: grid; justify-items: end; background: rgb(13 40 32 / .35); }
+.clients-detail { width: min(600px, 100%); height: 100%; overflow: auto; padding: 26px; background: #fff; box-shadow: -8px 0 24px rgb(0 0 0 / .1); }
+.clients-detail > header { display: flex; justify-content: space-between; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
+.clients-detail > header p { margin: 0 0 5px; color: #54816b; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.clients-detail h2 { margin: 0 0 4px; font-size: 22px; }
+.clients-detail header span { color: #667570; font-size: 12px; }
+.clients-detail > header button { width: 34px; height: 34px; border: 1px solid #dae4e1; background: #fff; color: #315c45; font-size: 22px; cursor: pointer; }
+.clients-detail dl { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 18px 0 24px; }
+.clients-detail dl div { display: grid; gap: 5px; }
+.clients-detail dt { color: #667570; font-size: 11px; }
+.clients-detail dd { margin: 0; color: #173f35; font-size: 18px; font-weight: 650; }
+.clients-detail h3 { margin: 0; padding-bottom: 10px; border-bottom: 1px solid #dae4e1; font-size: 14px; }
+.client-history { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.client-history li { display: grid; grid-template-columns: 1fr auto; gap: 7px 14px; padding: 13px 0; border-bottom: 1px solid #edf1ee; font-size: 11px; }
+.client-history li div { display: grid; gap: 3px; }
+.client-history li span, .client-history time { color: #667570; }
+.client-history b { grid-column: 2; justify-self: end; color: #315c45; }
+@media (max-width: 700px) { .clients-page { padding: 20px 14px; }.clients-heading { align-items: start; flex-direction: column; }.clients-search, .clients-search input { width: 100%; }.clients-detail { padding: 20px 14px; } }

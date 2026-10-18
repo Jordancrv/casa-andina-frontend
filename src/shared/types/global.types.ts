@@ -19,7 +19,7 @@ export interface PaginatedList<T> {
 }
 
 // Roles — deben coincidir con RolUsuario enum del backend
-export type Rol = 'Administrador' | 'Recepcion' | 'Operaciones' | 'Mantenimiento' | 'Cliente'
+export type Rol = 'Superadministrador' | 'Administrador' | 'Recepcion' | 'Operaciones' | 'Mantenimiento' | 'Cliente'
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -74,6 +74,8 @@ export interface CatalogosResponse {
 
 export interface HabitacionDto {
   id: number
+  sedeId: number
+  tipoHabitacionId: number
   numero: string
   piso: number
   precioNoche: number
@@ -83,7 +85,9 @@ export interface HabitacionDto {
   tipoHabitacionNombre: string
   capacidadAdultos: number
   capacidadNinos: number
+  comodidadesIds: number[]
   comodidades: string[]
+  activo: boolean
 }
 
 /** Payload para crear habitación → CreateHabitacionCommand del backend */
@@ -96,6 +100,29 @@ export interface CreateHabitacionPayload {
   estado: string
   fotoUrl?: string
   comodidadesIds: number[]
+}
+
+export type UpdateHabitacionPayload = CreateHabitacionPayload
+
+// ---------------------------------------------------------------------------
+// Servicios
+// ---------------------------------------------------------------------------
+
+export interface ServicioDto {
+  id: number
+  nombre: string
+  descripcion: string | null
+  precio: number
+  sedesIds: number[]
+  sedes: string[]
+  activo: boolean
+}
+
+export interface ServicioPayload {
+  nombre: string
+  descripcion?: string
+  precio: number
+  sedesIds: number[]
 }
 
 // ---------------------------------------------------------------------------
@@ -114,6 +141,17 @@ export interface ReservaDto {
   sedeNombre: string
   ciudad: string
   habitacionesNumeros: string[]
+  pagos: PagoReservaDto[]
+}
+
+export interface PagoReservaDto {
+  pagoId: number
+  metodoPago: string
+  estado: string
+  importe: number
+  moneda: string
+  fechaCreacion: string
+  montoAplicado: number
 }
 
 // ---------------------------------------------------------------------------
@@ -137,23 +175,18 @@ export interface DestinoRecomendadoDto {
 // Dashboard BI — DTOs alineados con los endpoints del backend
 // ---------------------------------------------------------------------------
 
-/** GET /api/dashboard/kpis
- *  Devuelve los 4 KPIs principales del período seleccionado.
- *  Params: periodo ('7d' | '30d' | 'mes') + sedeId? (null = todas) */
+/** Métricas devueltas por GET /api/dashboard/bi para el periodo y sede autorizada. */
 export interface DashboardKpisDto {
   totalReservas: number
-  totalReservasPeriodoAnterior: number   // para calcular variación %
-  ingresosTotalSoles: number
-  ingresosPeriodoAnterior: number
-  ocupacionPromedioPct: number
-  ocupacionPeriodoAnterior: number
+  totalReservasPeriodoAnterior: number
+  importeReservadoSoles: number
+  importeReservadoPeriodoAnterior: number
+  ocupacionActualPct: number
   totalClientesActivos: number
-  nuevosClientesPct: number
+  clientesPeriodoAnterior: number
 }
 
-/** GET /api/dashboard/reservas-semana
- *  Series de reservas confirmadas + canceladas para las últimas N semanas.
- *  Params: semanas (default 6) + sedeId? */
+/** Serie de reservas confirmadas y canceladas de las últimas seis semanas. */
 export interface ReservaSemanaSerie {
   semanaLabel: string        // "S-5", "S-4" … "Actual"
   confirmadas: number
@@ -162,9 +195,7 @@ export interface ReservaSemanaSerie {
   alturaPctCanceladas: number
 }
 
-/** GET /api/dashboard/ocupacion-sedes
- *  Porcentaje de ocupación actual por sede, ordenado desc.
- *  Params: sedeId? (null = todas → devuelve array) */
+/** Ocupación actual de la sede del usuario autenticado. */
 export interface OcupacionSedeDto {
   sedeNombre: string
   ciudad: string
@@ -190,9 +221,7 @@ export interface ProyeccionSemanaDto {
   confianzaPct: number       // barra de confianza 0-100
 }
 
-/** GET /api/dashboard/canales
- *  Desglose por canal (Directo / OTA) + métricas derivadas.
- *  Params: periodo + sedeId? */
+/** Desglose de canales y promedios reservados en el periodo seleccionado. */
 export interface CanalReservasDto {
   reservasDirectas: number
   reservasOTA: number

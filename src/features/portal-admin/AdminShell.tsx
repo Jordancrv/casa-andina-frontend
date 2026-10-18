@@ -12,6 +12,9 @@
  */
 
 import { useLocation, useNavigate } from 'react-router-dom'
+import { useAuth } from '@/app/providers/auth-context'
+import type { Rol } from '@/shared/types/global.types'
+import { ROLE_ACCESS } from '@/shared/constants/role-access'
 import logoCasaAndina from '@/assets/casa-andina.png'
 import './AdminShell.css'
 
@@ -76,16 +79,31 @@ const IcoUsuarios = () => (
   </svg>
 )
 
+const IcoSedes = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9v.01M9 12v.01M9 15v.01M9 18v.01" />
+  </svg>
+)
+
+const IcoReportes = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 19V5m0 14h17M8 15l3-4 3 2 5-7" />
+  </svg>
+)
+
 // ---------------------------------------------------------------------------
 // Ítems de navegación con SVG icon como ReactNode
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
-  { label: 'Resumen',      path: '/admin/dashboard',    icon: <IcoResumen /> },
-  { label: 'Reservas',     path: '/admin/calendario',   icon: <IcoReservas /> },
-  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones /> },
-  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios /> },
-  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios /> },
+const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: readonly Rol[] }[] = [
+  { label: 'Dashboard',    path: '/admin/dashboard',    icon: <IcoResumen />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Sedes',        path: '/admin/sedes',         icon: <IcoSedes />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ROLE_ACCESS.rooms },
+  { label: 'Calendario',   path: '/admin/calendario',   icon: <IcoReservas />, roles: ROLE_ACCESS.internal },
+  { label: 'Clientes',     path: '/admin/clientes',     icon: <IcoUsuarios />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ROLE_ACCESS.users },
+  { label: 'Reportes',     path: '/admin/reportes',     icon: <IcoReportes />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ROLE_ACCESS.services },
 ]
 
 // ---------------------------------------------------------------------------
@@ -107,6 +125,8 @@ export function AdminShell({
 }: AdminShellProps) {
   const navigate     = useNavigate()
   const { pathname } = useLocation()
+  const { usuario, logout } = useAuth()
+  const navItems = NAV_ITEMS.filter(item => usuario && item.roles.includes(usuario.rol))
 
   return (
     <div className="shell">
@@ -124,10 +144,10 @@ export function AdminShell({
 
         {/* Navegación */}
         <nav className="shell-nav" aria-label="Menú del portal">
-          {NAV_ITEMS.map(({ label, path, icon }) => {
+          {navItems.map(({ label, path, icon }) => {
             const isActive = pathname === path || pathname.startsWith(path + '/')
             return (
-              <button
+            <button
                 key={path}
                 type="button"
                 className={`shell-nav__item${isActive ? ' shell-nav__item--active' : ''}`}
@@ -145,9 +165,10 @@ export function AdminShell({
         <div className="shell-user">
           <span className="shell-avatar">{iniciales}</span>
           <span className="shell-user__info">
-            <b>{nombreUsuario}</b>
-            <small>{rolUsuario}</small>
+            <b>{usuario?.nombreCompleto ?? nombreUsuario}</b>
+            <small>{usuario?.rol ?? rolUsuario}</small>
           </span>
+          <button type="button" className="shell-logout" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => { logout(); navigate('/login') }}>Salir</button>
         </div>
       </aside>
 

@@ -1,0 +1,18 @@
+import { createContext, useContext } from 'react'
+import type { LoginApiResponse, UsuarioSesion } from '@/features/auth/auth.types'
+
+export interface AuthContextValue {
+  usuario: UsuarioSesion | null
+  login: (email: string, password: string, captchaToken?: string | null) => Promise<void>
+  completeLogin: (response: LoginApiResponse) => void
+  logout: () => void
+  isLoading: boolean
+}
+
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined)
+
+export function useAuth(): AuthContextValue {
+  const context = useContext(AuthContext)
+  if (!context) throw new Error('useAuth debe utilizarse dentro de AuthProvider')
+  return context
+}

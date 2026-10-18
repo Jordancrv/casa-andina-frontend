@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { getRecomendaciones } from '../chatbot.api'
+import { getRecomendaciones } from './chatbot.api'
 import type { DestinoRecomendadoDto, NivelPresupuesto, TipoClima } from '@/shared/types/global.types'
 
 export const useChatbot = () => {
