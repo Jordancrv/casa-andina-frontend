@@ -93,7 +93,11 @@ export const Calendario = () => {
     <section className="cal-page">
       <header className="cal-heading">
         <div><p className="cal-eyebrow">OPERACIÓN HOTELERA</p><h1>Reservas y ocupación</h1><p>Consulta qué habitaciones están reservadas por sede y fechas.</p></div>
-        <div className="cal-summary"><strong>{habitacionesReservadas}</strong><span>de {habitaciones.length} habitaciones ocupadas</span><span>{habitaciones.reduce((total, room) => total + room.reservas.length, 0)} reservas en el rango</span></div>
+        <div className="cal-summary" aria-label="Resumen del rango seleccionado" aria-live="polite">
+          <span className="cal-summary-label">Habitaciones con reservas</span>
+          <div className="cal-summary-value"><strong>{consultando ? '—' : error || !rangoValido ? '—' : habitacionesReservadas}</strong><span>de {consultando || error || !rangoValido ? '—' : habitaciones.length} registradas</span></div>
+          <div className="cal-summary-footer"><span className="cal-summary-dot" aria-hidden="true" /><span>{consultando ? 'Actualizando resumen…' : error || !rangoValido ? 'Resumen no disponible' : `${habitaciones.reduce((total, room) => total + room.reservas.length, 0)} reservas en el rango seleccionado`}</span></div>
+        </div>
       </header>
 
       <div className="cal-filters">
@@ -120,7 +124,7 @@ export const Calendario = () => {
             {dias.map(day => <div className="cal-day-head" key={day.toISOString()}><span>{dayLabel(day, { weekday: 'short' }).replace('.', '')}</span><strong>{dayLabel(day, { day: '2-digit' })}</strong></div>)}
             {habitaciones.map(habitacion => <div className="cal-timeline-row" key={habitacion.habitacionId} style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
               <div className="cal-room-cell"><strong>{habitacion.numero}</strong><span>{habitacion.tipoHabitacion} · Piso {habitacion.piso}</span><small>{habitacion.estadoHabitacion}</small></div>
-              {dias.map(day => <div className="cal-day-cell" key={day.toISOString()} />)}
+              {dias.map((day, index) => <div className="cal-day-cell" key={day.toISOString()} style={{ gridColumn: index + 2 }} />)}
               {habitacion.reservas.map(reserva => {
                 const start = Math.max(0, daysApart(rango.desde, reserva.fechaCheckIn))
                 const end = Math.min(dias.length, daysApart(rango.desde, reserva.fechaCheckOut))

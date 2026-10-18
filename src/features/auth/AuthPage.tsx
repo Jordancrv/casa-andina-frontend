@@ -7,6 +7,7 @@ import { getDocumentTypes, registerClient } from './auth.api'
 import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
 import { RecaptchaCheckbox } from './RecaptchaCheckbox'
 import { isRecaptchaConfigured } from './recaptcha.config'
+import { cleanGuestPhone, formatGuestPhone } from '@/features/portal-cliente/reservas/guest-input'
 import logo from '@/assets/casa-andina.png'
 import './auth.css'
 
@@ -84,9 +85,15 @@ export const AuthPage = () => {
   const [personType, setPersonType] = useState<'N' | 'J'>('N')
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeOption[]>([])
   const [documentCode, setDocumentCode] = useState('')
+  const [documentNumber, setDocumentNumber] = useState('')
+  const [phone, setPhone] = useState('')
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaAttempt, setCaptchaAttempt] = useState(0)
-  const handleCaptchaToken = useCallback((token: string | null) => setCaptchaToken(token), [])
+  const [captchaRequired, setCaptchaRequired] = useState(false)
+  const handleCaptchaToken = useCallback((token: string | null) => {
+    setCaptchaToken(token)
+    if (token) setCaptchaRequired(false)
+  }, [])
 
   useEffect(() => {
     if (!isRegister) return
@@ -96,6 +103,7 @@ export const AuthPage = () => {
         if (!active) return
         setDocumentTypes(types)
         setDocumentCode(types[0]?.codigo ?? '')
+        setDocumentNumber('')
       })
       .catch(() => {
         if (active) setErrorMessage('No pudimos cargar los tipos de documento.')
@@ -110,8 +118,9 @@ export const AuthPage = () => {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
+    setCaptchaRequired(false)
     if (isRecaptchaConfigured && !captchaToken) {
-      setErrorMessage('Completa la verificación reCAPTCHA antes de iniciar sesión.')
+      setCaptchaRequired(true)
       return
     }
     setIsSubmitting(true)
@@ -120,7 +129,11 @@ export const AuthPage = () => {
     try {
       await login(String(data.get('email')), String(data.get('password')), captchaToken)
     } catch (error) {
-      setErrorMessage(getErrorMessage(error))
+      setErrorMessage(
+        axios.isAxiosError(error) && error.response?.status === 401
+          ? 'Correo o contraseña incorrectos. Revisa tus datos e inténtalo nuevamente.'
+          : getErrorMessage(error)
+      )
     } finally {
       setIsSubmitting(false)
       setCaptchaToken(null)
@@ -162,6 +175,11 @@ export const AuthPage = () => {
       return
     }
 
+    if (phone && !/^\+?[1-9]\d{7,14}$/.test(phone)) {
+      setErrorMessage('El teléfono debe tener de 8 a 15 dígitos y puede iniciar con + y código de país.')
+      return
+    }
+
     const request: RegisterClientRequest = {
       tipoPersona: personType,
       tipoDocumento: documentCode,
@@ -169,7 +187,7 @@ export const AuthPage = () => {
       nombreCompleto: fullName,
       nombreComercial: personType === 'J' ? String(data.get('nombreComercial') ?? '').trim() || null : null,
       email: String(data.get('email') ?? '').trim().toLowerCase(),
-      telefono: String(data.get('telefono') ?? '').trim() || null,
+      telefono: phone || null,
       password
     }
 
@@ -191,17 +209,12 @@ export const AuthPage = () => {
         <Link className="auth-logo" to="/">
           <img src={logo} alt="Casa Andina" />
         </Link>
-        <div className="auth-brand-copy">
-          <p>Una estadía pensada para ti</p>
-          <h1>{isRegister ? 'Empieza tu próxima experiencia' : 'Bienvenido de nuevo'}</h1>
-          <span>Gestiona tus reservas, servicios y preferencias desde un solo lugar.</span>
-        </div>
+        <p className="auth-brand-image-description">En cada uno de nuestros hoteles, encuentras una casa llena de espacios pensados para disfrutar el Perú.</p>
       </section>
 
       <section className="auth-panel">
         <div className="auth-form-container">
           <header>
-            <p className="auth-eyebrow">Portal de clientes</p>
             <h2>{isRegister ? 'Crear una cuenta' : 'Iniciar sesión'}</h2>
             <p className="auth-intro">
               {isRegister
@@ -234,7 +247,7 @@ export const AuthPage = () => {
                 )}
                 <label className="auth-field">
                   <span>Tipo de documento</span>
-                  <select value={documentCode} onChange={(event) => setDocumentCode(event.target.value)} required>
+                  <select value={documentCode} onChange={(event) => { setDocumentCode(event.target.value); setDocumentNumber('') }} required>
                     {documentTypes.map((type) => <option key={type.codigo} value={type.codigo}>{type.nombre}</option>)}
                   </select>
                 </label>
@@ -242,16 +255,24 @@ export const AuthPage = () => {
                   <span>Número de documento</span>
                   <input
                     name="numeroDocumento"
+                    value={documentNumber}
+                    onChange={(event) => {
+                      const numeric = documentCode === 'DNI' || documentCode === 'RUC'
+                      const limit = documentCode === 'DNI' ? 8 : documentCode === 'RUC' ? 11 : documentCode === 'CE' ? 12 : 20
+                      setDocumentNumber(event.target.value.replace(numeric ? /\D/g : /[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, limit))
+                    }}
                     inputMode={documentCode === 'PASAPORTE' || documentCode === 'CE' ? 'text' : 'numeric'}
                     autoComplete="off"
-                    minLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMinima}
-                    maxLength={documentTypes.find((type) => type.codigo === documentCode)?.longitudMaxima ?? 20}
+                    minLength={documentCode === 'DNI' ? 8 : documentCode === 'RUC' ? 11 : documentCode === 'CE' ? 9 : 6}
+                    maxLength={documentCode === 'DNI' ? 8 : documentCode === 'RUC' ? 11 : documentCode === 'CE' ? 12 : 20}
+                    pattern={documentCode === 'DNI' ? '[0-9]{8}' : documentCode === 'RUC' ? '[0-9]{11}' : documentCode === 'CE' ? '[A-Za-z0-9]{9,12}' : '[A-Za-z0-9]{6,20}'}
+                    title={documentCode === 'DNI' ? 'El DNI debe contener exactamente 8 números.' : documentCode === 'RUC' ? 'El RUC debe contener exactamente 11 números.' : documentCode === 'CE' ? 'Ingresa entre 9 y 12 letras o números.' : 'Ingresa entre 6 y 20 letras o números.'}
                     required
                   />
                 </label>
                 <label className="auth-field">
                   <span>Teléfono <small>Opcional</small></span>
-                  <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" pattern="\+?[0-9]{7,15}" />
+                  <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" placeholder="+51 999 999 999" maxLength={22} pattern="\+?[1-9][0-9 ]{7,20}" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={formatGuestPhone(phone)} onChange={event => setPhone(cleanGuestPhone(event.target.value))} />
                 </label>
               </div>
             )}
@@ -261,9 +282,11 @@ export const AuthPage = () => {
               <input name="email" type="email" autoComplete="email" maxLength={150} required />
             </label>
 
-            <label className="auth-field">
-              <span>Contraseña</span>
+            <div className="auth-field">
+              <label htmlFor="auth-password">Contraseña</label>
+              <div className="auth-password-input">
               <input
+                id="auth-password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
                 autoComplete={isRegister ? 'new-password' : 'current-password'}
@@ -273,9 +296,20 @@ export const AuthPage = () => {
                 onChange={(event) => setPassword(event.target.value)}
                 required
               />
-            </label>
+                <button className="auth-password-toggle" type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-pressed={showPassword} aria-controls="auth-password">
+                  <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+                    <circle cx="12" cy="12" r="3" />
+                    {showPassword && <path d="m3 3 18 18" />}
+                  </svg>
+                </button>
+              </div>
+            </div>
 
-            {!isRegister && <RecaptchaCheckbox onToken={handleCaptchaToken} resetKey={captchaAttempt} />}
+            {!isRegister && <div className="auth-captcha-group">
+              <RecaptchaCheckbox onToken={handleCaptchaToken} resetKey={captchaAttempt} />
+              {captchaRequired && <p className="auth-captcha-required" role="alert">Completa la verificación reCAPTCHA antes de iniciar sesión.</p>}
+            </div>}
 
             {isRegister && (
               <>
@@ -286,11 +320,6 @@ export const AuthPage = () => {
                 </label>
               </>
             )}
-
-            <label className="auth-checkbox">
-              <input type="checkbox" checked={showPassword} onChange={(event) => setShowPassword(event.target.checked)} />
-              <span>Mostrar contraseña</span>
-            </label>
 
             <button className="auth-submit" type="submit" disabled={isSubmitting || (isRegister && !isPasswordValid(password))}>
               {isSubmitting ? 'Procesando...' : isRegister ? 'Crear cuenta' : 'Ingresar'}
