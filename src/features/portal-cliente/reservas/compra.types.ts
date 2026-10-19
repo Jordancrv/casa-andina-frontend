@@ -10,6 +10,7 @@ export interface HabitacionDisponible {
   capacidadNinos: number
   precioNoche: number
   comodidades: string[]
+  fotoUrl?: string | null
 }
 
 export interface ServicioReserva {
