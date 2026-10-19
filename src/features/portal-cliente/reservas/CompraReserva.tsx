@@ -170,8 +170,8 @@ export function CompraReserva() {
     setStep(next)
     document.querySelector('.cliente-main')?.scrollTo({ top: 0, behavior: 'instant' })
   }
-  const sedeImage = (name: string) => {
-    const normalized = name.toLowerCase()
+  const sedeImage = (name: string, city: string) => {
+    const normalized = `${name} ${city}`.toLowerCase()
     const destinations: [string, string][] = [['chiclayo','CHI-SEL'],['huaraz','HRZ-ASO'],['huancayo','HYO-ASO'],['nasca','NAZ-STD'],['nazca','NAZ-STD'],['piura','PIU-PRE'],['trujillo','TRU-STD'],['arequipa','ARQ-PRE'],['cusco','CUS-PRE'],['miraflores','MIR-PRE'],['san isidro','SIS-PRE']]
     const code = destinations.find(([city]) => normalized.includes(city))?.[1]
     return code ? SEDE_IMAGES[code] : undefined
@@ -187,7 +187,7 @@ export function CompraReserva() {
         {catalogLoading && <p className="client-state" role="status">Cargando sedes…</p>}
         {!catalogLoading && !error && !sedes.length && <p className="client-state">No hay sedes disponibles.</p>}
         <div className="booking-sede-grid">{sedes.map(sede => <button type="button" className="booking-sede-card" key={sede.id} onClick={() => { invalidarDisponibilidad(); setSedeId(sede.id) }}>
-          {sedeImage(sede.nombre) && <img src={sedeImage(sede.nombre)} alt="" loading="lazy" />}
+          {sedeImage(sede.nombre, sede.ciudad) && <img src={sedeImage(sede.nombre, sede.ciudad)} alt="" loading="lazy" />}
           <span className="booking-sede-body"><small>{sede.ciudad}</small><strong>{sede.nombre}</strong><span>Ver habitaciones <b aria-hidden="true">↗</b></span></span>
         </button>)}</div>
       </>}
