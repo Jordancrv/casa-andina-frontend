@@ -176,8 +176,20 @@
 .booking-guest-heading>span { color:#63726e; font-size:13px; }
 .booking-wizard .guest-fields label { font-size:12px; }
 .booking-wizard .guest-fields input { font-size:14px; }
-.booking-wizard .room-option { border-radius:10px; overflow:hidden; }
-.booking-wizard .room-option-main { gap:20px; }
+.booking-wizard .room-option { display:flex; align-items:stretch; border-radius:10px; overflow:hidden; }
+.booking-wizard .booking-room-photo { display:block; width:220px; flex:0 0 220px; min-height:200px; object-fit:cover; align-self:stretch; }
+.booking-wizard .booking-room-photo[hidden] { display:none; }
+@media(max-width:620px) { .booking-wizard .room-option { flex-direction:column; } .booking-wizard .booking-room-photo { width:100%; height:180px; min-height:0; flex:0 0 auto; } }
+.booking-wizard .room-option-main { flex:1; min-width:0; gap:24px; padding:24px; grid-template-columns:minmax(0,1fr) auto auto; }
+.booking-wizard .room-option .room-category { display:block; font-size:13px; font-weight:600; color:#506860; letter-spacing:.03em; line-height:1.5; }
+.booking-wizard .room-option h3 { margin:9px 0; font-size:23px; }
+.booking-wizard .room-option .room-capacity { font-size:15px; color:#506860; line-height:1.6; }
+.booking-wizard .room-amenities { display:block; list-style:none; padding:0; margin:12px 0 0; max-width:85ch; color:#667570; font-size:14px; line-height:1.9; }
+.booking-wizard .room-amenities li { display:inline; padding:0; border:0; border-radius:0; background:none; color:inherit; font:inherit; overflow-wrap:anywhere; }
+.booking-wizard .room-amenities li:not(:last-child)::after { content:' · '; white-space:pre-wrap; color:#879b92; }
+.booking-wizard .room-price { gap:7px; }
+.booking-wizard .room-price small { font-size:14px; color:#506860; }
+@media(max-width:700px) { .booking-wizard .room-option-main { grid-template-columns:minmax(0,1fr) auto; padding:20px; gap:18px; } .booking-wizard .room-option-main>div:first-child { grid-column:1 / -1; } .booking-wizard .room-option-main>button { grid-column:auto; } .booking-wizard .room-price { text-align:left; } }
 .booking-review-extras { color:#63726e; font-size:13px; line-height:1.7; margin:20px 0 0; }
 .booking-back { margin-top:28px; }
 .payment-method-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:20px 0; }
