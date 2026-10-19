@@ -1,0 +1,15 @@
+.stay-status{display:inline-flex;align-items:center;gap:10px;max-width:100%;box-sizing:border-box;padding:10px 14px;border:1px solid var(--stay-border);border-radius:10px;background:var(--stay-bg);color:var(--stay-color);font-family:'Hanken Grotesk',sans-serif;vertical-align:middle;text-align:left}
+.stay-status--confirmed{--stay-bg:#edf5ff;--stay-color:#1e5086;--stay-border:#bed4ed}
+.stay-status--active{--stay-bg:#e5f3ec;--stay-color:#15583f;--stay-border:#9fcdb7}
+.stay-status--completed{--stay-bg:#eef0f4;--stay-color:#465268;--stay-border:#cbd1dc}
+.stay-status--cancelled{--stay-bg:#fff0ee;--stay-color:#9a3027;--stay-border:#edc2bb}
+.stay-status--pending{--stay-bg:#fff6e3;--stay-color:#805511;--stay-border:#e5ce9c}
+.stay-status svg{width:23px;height:23px;flex:0 0 23px}
+.stay-status .stay-status-label{display:block;font-size:14px;font-weight:700;line-height:1.35;letter-spacing:0;text-transform:none;color:inherit}
+.stay-status .stay-status-hint{display:block;margin-top:4px;font-size:12px;line-height:1.4;color:inherit;font-weight:400}
+.stay-status--detailed{display:flex;padding:16px 18px;border-left:4px solid var(--stay-color);margin-bottom:20px}
+.stay-status--detailed .stay-status-label{font-size:17px}
+.reservation-status-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%;grid-column:1 / -1;padding-bottom:16px;border-bottom:1px solid #e5ece9}
+.reservation-status-heading .stay-status{margin-left:auto}
+.my-reservations .reservation-status-heading .reservation-code,.reception-list .reservation-status-heading .reservation-code{font-size:20px;font-weight:800;line-height:1.4;letter-spacing:.03em;color:#173f35;overflow-wrap:anywhere}
+.reservation-status-heading .room-category{margin:0}

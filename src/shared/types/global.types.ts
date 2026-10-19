@@ -132,6 +132,7 @@ export interface ServicioPayload {
 export type EstadoReserva = 'Pendiente' | 'Confirmada' | 'Bloqueada' | 'Completada' | 'Cancelada'
 
 export interface ReservaDto {
+  estadoEstadia?: string
   reservaId: number
   codigo: string
   fechaCheckIn: string   // ISO 8601

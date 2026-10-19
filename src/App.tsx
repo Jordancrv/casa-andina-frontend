@@ -4,6 +4,7 @@ import { LandingPage } from '@/features/landing/components/LandingPage'
 import { AdminShell } from '@/features/portal-admin/AdminShell'
 import { DashboardBI } from '@/features/portal-admin/dashboard-bi/DashboardBI'
 import { Calendario } from '@/features/portal-admin/calendario/Calendario'
+import { Recepcion } from '@/features/portal-admin/recepcion/Recepcion'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
@@ -51,6 +52,7 @@ const AppContent = () => {
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
         <Route path="/admin" element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
+        <Route path="/admin/recepcion" element={<RequireRole roles={ROLE_ACCESS.reception}><AdminShell><Recepcion /></AdminShell></RequireRole>} />
         <Route path="/admin/dashboard"    element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
         <Route path="/admin/habitaciones" element={<RequireRole roles={ROLE_ACCESS.rooms}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
         <Route path="/admin/calendario"   element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><Calendario /></AdminShell></RequireRole>} />

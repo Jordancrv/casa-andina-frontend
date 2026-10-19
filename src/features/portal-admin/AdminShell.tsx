@@ -97,6 +97,7 @@ const IcoReportes = () => (
 
 const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: readonly Rol[] }[] = [
   { label: 'Dashboard',    path: '/admin/dashboard',    icon: <IcoResumen />, roles: ROLE_ACCESS.dashboard },
+  { label: 'Recepción', path: '/admin/recepcion', icon: <IcoReservas />, roles: ROLE_ACCESS.reception },
   { label: 'Sedes',        path: '/admin/sedes',         icon: <IcoSedes />, roles: ROLE_ACCESS.dashboard },
   { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ROLE_ACCESS.rooms },
   { label: 'Calendario',   path: '/admin/calendario',   icon: <IcoReservas />, roles: ROLE_ACCESS.internal },
