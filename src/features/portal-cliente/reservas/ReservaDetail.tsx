@@ -1,3 +1,4 @@
+import { StayStatus } from '@/shared/ui/StayStatus'
 import { useEffect, useRef } from 'react'
 import type { ReservaDto } from '@/shared/types/global.types'
 
@@ -26,7 +27,7 @@ export function ReservaDetail({ reserva, onClose }: { reserva: ReservaDto; onClo
   }}>
     <header className="reservation-dialog-header"><div><p>DETALLE DE RESERVA</p><h2 id="reservation-detail-title">{reserva.codigo}</h2></div><button type="button" className="reservation-dialog-close" aria-label="Cerrar detalle" onClick={() => dialogRef.current?.close()}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button></header>
     <div className="reservation-dialog-body">
-      <span className="reservation-state">{reserva.estado}</span>
+      <StayStatus status={reserva.estadoEstadia || reserva.estado} detailed />
       <h3>{reserva.sedeNombre}</h3><p className="reservation-detail-city">{reserva.ciudad}</p>
       <dl className="reservation-detail-dates"><div><dt>Entrada</dt><dd>{date(reserva.fechaCheckIn)}</dd></div><div><dt>Salida</dt><dd>{date(reserva.fechaCheckOut)}</dd></div></dl>
       <section className="reservation-detail-section"><h4>Habitaciones reservadas</h4><div className="reservation-room-tags">{reserva.habitacionesNumeros.map(room => <span key={room}>Habitación {room}</span>)}</div></section>

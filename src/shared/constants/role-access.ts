@@ -6,11 +6,13 @@ export const ROLE_ACCESS = {
   services: ['Superadministrador', 'Administrador', 'Operaciones'],
   dashboard: ['Administrador'],
   users: ['Administrador'],
+  reception: ['Administrador', 'Recepcion'],
   client: ['Cliente']
 } as const satisfies Record<string, readonly Rol[]>
 
 const ROLE_SECTIONS: readonly { label: string; roles: readonly Rol[] }[] = [
   { label: 'Dashboard', roles: ROLE_ACCESS.dashboard },
+  { label: 'Recepción', roles: ROLE_ACCESS.reception },
   { label: 'Sedes', roles: ROLE_ACCESS.dashboard },
   { label: 'Habitaciones', roles: ROLE_ACCESS.rooms },
   { label: 'Calendario', roles: ROLE_ACCESS.internal },
@@ -29,5 +31,5 @@ export function getVisibleSectionsForRoles(roles: readonly string[]): string[] {
 
 export function getRoleHomeRoute(role: Rol): string {
   if (role === 'Cliente') return '/cliente'
-  return role === 'Administrador' ? '/admin/dashboard' : '/admin/calendario'
+  return role === 'Administrador' ? '/admin/dashboard' : role === 'Recepcion' ? '/admin/recepcion' : '/admin/calendario'
 }
