@@ -143,6 +143,9 @@ export interface ReservaDto {
   ciudad: string
   habitacionesNumeros: string[]
   pagos: PagoReservaDto[]
+  comprobanteDisponible?: boolean
+  tipoComprobante?: 'Boleta' | 'Factura' | null
+  numeroComprobante?: string | null
 }
 
 export interface PagoReservaDto {

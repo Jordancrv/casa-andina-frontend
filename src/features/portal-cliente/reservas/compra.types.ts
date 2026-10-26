@@ -49,6 +49,8 @@ export interface ReservaCompraRespuesta {
   metodoPago: string
   estadoPago: string
   mensajePago: string
+  numeroComprobante?: string | null
+  comprobanteDisponible?: boolean
 }
 
 export interface MetodoPago {

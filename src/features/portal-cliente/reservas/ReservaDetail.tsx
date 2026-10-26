@@ -1,6 +1,7 @@
 import { StayStatus } from '@/shared/ui/StayStatus'
 import { useEffect, useRef } from 'react'
 import type { ReservaDto } from '@/shared/types/global.types'
+import { ComprobanteActions } from './ComprobanteActions'
 
 const date = (value: string) => new Intl.DateTimeFormat('es-PE', { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`))
 const money = (value: number, currency = 'PEN') => new Intl.NumberFormat('es-PE', { style: 'currency', currency }).format(value)
@@ -33,6 +34,7 @@ export function ReservaDetail({ reserva, onClose }: { reserva: ReservaDto; onClo
       <section className="reservation-detail-section"><h4>Habitaciones reservadas</h4><div className="reservation-room-tags">{reserva.habitacionesNumeros.map(room => <span key={room}>Habitación {room}</span>)}</div></section>
       <section className="reservation-detail-section"><h4>Pagos registrados</h4>{!reserva.pagos.length ? <p>No hay pagos registrados.</p> : <ul className="reservation-payment-list">{reserva.pagos.map(pago => <li key={pago.pagoId}><div><strong>{pago.metodoPago}</strong><span>{pago.estado} · Simulado</span><small>{date(pago.fechaCreacion)}</small></div><div><strong>{money(pago.montoAplicado, pago.moneda)}</strong><small>Aplicado a esta reserva</small></div></li>)}</ul>}</section>
       <div className="reservation-detail-total"><span>Total de la reserva</span><strong>{money(reserva.montoTotal)}</strong></div>
+      {reserva.comprobanteDisponible && <section className="reservation-detail-section"><h4>{reserva.tipoComprobante ?? 'Comprobante'} de reserva</h4><p className="reservation-receipt-number">{reserva.numeroComprobante}</p><ComprobanteActions reservaId={reserva.reservaId} tipo={reserva.tipoComprobante} numero={reserva.numeroComprobante} /></section>}
     </div>
   </dialog>
 }

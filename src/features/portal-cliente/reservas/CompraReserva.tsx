@@ -6,6 +6,7 @@ import type { SedeDto } from '@/shared/types/global.types'
 import { getReservas } from './reservas.api'
 import { SEDE_IMAGES } from '@/shared/constants/sede-images'
 import { PaymentPreview } from './PaymentPreview'
+import { ComprobanteActions } from './ComprobanteActions'
 import { cleanGuestName, cleanGuestPhone, formatGuestPhone } from './guest-input'
 import '../cliente.css'
 
@@ -161,7 +162,7 @@ export function CompraReserva() {
     navigate('/cliente/reservas')
   }
 
-  if (confirmacion) return <section className="cliente-content"><div className="booking-success"><span className="success-mark">✓</span><p className="cliente-eyebrow">RESERVA CONFIRMADA</p><h1>Tu estadía ya está reservada</h1><p className="muted">Código de reserva <strong>{confirmacion.codigo}</strong></p><p className="muted">{confirmacion.fechas} · {confirmacion.habitacionNombres.join(', ')}</p><div className="success-total"><span>Total de la reserva</span><strong>{money(confirmacion.data.precioTotal)}</strong></div><p className="muted">Pago: {confirmacion.data.metodoPago} · {confirmacion.data.estadoPago} (simulado)</p><p className="notice">{confirmacion.data.mensajePago}</p><button className="client-primary" onClick={goToReservations}>Ver mis reservas</button></div></section>
+  if (confirmacion) return <section className="cliente-content"><div className="booking-success"><span className="success-mark">✓</span><p className="cliente-eyebrow">RESERVA CONFIRMADA</p><h1>Tu estadía ya está reservada</h1><p className="muted">Código de reserva <strong>{confirmacion.codigo}</strong></p><p className="muted">{confirmacion.fechas} · {confirmacion.habitacionNombres.join(', ')}</p><div className="success-total"><span>Total de la reserva</span><strong>{money(confirmacion.data.precioTotal)}</strong></div><p className="muted">Pago: {confirmacion.data.metodoPago} · {confirmacion.data.estadoPago} (simulado)</p><p className="notice">{confirmacion.data.mensajePago}</p>{confirmacion.data.comprobanteDisponible && <ComprobanteActions reservaId={confirmacion.data.reservaId} tipo={confirmacion.data.tipoComprobante} numero={confirmacion.data.numeroComprobante} />}<button className="client-primary" onClick={goToReservations}>Ver mis reservas</button></div></section>
 
   const selectedSede = sedes.find(sede => sede.id === sedeId)
   const selectedRooms = habitaciones.filter(room => Boolean(seleccion[room.habitacionId]))
