@@ -54,8 +54,8 @@ export default function PdfCanvas({ url }: { url: string }) {
     <div className="receipt-page-controls"><div className="receipt-pager"><button type="button" disabled={!pdf || pageNumber <= 1} onClick={() => setPageNumber(current => current - 1)}>← Anterior</button><span aria-live="polite">{pdf ? `Página ${pageNumber} de ${pdf.numPages}` : 'Abriendo PDF…'}</span><button type="button" disabled={!pdf || pageNumber >= pdf.numPages} onClick={() => setPageNumber(current => current + 1)}>Siguiente →</button></div><div className="receipt-zoom"><button type="button" aria-label="Reducir tamaño del PDF" disabled={zoom <= .5} onClick={() => setZoom(current => current - .25)}>−</button><span>{Math.round(zoom * 100)}%</span><button type="button" aria-label="Aumentar tamaño del PDF" disabled={zoom >= 2.5} onClick={() => setZoom(current => current + .25)}>＋</button></div></div>
     <div className="receipt-canvas-scroll" ref={host}>
       {!error && rendered !== renderKey && <p className="receipt-canvas-loading" role="status">Cargando página…</p>}
-      {error && <div className="receipt-state receipt-error" role="alert"><p>{error}</p>{pdf && <button className="client-secondary" type="button" onClick={() => { setError(null); setAttempt(current => current + 1) }}>Reintentar página</button>}</div>}
-      <canvas key={`${pageNumber}:${width}:${zoom}`} ref={canvasRef} aria-label={`Página ${pageNumber} del comprobante`} role="img" style={{ visibility: rendered === renderKey && !error ? 'visible' : 'hidden' }} />
+      {error && <div className="receipt-state receipt-error" role="alert"><p>{error}</p>{pdf && <button className="pdf-retry" type="button" onClick={() => { setError(null); setAttempt(current => current + 1) }}>Reintentar página</button>}</div>}
+      <canvas key={`${pageNumber}:${width}:${zoom}`} ref={canvasRef} aria-label={`Página ${pageNumber} del documento`} role="img" style={{ visibility: rendered === renderKey && !error ? 'visible' : 'hidden' }} />
     </div>
   </div>
 }

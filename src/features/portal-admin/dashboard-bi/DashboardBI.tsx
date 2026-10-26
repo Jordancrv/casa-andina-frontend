@@ -6,6 +6,7 @@ import { BarChart } from './components/BarChart'
 import { OcupacionList } from './components/OcupacionList'
 import { CanalesCard } from './components/CanalesCard'
 import { useDashboard, formatSoles, formatVariacion } from './useDashboard'
+import { DashboardReport } from './DashboardReport'
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -43,6 +44,7 @@ export const DashboardBI = () => {
             <option value="7d">Últimos 7 días</option><option value="30d">Últimos 30 días</option><option value="mes">Este mes</option>
           </select>
           <button className="db-btn-refresh" onClick={() => void refetch()} disabled={loading} aria-label="Actualizar datos" title="Actualizar datos">↻</button>
+          <DashboardReport periodo={periodo} disabled={loading || !data || !!error} />
         </div>
       </header>
       {error && <div className="db-error" role="alert"><span>{error}</span><button className="db-error__btn" onClick={() => void refetch()}>Reintentar</button></div>}
