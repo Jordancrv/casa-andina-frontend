@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { ClimaViaje } from '../chatbot.types'
 import { peruToday } from '../travel-dates'
-import { seasonForDate, weatherCondition, type WeatherKind } from '../travel-weather'
+import { seasonForDate, weatherCondition, weatherScene, type WeatherKind } from '../travel-weather'
+import { WeatherScene } from './WeatherScene'
 
 const dateLabel = (date: string) => new Intl.DateTimeFormat('es-PE', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
 const weekday = (date: string) => new Intl.DateTimeFormat('es-PE', { weekday: 'short', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
@@ -21,18 +22,25 @@ export function WeatherIcon({ kind }: { kind: WeatherKind }) {
 
 export function WeatherCard({ clima, ciudad, entrada }: { clima: ClimaViaje; ciudad: string; entrada: string }) {
   const [selectedDate, setSelectedDate] = useState(clima.dias[0]?.fecha ?? '')
+  const [paused, setPaused] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
   const day = clima.dias.find(d => d.fecha === selectedDate) ?? clima.dias[0]
   const condition = weatherCondition(day?.codigoTiempo)
   const currentSeason = seasonForDate(peruToday())
   const tripSeason = seasonForDate(entrada)
   if (!day) return <section className="ca-weather-empty" aria-label={`Clima en ${ciudad}`}><WeatherIcon kind="unknown"/><div><strong>El clima también es parte del plan</strong><p>{clima.aviso}</p><span>Estación de referencia actual: {currentSeason.toLowerCase()} · no es un pronóstico.</span></div></section>
-  const theme = ['rain', 'storm', 'cloud', 'fog'].includes(condition.kind) ? 'rainy' : condition.kind === 'snow' || day.maximaC < 16 ? 'cool' : condition.kind === 'unknown' ? 'neutral' : 'warm'
-  return <section className={`ca-weather ca-weather--${theme}`} aria-label={`Pronóstico para tu viaje a ${ciudad}`}>
-    <div className="ca-weather-heading"><span>EL CLIMA PARA TU ESCAPADA</span><span className="ca-weather-season">{currentSeason} ahora</span></div>
-    <div className="ca-weather-current"><div><h4>{ciudad}</h4><p>Pronóstico · {dateLabel(day.fecha)}</p><div className="ca-weather-temperature">{Math.round(day.maximaC)}<span>°C</span></div><small>Máxima prevista · mínima {Math.round(day.minimaC)}°C</small></div><div className="ca-weather-condition"><WeatherIcon kind={condition.kind}/><span>{condition.label}</span></div></div>
-    <div className="ca-weather-metrics"><span>↗ Máx. {Math.round(day.maximaC)}° · ↘ Mín. {Math.round(day.minimaC)}°</span><span><svg width="11" height="13" viewBox="0 0 12 16" fill="none" aria-hidden="true"><path d="M6 1C5 4 1 7 1 10a5 5 0 0 0 10 0C11 7 7 4 6 1Z" stroke="currentColor" strokeWidth="1.5"/></svg> {day.probabilidadLluvia == null ? 'Lluvia sin datos' : `${Math.round(day.probabilidadLluvia)}% prob. de lluvia`}</span></div>
-    <div className="ca-weather-days" aria-label="Elige un día del pronóstico">{clima.dias.map(d => <button key={d.fecha} type="button" aria-label={`Ver clima del ${dateLabel(d.fecha)}`} aria-pressed={d.fecha === day.fecha} onClick={() => setSelectedDate(d.fecha)}><span>{weekday(d.fecha)}</span><time dateTime={d.fecha}>{dateLabel(d.fecha)}</time><WeatherIcon kind={weatherCondition(d.codigoTiempo).kind}/><strong>{Math.round(d.maximaC)}° <small>{Math.round(d.minimaC)}°</small></strong><span>{d.probabilidadLluvia == null ? '— lluvia' : `${Math.round(d.probabilidadLluvia)}% lluvia`}</span></button>)}</div>
+  const scene = weatherScene(condition.kind, day.maximaC)
+  return <section className={`ca-weather ca-weather--${scene}${paused ? ' ca-weather--paused' : ''}`} aria-label={`Pronóstico para tu viaje a ${ciudad}`}>
+    <div className="ca-weather-stage" data-scene={scene}>
+      <WeatherScene key={`${scene}-${day.fecha}`} scene={scene} season={seasonForDate(day.fecha)} sunny={condition.kind === 'sun'}/>
+      <div className="ca-weather-heading"><span>EL CLIMA PARA TU ESCAPADA</span><span className="ca-weather-season">{seasonForDate(day.fecha)} · tu viaje</span></div>
+      <div className="ca-weather-current"><div><h4>{ciudad}</h4><p>Pronóstico · {dateLabel(day.fecha)}</p><div className="ca-weather-temperature" key={day.fecha}>{Math.round(day.maximaC)}<span>°C</span></div><small>Máxima prevista · mínima {Math.round(day.minimaC)}°C</small></div><div className="ca-weather-condition"><WeatherIcon kind={condition.kind}/><span>{condition.label}</span></div></div>
+      <div className="ca-weather-scene-footer"><span>{scene === 'frost' ? 'Temperaturas frescas para abrigarse' : scene === 'neutral' ? 'Condición meteorológica sin datos' : condition.label}</span>{scene !== 'neutral' && <button type="button" aria-label={paused ? 'Activar animación del clima' : 'Pausar animación del clima'} aria-pressed={!paused} onClick={() => setPaused(current => !current)}>{paused ? '▷ Animar' : 'Ⅱ Pausar'}</button>}</div>
+    </div>
+    <div className="ca-weather-details">
+    <div className="ca-weather-metrics"><span>↗ Máx. {Math.round(day.maximaC)}° · ↘ Mín. {Math.round(day.minimaC)}°</span><span><svg width="11" height="13" viewBox="0 0 12 16" fill="none" aria-hidden="true"><path d="M6 1C5 4 1 7 1 10a5 5 0 0 0 10 0C11 7 7 4 6 1Z" stroke="currentColor" strokeWidth="1.5"/></svg> {day.probabilidadLluvia == null ? 'Precipitación sin datos' : `${Math.round(day.probabilidadLluvia)}% prob. de ${condition.kind === 'snow' ? 'precipitación' : 'lluvia'}`}</span></div>
+    <div className="ca-weather-days" aria-label="Elige un día del pronóstico">{clima.dias.map(d => <button key={d.fecha} type="button" aria-label={`Ver clima del ${dateLabel(d.fecha)}`} aria-pressed={d.fecha === day.fecha} onClick={() => setSelectedDate(d.fecha)}><span>{weekday(d.fecha)}</span><time dateTime={d.fecha}>{dateLabel(d.fecha)}</time><WeatherIcon kind={weatherCondition(d.codigoTiempo).kind}/><strong>{Math.round(d.maximaC)}° <small>{Math.round(d.minimaC)}°</small></strong><span>{d.probabilidadLluvia == null ? 'Sin dato' : `${Math.round(d.probabilidadLluvia)}% ${weatherCondition(d.codigoTiempo).kind === 'snow' ? 'precip.' : 'lluvia'}`}</span></button>)}</div>
     {clima.estado === 'parcial' && <p className="ca-weather-coverage">Cobertura parcial · solo hay pronóstico para los días mostrados.</p>}
     <details className="ca-weather-source"><summary>Fuente, estación y cobertura</summary><p>{clima.aviso}</p><p>Estación actual de referencia: {currentSeason.toLowerCase()}. {tripSeason !== currentSeason && `Al inicio de tu viaje: ${tripSeason.toLowerCase()}. `}Referencia por meses del hemisferio sur; las condiciones varían según la región.</p>{clima.fuenteUrl && <a href={clima.fuenteUrl} target="_blank" rel="noreferrer">Open-Meteo ↗</a>}{clima.consultadoEn && <span> · Consultado {new Date(clima.consultadoEn).toLocaleString('es-PE', { timeZone: 'America/Lima', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>}</details>
+    </div>
   </section>
 }

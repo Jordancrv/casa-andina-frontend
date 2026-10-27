@@ -1,4 +1,15 @@
 export type WeatherKind = 'sun' | 'partly' | 'cloud' | 'fog' | 'rain' | 'snow' | 'storm' | 'unknown'
+export type WeatherScene = 'sunny' | 'breezy' | 'rain' | 'storm' | 'snow' | 'frost' | 'cloudy' | 'mist' | 'neutral'
+
+export function weatherScene(kind: WeatherKind, maximum: number): WeatherScene {
+  if (kind === 'unknown' || !Number.isFinite(maximum)) return 'neutral'
+  if (kind === 'storm' || kind === 'rain' || kind === 'snow') return kind
+  if (kind === 'fog') return 'mist'
+  if (maximum < 16) return 'frost'
+  if (kind === 'cloud') return 'cloudy'
+  if (maximum >= 24 && kind === 'sun') return 'sunny'
+  return 'breezy'
+}
 
 /** Condiciones del proveedor WMO; la temperatura no permite deducir si está soleado. */
 export function weatherCondition(code?: number | null): { label: string; kind: WeatherKind } {
