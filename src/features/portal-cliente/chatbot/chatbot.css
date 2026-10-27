@@ -88,13 +88,13 @@
 .ca-chat-brand-actions .ca-chat-reset { align-self:center; margin:0; }
 .ca-composer-footer { justify-content:flex-end; }
 @media (max-width:620px) { .ca-chat-brand-actions { flex-basis:43px; gap:6px; }.ca-chat-brand-header .ca-chat-brand-mark { flex-basis:43px; width:43px; height:43px; }.ca-chat-brand-mark>span { font-size:43px; }.ca-chat-brand-mark i { font-size:18px; right:-2px; }.ca-chat-brand-mark b { font-size:12px; right:0; }.ca-chat-brand-actions .ca-chat-reset { flex-basis:auto; } }
-/* Onda de espera: amplitud desfasada y movimiento suave, sin indicar un progreso ficticio. */
-.ca-typing { gap:18px; min-height:88px; background:linear-gradient(110deg,#f0f7ef,#f7f5fb 65%,#fcf8ef); border-color:#dde8df; box-shadow:0 3px 12px #3a654908; }
-.ca-typing-wave { display:flex; flex:0 0 auto; height:42px; align-items:center; justify-content:center; gap:3px; padding:3px 0; }
-.ca-typing-wave i { display:block; width:3px; border-radius:8px; transform-origin:center; background:linear-gradient(180deg,#a9b8d9,#639b83 70%,#b5c797); opacity:.8; will-change:transform; animation:ca-loading-wave 1.25s cubic-bezier(.37,0,.63,1) infinite; }
-.ca-typing-wave i:nth-child(n+9) { background:linear-gradient(180deg,#c6b6df,#819cb9 60%,#95bfa7); }
+/* Tres puntos que rebotan en secuencia, dibujados con CSS sin recursos de video. */
+.ca-typing { gap:15px; min-height:78px; background:linear-gradient(110deg,#f0f7ef,#f7f5fb 65%,#fcf8ef); border-color:#dde8df; box-shadow:0 3px 12px #3a654908; }
+.ca-typing-dots { display:flex; flex:0 0 auto; align-items:center; justify-content:center; gap:6px; height:30px; padding:7px 2px; }
+.ca-typing-dots i { display:block; width:8px; height:8px; border-radius:50%; background:#62947e; animation:ca-loading-dots 1.2s ease-in-out infinite both; }
+.ca-typing-dots i:nth-child(2) { animation-delay:.16s; }.ca-typing-dots i:nth-child(3) { animation-delay:.32s; }
 .ca-typing strong { font-size:13px; font-weight:600; color:#497058; }.ca-typing p { font-size:11px; line-height:1.6; }
-@keyframes ca-loading-wave { 0%,100% { transform:scaleY(.3); opacity:.45; } 50% { transform:scaleY(1); opacity:1; } }
+@keyframes ca-loading-dots { 0%,60%,100% { transform:translateY(0); opacity:.45; } 30% { transform:translateY(-7px); opacity:1; } }
 @keyframes ca-loading-soft-pulse { 0%,100% { opacity:.55; } 50% { opacity:.9; } }
-@media (prefers-reduced-motion:reduce) { .ca-typing-wave i { transform:none; will-change:auto; animation:ca-loading-soft-pulse 3s ease-in-out infinite; } }
-@media (max-width:620px) { .ca-typing { align-items:center; gap:13px; padding:15px 13px; }.ca-typing-wave { gap:2px; }.ca-typing-wave i { width:2px; }.ca-typing strong { font-size:12px; }.ca-typing p { font-size:10px; } }
+@media (prefers-reduced-motion:reduce) { .ca-typing-dots i { transform:none; animation:ca-loading-soft-pulse 3s ease-in-out infinite; } }
+@media (max-width:620px) { .ca-typing { align-items:center; gap:12px; padding:15px 13px; }.ca-typing strong { font-size:12px; }.ca-typing p { font-size:10px; } }
