@@ -1,5 +1,5 @@
 import api from '@/shared/lib/api'
-import type { ConsultaViaje, PlanViaje } from './chatbot.types'
+import type { ConsultaViaje, PlanViaje, ConsultaConversacion, RespuestaConversacion } from './chatbot.types'
 import type { DestinoRecomendadoDto, NivelPresupuesto, TipoClima } from '@/shared/types/global.types'
 
 /**
@@ -16,3 +16,6 @@ export const getRecomendaciones = (
 
 export const planificarViaje = (consulta: ConsultaViaje, signal: AbortSignal): Promise<PlanViaje> =>
   api.post('/chatbot/planificar', consulta, { signal, timeout: 35000 })
+
+export const conversarViaje = (consulta: ConsultaConversacion, signal: AbortSignal): Promise<RespuestaConversacion> =>
+  api.post('/chatbot/conversar', consulta, { signal, timeout: 60000 })

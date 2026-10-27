@@ -8,6 +8,27 @@ export interface ConsultaViaje {
   historial?: { rol: 'usuario' | 'asistente'; texto: string }[]
 }
 
+export interface PreferenciasConversacion {
+  fechaEntrada: string | null
+  fechaSalida: string | null
+  presupuestoPorNoche: number | null
+  adultos: number | null
+  ciudad: string | null
+  destinoFlexible: boolean
+}
+export interface RespuestaConversacion {
+  mensaje: string
+  usaIa: boolean
+  preferencias: PreferenciasConversacion
+  plan: PlanViaje | null
+  sugerencias: string[]
+}
+export interface ConsultaConversacion {
+  mensaje: string
+  preferencias: PreferenciasConversacion | null
+  historial: { rol: 'usuario' | 'asistente'; texto: string }[]
+}
+
 export interface ClimaViaje {
   estado: 'disponible' | 'parcial' | 'fuera_de_rango' | 'sin_ubicacion' | 'no_disponible'
   aviso: string
