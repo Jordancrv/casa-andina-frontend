@@ -82,3 +82,9 @@
 .ca-chat-log { padding:24px 30px; }.ca-chat-composer { padding:13px 30px 12px; }
 @media (max-width:620px) { .ca-chat-brand-header { gap:12px; padding:17px 15px; }.ca-chat-brand-copy .ca-eyebrow { font-size:8px; letter-spacing:1px; margin-bottom:7px; }.ca-chat-brand-copy h1 { font-size:24px; letter-spacing:-.5px; }.ca-chat-brand-copy>p:last-child { font-size:11px; margin-top:7px; }.ca-chat-brand-header .ca-chat-reset { flex-basis:30px; }.ca-chat-log { padding:16px 12px; }.ca-chat-composer { padding:11px 12px; } }
 .cliente-app--assistant .cliente-main { overflow:hidden; scrollbar-gutter:auto; }
+.ca-chat-brand-actions { display:flex; flex:0 0 88px; flex-direction:column; align-items:center; gap:8px; align-self:center; }
+.ca-chat-brand-header .ca-chat-brand-mark { display:block; flex:0 0 61px; width:70px; height:61px; color:#72a28b; }
+.ca-chat-brand-mark>span { font-size:63px; }.ca-chat-brand-mark i { font-size:26px; right:-1px; }.ca-chat-brand-mark b { font-size:17px; right:2px; }
+.ca-chat-brand-actions .ca-chat-reset { align-self:center; margin:0; }
+.ca-composer-footer { justify-content:flex-end; }
+@media (max-width:620px) { .ca-chat-brand-actions { flex-basis:43px; gap:6px; }.ca-chat-brand-header .ca-chat-brand-mark { flex-basis:43px; width:43px; height:43px; }.ca-chat-brand-mark>span { font-size:43px; }.ca-chat-brand-mark i { font-size:18px; right:-2px; }.ca-chat-brand-mark b { font-size:12px; right:0; }.ca-chat-brand-actions .ca-chat-reset { flex-basis:auto; } }
