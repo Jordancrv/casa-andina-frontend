@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { getSedesCliente, getDisponibilidad, getServiciosDeSede, comprarReserva, getMetodosPago } from './compra.api'
 import type { CrearReservaPayload, HabitacionDisponible, HuespedCompra, MetodoPago, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
 import type { SedeDto } from '@/shared/types/global.types'
@@ -29,10 +29,16 @@ const emptyGuest = (titular = false): HuespedCompra => ({ nombres: '', apellidos
 
 export function CompraReserva() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const initialEntry = searchParams.get('entrada') ?? ''
+  const initialExit = searchParams.get('salida') ?? ''
+  const validInitialDates = /^\d{4}-\d{2}-\d{2}$/.test(initialEntry) && /^\d{4}-\d{2}-\d{2}$/.test(initialExit)
+    && initialEntry >= peruToday() && initialExit > initialEntry && nightsBetween(initialEntry, initialExit) <= 30
+  const initialSite = Number(searchParams.get('sedeId'))
   const [sedes, setSedes] = useState<SedeDto[]>([])
-  const [sedeId, setSedeId] = useState(0)
-  const [checkIn, setCheckIn] = useState(() => addDays(peruToday(), 1))
-  const [checkOut, setCheckOut] = useState(() => addDays(peruToday(), 2))
+  const [sedeId, setSedeId] = useState(() => Number.isInteger(initialSite) && initialSite > 0 ? initialSite : 0)
+  const [checkIn, setCheckIn] = useState(() => validInitialDates ? initialEntry : addDays(peruToday(), 1))
+  const [checkOut, setCheckOut] = useState(() => validInitialDates ? initialExit : addDays(peruToday(), 2))
   const [habitaciones, setHabitaciones] = useState<HabitacionDisponible[]>([])
   const [seleccion, setSeleccion] = useState<Record<number, HuespedCompra[]>>({})
   const [servicios, setServicios] = useState<ServicioReserva[]>([])
@@ -56,6 +62,7 @@ export function CompraReserva() {
     Promise.all([getSedesCliente(), getMetodosPago()])
       .then(([catalog, methods]) => {
         setSedes(catalog)
+        setSedeId(current => catalog.some(sede => sede.id === current) ? current : 0)
         setMetodosPago(methods)
         if (methods[0]) setMetodoPagoCodigo(methods[0].codigo)
       })

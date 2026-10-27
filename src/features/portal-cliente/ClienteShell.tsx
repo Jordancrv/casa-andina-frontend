@@ -10,7 +10,7 @@ export function ClienteShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const initials = useMemo(() => usuario?.nombreCompleto.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase() ?? 'CL', [usuario])
 
-  return <div className="cliente-app">
+  return <div className={`cliente-app${pathname === '/cliente/asistente' ? ' cliente-app--assistant' : ''}`}>
     <aside className="cliente-sidebar">
       <div className="cliente-brand"><img className="cliente-brand-logo" src={logo} alt="Casa Andina Hoteles" /></div>
       <nav aria-label="Navegación del cliente">
