@@ -282,3 +282,9 @@
 .my-reservations .reservation-total>strong { display:block; margin:0; line-height:1.2; white-space:nowrap; }
 .my-reservations .reservation-total>.reservation-detail-button { align-self:auto; margin-top:6px; min-height:32px; padding:6px 12px; line-height:1.2; }
 @media (max-width:620px) { .my-reservations .reservation-total { align-items:flex-start; text-align:left; } }
+
+.cliente-sidebar-footer { display:contents; }
+@media (min-width:621px) {
+  .cliente-app--assistant .cliente-sidebar-footer { display:flex; flex-direction:column; flex-shrink:0; margin-top:auto; height:var(--assistant-footer-height,156px); border-top:1px solid #dae4e1; box-sizing:border-box; }
+  .cliente-app--assistant .cliente-profile { margin-top:0; border-top:0; flex:1; padding:16px 20px; }
+}

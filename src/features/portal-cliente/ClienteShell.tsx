@@ -18,8 +18,10 @@ export function ClienteShell({ children }: { children: React.ReactNode }) {
         <button className={pathname.startsWith('/cliente/reservas') ? 'active' : ''} onClick={() => navigate('/cliente/reservas')}>Mis reservas</button>
         <button className={pathname === '/cliente/asistente' ? 'active' : ''} onClick={() => navigate('/cliente/asistente')}>Asistente</button>
       </nav>
+      <div className="cliente-sidebar-footer">
       <div className="cliente-profile"><span className="cliente-avatar">{initials}</span><span><b>{usuario?.nombreCompleto}</b><small>Cliente</small></span></div>
       <button className="cliente-sidebar-logout" onClick={() => { logout(); navigate('/login') }}>Cerrar sesión</button>
+      </div>
     </aside>
     <main className="cliente-main">
       {children}
