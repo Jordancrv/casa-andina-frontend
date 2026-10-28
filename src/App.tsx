@@ -17,6 +17,7 @@ import { AuthPage } from '@/features/auth/AuthPage'
 import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
 import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
 import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
+import { MiCalendario } from '@/features/portal-cliente/calendario/MiCalendario'
 import { Chatbot } from '@/features/portal-cliente/chatbot/components/Chatbot'
 import { getRoleHomeRoute, ROLE_ACCESS } from '@/shared/constants/role-access'
 
@@ -70,6 +71,7 @@ const AppContent = () => {
           }
         />
         <Route path="/cliente/reservas" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
+        <Route path="/cliente/calendario" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MiCalendario /></ClienteShell></RequireRole>} />
         <Route path="/cliente/asistente" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><Chatbot /></ClienteShell></RequireRole>} />
       </Routes>
     </Router>

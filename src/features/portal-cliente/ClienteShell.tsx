@@ -10,12 +10,13 @@ export function ClienteShell({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation()
   const initials = useMemo(() => usuario?.nombreCompleto.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase() ?? 'CL', [usuario])
 
-  return <div className={`cliente-app${pathname === '/cliente/asistente' ? ' cliente-app--assistant' : ''}`}>
+  return <div className={`cliente-app${pathname === '/cliente/asistente' ? ' cliente-app--assistant' : ''}${pathname === '/cliente/calendario' ? ' cliente-app--calendar' : ''}`}>
     <aside className="cliente-sidebar">
       <div className="cliente-brand"><img className="cliente-brand-logo" src={logo} alt="Casa Andina Hoteles" /></div>
       <nav aria-label="Navegación del cliente">
         <button className={pathname === '/cliente' ? 'active' : ''} onClick={() => navigate('/cliente')}>Buscar estadía</button>
         <button className={pathname.startsWith('/cliente/reservas') ? 'active' : ''} onClick={() => navigate('/cliente/reservas')}>Mis reservas</button>
+        <button className={pathname === '/cliente/calendario' ? 'active' : ''} onClick={() => navigate('/cliente/calendario')}>Mi calendario</button>
         <button className={pathname === '/cliente/asistente' ? 'active' : ''} onClick={() => navigate('/cliente/asistente')}>Asistente</button>
       </nav>
       <div className="cliente-sidebar-footer">

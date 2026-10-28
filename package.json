@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test:assistant": "node --experimental-strip-types --test tests/travel-weather.test.ts",
+    "test:calendar": "node --experimental-strip-types --test tests/calendar-dates.test.ts",
     "preview": "vite preview"
   },
   "dependencies": {
