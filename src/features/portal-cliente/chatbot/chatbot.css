@@ -97,6 +97,14 @@
 @keyframes ca-loading-dots { 0%,40%,100% { transform:translateY(0); } 16.6667% { transform:translateY(-9px); } }
 @keyframes ca-loading-dots-reduced { 0%,40%,100% { transform:translateY(0); } 16.6667% { transform:translateY(-3px); } }
 @media (prefers-reduced-motion:reduce) { .ca-typing-dots i { animation:ca-loading-dots-reduced 1.8s ease-in-out infinite both; }.ca-typing-dots i:nth-child(2) { animation-delay:.3s; }.ca-typing-dots i:nth-child(3) { animation-delay:.6s; } }
+
+@keyframes ca-message-appear { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.ca-assistant-bubble, .ca-user-message, .ca-trip-question, .ca-trip-confirmed { animation:ca-message-appear .28s ease-out both; }
+.ca-assistant button, .ca-room-book { transition:background-color .4s ease, color .4s ease, border-color .4s ease, box-shadow .4s ease, transform .4s cubic-bezier(.22,1,.36,1), filter .4s ease; }
+@media (prefers-reduced-motion:reduce) {
+  .ca-assistant-bubble, .ca-user-message, .ca-trip-question, .ca-trip-confirmed { animation:none; }
+  .ca-assistant button, .ca-room-book { transition:none; }
+}
 @media (max-width:620px) { .ca-typing { align-items:center; gap:12px; padding:15px 13px; }.ca-typing strong { font-size:12px; }.ca-typing p { font-size:10px; } }
 .ca-chat-brand-copy>.ca-answer-label { margin-top:12px; }
 @media (min-width:621px) { .ca-chat-composer { min-height:156px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; } }

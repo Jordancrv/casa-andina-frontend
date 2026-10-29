@@ -292,3 +292,40 @@ button.cliente-profile { width: 100%; border: 0; border-top: 1px solid #dae4e1; 
 button.cliente-profile:focus-visible { outline: 2px solid #86aa98; outline-offset: -3px; }
 .guest-fields select{box-sizing:border-box;width:100%;min-width:0;height:40px;padding:0 10px;border:1px solid #dae4e1;background:#fff;color:#19211f;font:inherit;font-size:12px}.guest-fields .guest-autofill{grid-column:1/-1}.guest-fields select:focus-visible{outline:2px solid #8eb5a5;outline-offset:1px}
 .reservation-guest-room h5{margin:16px 0 10px;color:#315c45;font-size:13px}.reservation-guest-card{padding:14px;margin:8px 0;border:1px solid #e0e9e4;border-radius:8px;background:#f9fbfa}.reservation-guest-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;color:#173f35;font-size:13px}.reservation-guest-heading span{padding:4px 8px;border-radius:12px;background:#dcefe7;color:#315c45;font-size:10px}.reservation-guest-card dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0 0}.reservation-guest-card dt{color:#788984;font-size:11px}.reservation-guest-card dd{margin:5px 0 0;color:#315c45;font-size:12px;overflow-wrap:anywhere}.reservation-old-guest{display:block;margin-top:12px;color:#788984;font-size:11px}@media(max-width:480px){.reservation-guest-card dl{grid-template-columns:1fr}}
+.calendar-plan-link{display:inline-flex;align-items:center;justify-content:center;gap:14px;min-height:44px;padding:0 15px 0 18px;border:1px solid #173f35;border-radius:7px;background:#173f35;color:#fff;text-decoration:none;font-family:'Hanken Grotesk',Arial,sans-serif;font-size:13px;font-weight:600;white-space:nowrap;transition:background .18s,border-color .18s,box-shadow .18s}.calendar-plan-link:hover{background:#285c48;border-color:#285c48;box-shadow:0 4px 12px #173f3526}.calendar-plan-link:focus-visible{outline:2px solid #b48345;outline-offset:3px}.calendar-plan-link__arrow{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#ffffff20;font-size:15px;line-height:1}@media(max-width:620px){.calendar-plan-link{align-self:flex-start}}
+.cancel-reservation-link{padding:9px 13px;border:1px solid #b77c73;border-radius:6px;background:white;color:#873c32;font:inherit;font-size:12px;cursor:pointer}.cancel-reservation-dialog{width:min(500px,calc(100% - 32px));max-height:85dvh;padding:0;border:1px solid #dae4e1;border-radius:14px;background:#fff;color:#173f35;font-family:'Hanken Grotesk',sans-serif;box-shadow:0 24px 80px #08261f40}.cancel-reservation-dialog::backdrop{background:#08261f99}.cancel-reservation-dialog header{display:flex;align-items:start;justify-content:space-between;gap:15px;padding:22px 24px;border-bottom:1px solid #dae4e1;background:#f4f8f5}.cancel-reservation-dialog header p{margin:0 0 6px;color:#987244;font-size:10px;font-weight:700;letter-spacing:.1em}.cancel-reservation-dialog h2{margin:0;font-size:21px}.cancel-reservation-dialog header button{border:0;background:transparent;color:#315c45;font-size:25px;cursor:pointer}.cancel-reservation-body{padding:20px 24px;color:#52645b;font-size:13px;line-height:1.6}.cancel-reservation-body>p{margin:0 0 16px}.cancel-reservation-note{padding:14px;border:1px solid #e8dfd0;border-radius:8px;background:#fbf8f2;color:#715d40}.cancel-reservation-note p{margin:6px 0 0}.cancel-reservation-dialog footer{display:flex;justify-content:flex-end;gap:8px;padding:0 24px 22px}.cancel-reservation-dialog footer button{min-height:40px;padding:0 14px;border-radius:7px;font:inherit;font-size:12px;cursor:pointer}.cancel-reservation-confirm{border:1px solid #8a4036;background:#8a4036;color:white}.cancel-reservation-dialog button:disabled{opacity:.5;cursor:not-allowed}.cancel-reservation-dialog button:focus-visible,.cancel-reservation-link:focus-visible{outline:2px solid #b48345;outline-offset:3px}
+
+/* Movimiento sutil en las opciones de reserva y sus controles. */
+.cliente-app button:not(.booking-sede-card) { transition: background-color .4s ease, color .4s ease, border-color .4s ease, box-shadow .4s ease, opacity .4s ease, filter .4s ease, transform .4s ease; }
+.booking-sede-card { transition: transform .45s cubic-bezier(.22,1,.36,1), box-shadow .45s ease, border-color .45s ease; }
+.booking-sede-card img { transition: filter .45s ease; }
+.booking-wizard .room-option { transition: transform .45s cubic-bezier(.22,1,.36,1), border-color .45s ease, box-shadow .45s ease; }
+@media (hover:hover) {
+  .booking-sede-card:hover img { filter: brightness(1.05); }
+  .booking-wizard .room-option:hover { transform:translateY(-3px); border-color:#a9c6b8; box-shadow:0 8px 24px #173f3512; }
+  .cliente-app button:not(:disabled):not(.booking-sede-card):hover { filter:brightness(.97); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .cliente-app button, .booking-sede-card img, .booking-wizard .room-option { transition:none; }
+  .booking-sede-card:hover, .booking-wizard .room-option:hover { transform:none; }
+}
+
+/* Fotografías enmarcadas para que el acercamiento no desplace el contenido. */
+.booking-sede-photo { display:block; width:100%; overflow:hidden; aspect-ratio:16/10; }
+.booking-sede-card .booking-sede-photo img { height:100%; transition:transform .8s cubic-bezier(.22,1,.36,1), filter .6s ease; }
+.booking-sede-body>span b { display:inline-block; transition:transform .45s ease; }
+.booking-wizard .booking-room-photo-frame { position:relative; flex:0 0 220px; width:220px; min-height:200px; overflow:hidden; }
+.booking-wizard .booking-room-photo-frame[hidden] { display:none; }
+.booking-wizard .booking-room-photo-frame .booking-room-photo { position:absolute; inset:0; width:100%; height:100%; min-height:0; object-fit:cover; transition:transform .8s cubic-bezier(.22,1,.36,1), filter .6s ease; }
+@media (hover:hover) {
+  .booking-sede-card:hover .booking-sede-photo img, .booking-wizard .room-option:hover .booking-room-photo { transform:scale(1.07); filter:brightness(1.04); }
+  .booking-sede-card:hover .booking-sede-body>span b { transform:translate(4px,-4px); }
+  .cliente-app .client-primary:hover:not(:disabled), .cliente-app .client-secondary:hover:not(:disabled), .calendar-plan-link:hover { transform:translateY(-3px); box-shadow:0 8px 20px #173f3524; }
+  .cliente-app .client-secondary:hover:not(:disabled) { background:#edf6f1; }
+}
+.cliente-app .client-primary:active:not(:disabled), .cliente-app .client-secondary:active:not(:disabled) { transform:translateY(0); }
+@media (max-width:620px) { .booking-wizard .booking-room-photo-frame { width:100%; height:180px; min-height:0; flex:0 0 180px; } }
+@media (prefers-reduced-motion:reduce) {
+  .booking-sede-card .booking-sede-photo img, .booking-wizard .booking-room-photo-frame .booking-room-photo, .booking-sede-body>span b, .calendar-plan-link { transition:none; }
+  .booking-sede-card:hover .booking-sede-photo img, .booking-wizard .room-option:hover .booking-room-photo, .booking-sede-card:hover .booking-sede-body>span b, .cliente-app .client-primary:hover:not(:disabled), .cliente-app .client-secondary:hover:not(:disabled), .calendar-plan-link:hover { transform:none; }
+}

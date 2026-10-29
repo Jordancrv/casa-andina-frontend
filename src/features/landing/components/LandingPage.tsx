@@ -1,7 +1,8 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import logo from '@/assets/casa-andina.png'
 import { SEDE_IMAGES } from '@/shared/constants/sede-images'
+import { AsistentePublico } from './AsistentePublico'
 import './landing.css'
 
 const sedesDestacadas = [
@@ -20,7 +21,33 @@ const sedesDestacadas = [
 const ciudades = ['Trujillo', 'Lima', 'Nasca', 'Arequipa', 'Cusco', 'Piura', 'Huancayo', 'Huaraz', 'Chiclayo']
 
 export const LandingPage = () => {
+  const pageRef = useRef<HTMLElement>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const page = pageRef.current
+    if (!page || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    const elements = page.querySelectorAll<HTMLElement>('.intro-photo, .intro-copy, .landing-intro dl, .sede-carousel-heading, .sede-carousel-controls, .sede-carousel, .coverage-copy, .coverage-explore, .access-content, .access-note, .landing-footer')
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed')
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { threshold: 0, rootMargin: '0px 0px -40px 0px' })
+
+    elements.forEach(element => {
+      if (element.getBoundingClientRect().top >= window.innerHeight) {
+        element.classList.add('scroll-reveal')
+        observer.observe(element)
+      }
+    })
+    return () => {
+      observer.disconnect()
+      elements.forEach(element => element.classList.remove('scroll-reveal', 'is-revealed'))
+    }
+  }, [])
   const moveCarousel = (direction: number) => {
     const carousel = carouselRef.current
     if (!carousel) return
@@ -30,7 +57,7 @@ export const LandingPage = () => {
     carousel.scrollBy({ left: direction * distance, behavior: reducedMotion ? 'instant' : 'smooth' })
   }
   return (
-    <main className="landing-page">
+    <main className="landing-page" ref={pageRef}>
       <header className="landing-header">
         <Link className="landing-logo" to="/" aria-label="Casa Andina, inicio"><img src={logo} alt="Casa Andina Hoteles" /></Link>
         <nav aria-label="Navegación principal">
@@ -102,21 +129,20 @@ export const LandingPage = () => {
       </section>
 
       <section className="coverage-band">
-        <div><p className="landing-eyebrow">Presencia nacional</p><h2>Más destinos,<br /><em>la misma bienvenida</em></h2><p className="coverage-description">De la costa a los Andes, encuentra una casa para tu próxima historia.</p></div>
-        <ul aria-label="Ciudades con presencia de Casa Andina">{ciudades.map((ciudad) => <li key={ciudad}>{ciudad}</li>)}</ul>
+        <div className="coverage-copy"><p className="landing-eyebrow">Presencia nacional</p><h2>Más destinos,<br /><em>la misma bienvenida</em></h2><p className="coverage-description">De la costa a los Andes, encuentra una casa para tu próxima historia.</p><div className="coverage-count"><strong>{ciudades.length.toString().padStart(2, '0')}</strong><span>ciudades para<br />descubrir el Perú</span></div><a className="coverage-link" href="#sedes">Explorar nuestras sedes <span aria-hidden="true">↗</span></a></div>
+        <div className="coverage-explore"><div className="coverage-gallery" aria-label="Destinos destacados">{['CUS-PRE', 'ARQ-PRE', 'MIR-PRE'].map((codigo) => { const sede = sedesDestacadas.find(item => item.codigo === codigo)!; return <a className="coverage-photo" key={codigo} href="#sedes" aria-label={`Explorar sedes, incluido ${sede.ciudad}`}><img src={SEDE_IMAGES[codigo]} alt="" loading="lazy" decoding="async" /><span>{sede.ciudad}</span></a> })}</div><p className="coverage-cities-label">Encuéntranos también en</p><ul aria-label="Ciudades con presencia de Casa Andina">{ciudades.map((ciudad) => <li key={ciudad}>{ciudad}</li>)}</ul></div>
       </section>
 
       <section className="landing-access" style={{ backgroundImage: `linear-gradient(90deg, rgba(10,42,34,.94), rgba(10,42,34,.65)), url(${SEDE_IMAGES['PIU-PRE']})` }}>
-        <p className="landing-eyebrow">Tu viaje comienza aquí</p><h2>Tu próximo recuerdo<br /><em>te está esperando</em></h2>
+        <div className="access-content"><p className="landing-eyebrow">Tu viaje comienza aquí</p><h2>Tu próximo recuerdo<br /><em>te está esperando</em></h2>
         <p>Accede al portal para consultar habitaciones, servicios y tus próximas reservas.</p>
-        <Link className="landing-primary" to="/login">Ingresar</Link>
+        <Link className="landing-primary" to="/login">Ingresar al portal <span aria-hidden="true">↗</span></Link></div>
+        <div className="access-note"><span aria-hidden="true">✳</span><p>Un nuevo destino,<br /><em>una bienvenida familiar.</em></p><small>CASA ANDINA · PERÚ</small></div>
       </section>
 
       <footer className="landing-footer"><img src={logo} alt="Casa Andina Hoteles" /><p>Hospitalidad peruana en cada destino.</p><Link to="/login">Portal de clientes</Link></footer>
 
-      <button className="ai-assistant-button" type="button" aria-label="Asistente Casa Andina, próximamente" title="Asistente Casa Andina, próximamente">
-        <span aria-hidden="true">🤖</span><span className="ai-assistant-label"><strong>Asistente</strong>Próximamente</span>
-      </button>
+      <AsistentePublico />
     </main>
   )
 }

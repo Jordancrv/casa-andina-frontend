@@ -1,6 +1,6 @@
 import { StayStatus } from '@/shared/ui/StayStatus'
-import { useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/app/providers/auth-context'
 import api from '@/shared/lib/api'
 import type { ReservaDto } from '@/shared/types/global.types'
@@ -13,10 +13,31 @@ interface ReservaDetalles {
   servicios: { id: number; nombre: string; cantidad: number; precioUnitario: number; subtotal: number }[]
 }
 
-export function ReservaDetail({ reserva, onClose }: { reserva: ReservaDto; onClose: () => void }) {
+function ConfirmarCancelacion({ reserva, onClose, onCancelled }: { reserva: ReservaDto; onClose: () => void; onCancelled: () => void }) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const client = useQueryClient()
+  const cancel = useMutation({ mutationFn: async () => await api.post(`/reservas/${reserva.reservaId}/cancelar`), onSuccess: async () => {
+    await Promise.all([client.invalidateQueries({ queryKey: ['dashboard'] }), client.invalidateQueries({ queryKey: ['admin'] }), client.invalidateQueries({ queryKey: ['reserva-detalle'] }), client.invalidateQueries({ queryKey: ['mis-reservas'], refetchType: 'none' })])
+    onCancelled()
+  } })
+  useEffect(() => { const dialog = ref.current; dialog?.showModal(); return () => dialog?.close() }, [])
+  const error = (cancel.error as { response?: { data?: { title?: string } } })?.response?.data?.title
+  return <dialog ref={ref} className="cancel-reservation-dialog" aria-labelledby="cancel-title" onCancel={event => { event.preventDefault(); if (!cancel.isPending) onClose() }}>
+    <header><div><p>CANCELACIÓN DE RESERVA</p><h2 id="cancel-title">¿Deseas cancelar tu reserva?</h2></div><button type="button" onClick={onClose} disabled={cancel.isPending} aria-label="Cerrar">×</button></header>
+    <div className="cancel-reservation-body"><p>Se cancelará la reserva <strong>{reserva.codigo}</strong> y sus habitaciones quedarán disponibles.</p>
+      <div className="cancel-reservation-note"><strong>Sobre la devolución</strong><p>El plazo indicado para una devolución es de 5 a 10 días hábiles según el método de pago. En este sistema el pago es simulado: no se realiza ningún cobro ni se procesará una devolución real.</p></div>
+      {cancel.isError && <p className="client-alert" role="alert">{error || 'No se pudo cancelar la reserva. Actualiza e inténtalo nuevamente.'}</p>}
+    </div><footer><button type="button" className="client-secondary" disabled={cancel.isPending} onClick={onClose}>Volver</button><button type="button" className="cancel-reservation-confirm" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{cancel.isPending ? 'Cancelando…' : 'Sí, cancelar reserva'}</button></footer>
+  </dialog>
+}
+
+export function ReservaDetail({ reserva, onClose, onCancelled }: { reserva: ReservaDto; onClose: () => void; onCancelled: () => void }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const [confirmCancel, setConfirmCancel] = useState(false)
   const { usuario } = useAuth()
   const detail = useQuery({ queryKey: ['reserva-detalle', usuario?.token, reserva.reservaId], queryFn: async () => await api.get(`/reservas/${reserva.reservaId}/detalle`) as ReservaDetalles, enabled: !!usuario })
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+  const puedeCancelar = reserva.estado === 'Reservado' && reserva.estadoEstadia === 'Reservado' && reserva.fechaCheckIn.slice(0, 10) >= hoy
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -48,6 +69,8 @@ export function ReservaDetail({ reserva, onClose }: { reserva: ReservaDto; onClo
       <section className="reservation-detail-section"><h4>Pagos registrados</h4>{!reserva.pagos.length ? <p>No hay pagos registrados.</p> : <ul className="reservation-payment-list">{reserva.pagos.map(pago => <li key={pago.pagoId}><div><strong>{pago.metodoPago}</strong><span>{pago.estado} · Simulado</span><small>{date(pago.fechaCreacion)}</small></div><div><strong>{money(pago.montoAplicado, pago.moneda)}</strong><small>Aplicado a esta reserva</small></div></li>)}</ul>}</section>
       <div className="reservation-detail-total"><span>Total de la reserva</span><strong>{money(reserva.montoTotal)}</strong></div>
       {reserva.comprobanteDisponible && <section className="reservation-detail-section"><h4>{reserva.tipoComprobante ?? 'Comprobante'} de reserva</h4><p className="reservation-receipt-number">{reserva.numeroComprobante}</p><ComprobanteActions reservaId={reserva.reservaId} tipo={reserva.tipoComprobante} numero={reserva.numeroComprobante} /></section>}
+      {puedeCancelar && <section className="reservation-detail-section"><h4>¿Cambiaste de planes?</h4><p>Puedes cancelar la reserva antes del check-in.</p><button type="button" className="cancel-reservation-link" onClick={() => setConfirmCancel(true)}>Cancelar reserva</button></section>}
     </div>
+    {confirmCancel && <ConfirmarCancelacion reserva={reserva} onClose={() => setConfirmCancel(false)} onCancelled={onCancelled} />}
   </dialog>
 }

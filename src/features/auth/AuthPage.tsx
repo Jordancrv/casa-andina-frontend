@@ -78,6 +78,18 @@ export const AuthPage = () => {
   const navigate = useNavigate()
   const { usuario, login, completeLogin } = useAuth()
   const isRegister = location.pathname === '/registro'
+  const recomendacion = location.state as { sedeRecomendadaId?: unknown; habitacionId?: unknown; entrada?: unknown; salida?: unknown; adultos?: unknown } | null
+  const sedeElegida = recomendacion?.sedeRecomendadaId
+  const parametros = new URLSearchParams()
+  if (typeof sedeElegida === 'number' && Number.isSafeInteger(sedeElegida) && sedeElegida > 0) {
+    parametros.set('sedeId', String(sedeElegida))
+    if (typeof recomendacion?.habitacionId === 'number' && Number.isSafeInteger(recomendacion.habitacionId) && recomendacion.habitacionId > 0 &&
+      typeof recomendacion.entrada === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(recomendacion.entrada) && typeof recomendacion.salida === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(recomendacion.salida) &&
+      typeof recomendacion.adultos === 'number' && Number.isInteger(recomendacion.adultos) && recomendacion.adultos >= 1 && recomendacion.adultos <= 8) {
+      parametros.set('habitacionId', String(recomendacion.habitacionId)); parametros.set('entrada', recomendacion.entrada); parametros.set('salida', recomendacion.salida); parametros.set('adultos', String(recomendacion.adultos))
+    }
+  }
+  const destinoCliente = parametros.size ? `/cliente?${parametros}` : '/cliente'
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [password, setPassword] = useState('')
@@ -112,7 +124,7 @@ export const AuthPage = () => {
   }, [isRegister, personType])
 
   if (usuario) {
-    return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
+    return <Navigate to={usuario.rol === 'Cliente' ? destinoCliente : getRoleHomeRoute(usuario.rol)} replace />
   }
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -195,7 +207,7 @@ export const AuthPage = () => {
     try {
       const session = await registerClient(request)
       completeLogin(session)
-      navigate(getRoleHomeRoute(session.rol), { replace: true })
+      navigate(session.rol === 'Cliente' ? destinoCliente : getRoleHomeRoute(session.rol), { replace: true })
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
     } finally {
@@ -329,7 +341,7 @@ export const AuthPage = () => {
 
           <p className="auth-switch">
             {isRegister ? '¿Ya tienes una cuenta?' : '¿Aún no tienes una cuenta?'}{' '}
-            <Link to={isRegister ? '/login' : '/registro'}>
+            <Link to={isRegister ? '/login' : '/registro'} state={location.state}>
               {isRegister ? 'Inicia sesión' : 'Regístrate'}
             </Link>
           </p>

@@ -89,7 +89,7 @@ export function MiCalendario() {
   const monthCount = reservas.filter(r => r.estado !== 'Cancelada' && r.fechaCheckIn.slice(0, 10) < monthEnd && r.fechaCheckOut.slice(0, 10) > monthStart).length
 
   return <section className="cliente-content cc-page">
-    <div className="client-heading"><div><p className="cliente-eyebrow">TUS VIAJES, EN UN SOLO LUGAR</p><h1>Mi calendario</h1><p>Un vistazo a tus próximas estadías. Más tiempo para disfrutar el viaje.</p></div><Link className="client-secondary" to="/cliente">Planear otra escapada ↗</Link></div>
+    <div className="client-heading"><div><p className="cliente-eyebrow">TUS VIAJES, EN UN SOLO LUGAR</p><h1>Mi calendario</h1><p>Un vistazo a tus próximas estadías. Más tiempo para disfrutar el viaje.</p></div><Link className="calendar-plan-link" to="/cliente"><span>Planear otra escapada</span><span className="calendar-plan-link__arrow" aria-hidden="true">↗</span></Link></div>
     {notice && <div className="cc-notice" role="status">{notice}<button aria-label="Cerrar aviso" onClick={() => setNotice('')}>×</button></div>}
     {error && <p className="client-alert" role="alert">{error}</p>}
     <section className="cc-google" aria-label="Conexión con Google Calendar">
@@ -118,6 +118,6 @@ export function MiCalendario() {
       {reservas.length === 0 && <p className="cc-no-bookings">Tu calendario está listo para tu primer viaje. <Link to="/cliente">Buscar una estadía ↗</Link></p>}
     </>}
     {connection?.conectado && <div className="cc-disconnect">{disconnectConfirm ? <><p>Se detendrá la sincronización. Tus reservas y los eventos existentes se conservarán.</p><button disabled={busy} onClick={() => void disconnect()}>Confirmar desconexión</button><button disabled={busy} onClick={() => setDisconnectConfirm(false)}>Volver</button></> : <button disabled={busy} onClick={() => setDisconnectConfirm(true)}>Desconectar Google Calendar</button>}</div>}
-    {detail && <ReservaDetail reserva={detail} onClose={() => setDetail(null)}/>}
+    {detail && <ReservaDetail reserva={detail} onClose={() => setDetail(null)} onCancelled={() => { setDetail(null); setNotice('Reserva cancelada. El pago era simulado; no se procesó una devolución real.'); void getReservas().then(setReservas).catch(() => setError('Reserva cancelada, pero no se pudo actualizar el calendario. Recarga la página.')) }}/>} 
   </section>
 }

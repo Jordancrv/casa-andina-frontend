@@ -59,6 +59,7 @@
   box-shadow: 0 8px 18px rgba(23,63,53,.12);
   transition: background .18s, transform .18s, box-shadow .18s;
 }
+.auth-submit { transition: background .4s ease, transform .4s cubic-bezier(.22,1,.36,1), box-shadow .4s ease; }
 .auth-submit:hover:not(:disabled) { background: #2f6f63; transform:translateY(-2px); box-shadow:0 12px 24px rgba(23,63,53,.18); }
 .auth-submit:active:not(:disabled) { transform: translateY(1px); }
 .auth-submit:disabled { opacity: .58; cursor: wait; }
