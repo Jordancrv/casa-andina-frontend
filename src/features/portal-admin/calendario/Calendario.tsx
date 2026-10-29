@@ -116,7 +116,7 @@ export const Calendario = () => {
       {rangoValido && !consultando && !error && sedes.length > 0 && habitaciones.length === 0 && <p className="cal-message">No hay habitaciones registradas para esta sede.</p>}
 
       {rangoValido && !consultando && !error && habitaciones.length > 0 && <>
-        <div className="cal-legend"><span><i className="is-confirmada" /> Confirmada</span><span><i className="is-pendiente" /> Pendiente</span><span>La fecha de salida no cuenta como noche ocupada. Solo se muestra el titular, sin datos de contacto.</span></div>
+        <div className="cal-legend"><span><i className="is-confirmada" /> Reservado</span><span><i className="is-pendiente" /> Pendiente</span><span>La fecha de salida no cuenta como noche ocupada. Solo se muestra el titular, sin datos de contacto.</span></div>
         <p className="cal-message cal-block-note">Los bloqueos por arreglo o mantenimiento aún no aparecen en la línea de tiempo: el modelo actual no guarda periodo ni motivo del bloqueo.</p>
         <div className="cal-timeline-scroll" role="region" aria-label="Calendario de habitaciones reservadas" tabIndex={0}>
           <div className="cal-timeline" style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
@@ -130,7 +130,7 @@ export const Calendario = () => {
                 const end = Math.min(dias.length, daysApart(rango.desde, reserva.fechaCheckOut))
                 if (end <= start) return null
                 const estadoReserva = reserva.estado?.toLowerCase() ?? ''
-                const estado = estadoReserva === 'confirmada' ? 'confirmada' : estadoReserva === 'pendiente' ? 'pendiente' : 'otro'
+                const estado = estadoReserva === 'reservado' ? 'confirmada' : estadoReserva === 'pendiente' ? 'pendiente' : 'otro'
                 const nombreReservante = reserva.nombreReservante || 'Titular no disponible'
                 return <div className={`cal-booking-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.estado || 'Estado no informado'}: ${nombreReservante} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
                   <span>{nombreReservante}</span><small>{bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}</small>

@@ -32,7 +32,7 @@ export function BarChart({ series, onSelectType, activeType }: BarChartProps) {
                   opacity: getOpacidad('confirmadas'),
                   transition: 'opacity 0.3s ease'
                 }}
-                title={`Confirmadas: ${s.confirmadas}`}
+                title={`Reservadas: ${s.confirmadas}`}
                 onClick={() => onSelectType?.('confirmadas')}
               />
               <div
@@ -61,7 +61,7 @@ export function BarChart({ series, onSelectType, activeType }: BarChartProps) {
           onClick={() => onSelectType?.('confirmadas')}
         >
           <span className="db-barchart__legend-dot db-barchart__legend-dot--conf" />
-          <span className="db-barchart__legend-text">Confirmadas</span>
+          <span className="db-barchart__legend-text">Reservadas</span>
         </div>
         <div 
           style={{ 

@@ -130,7 +130,7 @@ export interface ServicioPayload {
 // Reservas — alineado con ReservaDto del backend
 // ---------------------------------------------------------------------------
 
-export type EstadoReserva = 'Pendiente' | 'Confirmada' | 'Bloqueada' | 'Completada' | 'Cancelada'
+export type EstadoReserva = 'Pendiente' | 'Reservado' | 'Bloqueada' | 'Completada' | 'Cancelada'
 
 export interface ReservaDto {
   estadoEstadia?: string
