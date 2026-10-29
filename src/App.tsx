@@ -10,7 +10,7 @@ import { Servicios } from '@/features/portal-admin/servicios/Servicios'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
 import { Clientes } from '@/features/portal-admin/clientes/Clientes'
 import { Sedes } from '@/features/portal-admin/sedes/Sedes'
-import { ModulosPendientes } from '@/features/portal-admin/ModulosPendientes'
+import { Reportes } from '@/features/portal-admin/reportes/Reportes'
 import { useAuth } from '@/app/providers/auth-context'
 import type { Rol } from '@/shared/types/global.types'
 import { AuthPage } from '@/features/auth/AuthPage'
@@ -61,7 +61,7 @@ const AppContent = () => {
         <Route path="/admin/usuarios"     element={<RequireRole roles={ROLE_ACCESS.users}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
         <Route path="/admin/sedes"        element={<RequireRole roles={ROLE_ACCESS.branches}><AdminShell><Sedes /></AdminShell></RequireRole>} />
         <Route path="/admin/clientes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Clientes /></AdminShell></RequireRole>} />
-        <Route path="/admin/reportes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><ModulosPendientes modulo="reportes" /></AdminShell></RequireRole>} />
+        <Route path="/admin/reportes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Reportes /></AdminShell></RequireRole>} />
 
         {/* Portal Cliente — rol: Cliente */}
         <Route
