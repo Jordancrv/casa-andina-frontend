@@ -36,7 +36,7 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
   const set = <K extends keyof ClienteDatos>(key: K, value: ClienteDatos[K]) => { setDatos(prev => ({ ...prev, [key]: value })); setError(null) }
   const submit = (event: FormEvent<HTMLFormElement>) => { event.preventDefault(); if (!mutation.isPending) { setError(null); mutation.mutate() } }
 
-  return <dialog className="clients-dialog clients-edit-dialog" ref={dialog} onClose={onClose} onCancel={event => { if (mutation.isPending) event.preventDefault() }} aria-labelledby="client-form-title">
+  return <dialog className="clients-dialog clients-edit-dialog" ref={dialog} onCancel={event => { event.preventDefault(); if (!mutation.isPending) onClose() }} aria-labelledby="client-form-title">
     <form className="clients-edit" onSubmit={submit}>
       <header><div><p>RELACIÓN CON CLIENTES</p><h2 id="client-form-title">{cliente ? 'Editar cliente' : 'Nuevo cliente'}</h2><span>{cliente ? cliente.nombre : 'Registra un perfil para empezar a conocerlo.'}</span></div><button type="button" onClick={onClose} disabled={mutation.isPending} aria-label="Cerrar formulario">×</button></header>
       <fieldset disabled={mutation.isPending}>
