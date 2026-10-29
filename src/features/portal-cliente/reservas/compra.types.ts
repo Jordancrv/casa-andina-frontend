@@ -26,6 +26,9 @@ export interface HuespedCompra {
   correo: string
   telefono: string
   esTitular: boolean
+  dni: string
+  fechaNacimiento: string
+  sexo: string
 }
 
 export interface CrearReservaPayload {

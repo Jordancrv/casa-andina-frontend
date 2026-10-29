@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/app/providers/auth-context'
 import logo from '@/assets/casa-andina.png'
+import { ChatFlotante } from './chatbot/components/ChatFlotante'
 import './cliente.css'
 
 export function ClienteShell({ children }: { children: React.ReactNode }) {
@@ -18,14 +19,16 @@ export function ClienteShell({ children }: { children: React.ReactNode }) {
         <button className={pathname.startsWith('/cliente/reservas') ? 'active' : ''} onClick={() => navigate('/cliente/reservas')}>Mis reservas</button>
         <button className={pathname === '/cliente/calendario' ? 'active' : ''} onClick={() => navigate('/cliente/calendario')}>Mi calendario</button>
         <button className={pathname === '/cliente/asistente' ? 'active' : ''} onClick={() => navigate('/cliente/asistente')}>Asistente</button>
+        <button className={pathname === '/cliente/perfil' ? 'active' : ''} onClick={() => navigate('/cliente/perfil')}>Mi perfil</button>
       </nav>
       <div className="cliente-sidebar-footer">
-      <div className="cliente-profile"><span className="cliente-avatar">{initials}</span><span><b>{usuario?.nombreCompleto}</b><small>Cliente</small></span></div>
+      <button type="button" className="cliente-profile" onClick={() => navigate('/cliente/perfil')} aria-label="Ver mi perfil"><span className="cliente-avatar">{initials}</span><span><b>{usuario?.nombreCompleto}</b><small>Cliente</small></span></button>
       <button className="cliente-sidebar-logout" onClick={() => { logout(); navigate('/login') }}>Cerrar sesión</button>
       </div>
     </aside>
     <main className="cliente-main">
       {children}
     </main>
+    {pathname !== '/cliente/asistente' && <ChatFlotante />}
   </div>
 }

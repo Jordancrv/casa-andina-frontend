@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { usePlanViaje } from '../usePlanViaje'
+import { useConversation } from '../conversation-context'
 import { RecommendationCard } from './RecommendationCard'
 import '../../cliente.css'
 import '../chatbot.css'
@@ -14,7 +14,7 @@ const ejemplos = [
 ]
 
 export const Chatbot = () => {
-  const { turnos, isLoading, consultar, cancelar, reiniciar, reintentar } = usePlanViaje()
+  const { turnos, isLoading, consultar, cancelar, reiniciar, reintentar } = useConversation()
   const [mensaje, setMensaje] = useState('')
   const log = useRef<HTMLDivElement>(null)
   const latest = useRef<HTMLDivElement>(null)

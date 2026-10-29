@@ -1,6 +1,8 @@
 import { AccessProvider } from '@/app/providers/AccessProvider'
 import { useAccess, SECTION_PERMISSIONS } from '@/app/providers/access-context'
 import { Roles } from '@/features/portal-admin/roles/Roles'
+import { Perfil } from '@/features/perfil/Perfil'
+import { ConversationProvider } from '@/features/portal-cliente/chatbot/ConversationProvider'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
@@ -33,7 +35,7 @@ const RequireAccess = ({ client = false, children }: { client?: boolean; childre
   if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace />
   if (access.loading) return <p className="p-8">Cargando accesos…</p>
   if (access.error) return <div className="p-8"><p>No se pudieron verificar tus accesos.</p><button onClick={access.refresh}>Reintentar</button></div>
-  if (location.pathname === '/admin' || access.can(SECTION_PERMISSIONS[location.pathname])) return children
+  if (location.pathname === '/admin' || location.pathname === '/admin/perfil' || access.can(SECTION_PERMISSIONS[location.pathname])) return children
   return <Navigate to={access.home} replace />
 }
 
@@ -49,6 +51,7 @@ const AppContent = () => {
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
         <Route path="/admin" element={<RequireAccess><AdminShell><AdminRoleHome /></AdminShell></RequireAccess>} />
+        <Route path="/admin/perfil" element={<RequireAccess><AdminShell><Perfil /></AdminShell></RequireAccess>} />
         <Route path="/admin/recepcion" element={<RequireAccess><AdminShell><Recepcion /></AdminShell></RequireAccess>} />
         <Route path="/admin/dashboard"    element={<RequireAccess><AdminShell><DashboardBI /></AdminShell></RequireAccess>} />
         <Route path="/admin/habitaciones" element={<RequireAccess><AdminShell><Habitaciones /></AdminShell></RequireAccess>} />
@@ -69,6 +72,7 @@ const AppContent = () => {
           }
         />
         <Route path="/cliente/reservas" element={<RequireAccess client><ClienteShell><MisReservas /></ClienteShell></RequireAccess>} />
+        <Route path="/cliente/perfil" element={<RequireAccess client><ClienteShell><Perfil /></ClienteShell></RequireAccess>} />
         <Route path="/cliente/calendario" element={<RequireAccess client><ClienteShell><MiCalendario /></ClienteShell></RequireAccess>} />
         <Route path="/cliente/asistente" element={<RequireAccess client><ClienteShell><Chatbot /></ClienteShell></RequireAccess>} />
       </Routes>
@@ -95,7 +99,8 @@ const AdminRoleHome = () => {
 }
 
 const App = () => {
-  return <AccessProvider><AppContent /></AccessProvider>
+  const { usuario } = useAuth()
+  return <AccessProvider><ConversationProvider key={usuario?.token ?? 'sin-sesion'}><AppContent /></ConversationProvider></AccessProvider>
 }
 
 export default App

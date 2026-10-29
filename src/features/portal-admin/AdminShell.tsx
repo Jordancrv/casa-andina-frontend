@@ -160,7 +160,6 @@ export function AdminShell({
             alt="Casa Andina"
             className="shell-brand__logo"
           />
-          <span className="shell-brand__label">ADMIN CONSOLE</span>
         </div>
 
         {/* Navegación */}
@@ -184,11 +183,13 @@ export function AdminShell({
 
         {/* Usuario */}
         <div className="shell-user">
-          <span className="shell-avatar">{iniciales}</span>
+          <button type="button" className="shell-profile-button" onClick={() => navigate('/admin/perfil')} aria-label="Ver mi perfil">
+          <span className="shell-avatar">{usuario?.nombreCompleto.split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase() || iniciales}</span>
           <span className="shell-user__info">
             <b>{usuario?.nombreCompleto ?? nombreUsuario}</b>
             <small>{usuario?.rol ?? rolUsuario}</small>
           </span>
+          </button>
           <button type="button" className="shell-logout" aria-label="Cerrar sesión" title="Cerrar sesión" onClick={() => { logout(); navigate('/login') }}>Salir</button>
         </div>
       </aside>

@@ -54,6 +54,7 @@ export interface PlanViaje {
     clima: ClimaViaje
     habitacionId?: number | null
     fotoUrl?: string | null
+    reservasRecientes?: number
   }[]
   avisos: string[]
 }

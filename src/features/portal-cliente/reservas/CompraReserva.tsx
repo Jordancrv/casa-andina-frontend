@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '@/app/providers/auth-context'
+import api from '@/shared/lib/api'
 import { getSedesCliente, getDisponibilidad, getServiciosDeSede, comprarReserva, getMetodosPago } from './compra.api'
 import type { CrearReservaPayload, HabitacionDisponible, HuespedCompra, MetodoPago, ReservaCompraRespuesta, ServicioReserva } from './compra.types'
 import type { SedeDto } from '@/shared/types/global.types'
@@ -25,16 +28,24 @@ const guestNamePattern = /^[\p{L}\p{M}]+(?:[ '\u2019-][\p{L}\p{M}]+)*$/u
 const maxRoomsPerReservation = 8
 const maxGuestsPerRoom = 10
 const money = (amount: number) => new Intl.NumberFormat('es-PE', { style: 'currency', currency: 'PEN' }).format(amount)
-const emptyGuest = (titular = false): HuespedCompra => ({ nombres: '', apellidos: '', correo: '', telefono: '', esTitular: titular })
+const emptyGuest = (titular = false): HuespedCompra => ({ nombres: '', apellidos: '', correo: '', telefono: '', esTitular: titular, dni: '', fechaNacimiento: '', sexo: '' })
+interface SavedGuest { id: number; nombres: string; apellidos: string; dni: string; fechaNacimiento: string; sexo: string; correo: string; telefono: string | null }
+interface BuyerProfile { tipoPersona: string; nombres: string | null; apellidos: string | null; correo: string; fechaNacimiento: string | null; genero: string | null; documentos: { codigo: string; numero: string }[]; contactos: { tipoContacto: string; valor: string }[] }
 
 export function CompraReserva() {
   const navigate = useNavigate()
+  const { usuario } = useAuth()
+  const queryClient = useQueryClient()
+  const buyer = useQuery({ queryKey: ['perfil', usuario?.token], queryFn: async () => await api.get('/perfil') as BuyerProfile, enabled: !!usuario })
+  const savedGuests = useQuery({ queryKey: ['huespedes', usuario?.token], queryFn: async () => await api.get('/perfil/huespedes') as SavedGuest[], enabled: !!usuario })
   const [searchParams] = useSearchParams()
   const initialEntry = searchParams.get('entrada') ?? ''
   const initialExit = searchParams.get('salida') ?? ''
   const validInitialDates = /^\d{4}-\d{2}-\d{2}$/.test(initialEntry) && /^\d{4}-\d{2}-\d{2}$/.test(initialExit)
     && initialEntry >= peruToday() && initialExit > initialEntry && nightsBetween(initialEntry, initialExit) <= 30
   const initialSite = Number(searchParams.get('sedeId'))
+  const recommendedRoom = Number(searchParams.get('habitacionId'))
+  const recommendedAdults = Number(searchParams.get('adultos'))
   const [sedes, setSedes] = useState<SedeDto[]>([])
   const [sedeId, setSedeId] = useState(() => Number.isInteger(initialSite) && initialSite > 0 ? initialSite : 0)
   const [checkIn, setCheckIn] = useState(() => validInitialDates ? initialEntry : addDays(peruToday(), 1))
@@ -47,6 +58,7 @@ export function CompraReserva() {
   const [extras, setExtras] = useState<Record<number, number>>({})
   const [step, setStep] = useState(0)
   const [hasSearched, setHasSearched] = useState(false)
+  const [fechasConsultadas, setFechasConsultadas] = useState<{ sedeId: number; entrada: string; salida: string } | null>(null)
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [tipoComprobante, setTipoComprobante] = useState<'Boleta' | 'Factura'>('Boleta')
   const [razonSocial, setRazonSocial] = useState('')
@@ -55,40 +67,84 @@ export function CompraReserva() {
   const [searching, setSearching] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [confirmacion, setConfirmacion] = useState<{ data: ReservaCompraRespuesta; codigo: string; fechas: string; habitacionNombres: string[] } | null>(null)
+  const searchVersion = useRef(0)
+  const initialSearch = useRef({ sedeId: Number.isInteger(initialSite) && initialSite > 0 ? initialSite : 0, checkIn: validInitialDates ? initialEntry : addDays(peruToday(), 1), checkOut: validInitialDates ? initialExit : addDays(peruToday(), 2), invalidDates: !!(initialEntry || initialExit) && !validInitialDates, roomId: validInitialDates && Number.isInteger(recommendedRoom) && recommendedRoom > 0 ? recommendedRoom : 0, adultos: Number.isInteger(recommendedAdults) && recommendedAdults > 0 && recommendedAdults <= maxGuestsPerRoom ? recommendedAdults : 0 })
   const noches = Math.max(1, nightsBetween(checkIn, checkOut))
   const rangoFechasValido = checkIn >= peruToday() && checkOut > checkIn && noches <= 90
+  const resultadosActuales = !!fechasConsultadas && fechasConsultadas.sedeId === sedeId && fechasConsultadas.entrada === checkIn && fechasConsultadas.salida === checkOut
+  const nochesConsultadas = fechasConsultadas ? nightsBetween(fechasConsultadas.entrada, fechasConsultadas.salida) : noches
+
+  const buscarDisponibilidad = useCallback(async (site: number, entrada: string, salida: string, preferredRoom = 0, adultos = 0) => {
+    if (!site || entrada < peruToday() || salida <= entrada || nightsBetween(entrada, salida) > 90) { setError('Elige fechas válidas y una estadía de hasta 90 noches.'); return }
+    const version = ++searchVersion.current
+    setError(null); setSearching(true)
+    try {
+      const [rooms, services] = await Promise.all([getDisponibilidad(site, entrada, salida), getServiciosDeSede(site)])
+      if (version === searchVersion.current) {
+        setHabitaciones(rooms); setServicios(services); setSeleccion({}); setExtras({}); setFechasConsultadas({ sedeId: site, entrada, salida }); setHasSearched(true)
+        if (preferredRoom) {
+          const room = rooms.find(item => item.habitacionId === preferredRoom && item.sedeId === site && adultos > 0 && item.capacidadAdultos >= adultos && adultos <= maxGuestsPerRoom)
+          if (room) { setSeleccion({ [room.habitacionId]: Array.from({ length: adultos }, (_, i) => emptyGuest(i === 0)) }); setStep(1) }
+          else setError('La habitación recomendada ya no está disponible para estas fechas o no cumple la capacidad. Elige otra habitación de la lista.')
+        }
+      }
+    } catch {
+      if (version === searchVersion.current) setError('No se pudo consultar disponibilidad. Revisa las fechas e inténtalo nuevamente.')
+    } finally { if (version === searchVersion.current) setSearching(false) }
+  }, [])
 
   useEffect(() => {
+    let active = true
+    const versionRef = searchVersion
     Promise.all([getSedesCliente(), getMetodosPago()])
       .then(([catalog, methods]) => {
+        if (!active) return
         setSedes(catalog)
         setSedeId(current => catalog.some(sede => sede.id === current) ? current : 0)
         setMetodosPago(methods)
         if (methods[0]) setMetodoPagoCodigo(methods[0].codigo)
+        const initial = initialSearch.current
+        if (initial.sedeId && catalog.some(sede => sede.id === initial.sedeId)) {
+          if (initial.invalidDates) setError("Las fechas de la recomendación ya no son válidas. Selecciona nuevas fechas y busca habitaciones.")
+          else void buscarDisponibilidad(initial.sedeId, initial.checkIn, initial.checkOut, initial.roomId, initial.adultos)
+        }
       })
-      .catch(() => setError('No se pudieron cargar las opciones para la reserva.'))
-      .finally(() => setCatalogLoading(false))
-  }, [])
+      .catch(() => { if (active) setError('No se pudieron cargar las opciones para la reserva.') })
+      .finally(() => { if (active) setCatalogLoading(false) })
+    return () => { active = false; versionRef.current++ }
+  }, [buscarDisponibilidad])
   const costoHabitaciones = useMemo(() => Object.keys(seleccion).reduce((sum, id) => sum + (habitaciones.find(room => room.habitacionId === Number(id))?.precioNoche ?? 0) * noches, 0), [habitaciones, seleccion, noches])
   const costoExtras = useMemo(() => Object.entries(extras).reduce((sum, [id, qty]) => sum + (servicios.find(service => service.id === Number(id))?.precio ?? 0) * qty, 0), [extras, servicios])
   const selectedRoomCount = Object.keys(seleccion).length
+  const seleccionadoEnOtraCasilla = (roomId: number, index: number, dni: string | null | undefined, correo: string | null | undefined) =>
+    Object.entries(seleccion).some(([id, guests]) => guests.some((guest, guestIndex) => {
+      if (Number(id) === roomId && guestIndex === index) return false
+      return (!!dni?.trim() && guest.dni.trim() === dni.trim()) || (!!correo?.trim() && guest.correo.trim().toLowerCase() === correo.trim().toLowerCase())
+    }))
+  const fillGuest = (roomId: number, index: number, value: string) => {
+    if (!value) return
+    const existing = value === 'comprador' && buyer.data?.tipoPersona === 'N' ? {
+      nombres: buyer.data.nombres ?? '', apellidos: buyer.data.apellidos ?? '', correo: buyer.data.correo,
+      telefono: buyer.data.contactos.find(c => c.tipoContacto === 'Telefono')?.valor ?? '',
+      dni: buyer.data.documentos.find(d => d.codigo === 'DNI')?.numero ?? '',
+      fechaNacimiento: buyer.data.fechaNacimiento?.slice(0, 10) ?? '', sexo: buyer.data.genero ?? ''
+    } : savedGuests.data?.find(g => String(g.id) === value)
+    if (!existing) return
+    if (seleccionadoEnOtraCasilla(roomId, index, existing.dni, existing.correo)) { setError('Este huésped ya está registrado en otra habitación o casilla.'); return }
+    setError(null)
+    setSeleccion(current => ({ ...current, [roomId]: current[roomId].map((guest, i) => i === index ? { ...guest, nombres: existing.nombres, apellidos: existing.apellidos, correo: existing.correo, telefono: existing.telefono ?? '', dni: existing.dni, fechaNacimiento: existing.fechaNacimiento?.slice(0, 10) ?? '', sexo: existing.sexo } : guest) }))
+  }
 
   const invalidarDisponibilidad = () => {
-    setHabitaciones([]); setServicios([]); setSeleccion({}); setExtras({}); setStep(0); setHasSearched(false); setError(null)
+    searchVersion.current++; setSearching(false); setHabitaciones([]); setServicios([]); setSeleccion({}); setExtras({}); setStep(0); setHasSearched(false); setFechasConsultadas(null); setError(null)
   }
 
   const buscar = async () => {
-    if (checkIn < peruToday() || checkOut <= checkIn) { setError('La entrada no puede estar en el pasado y la salida debe ser posterior a la entrada.'); return }
-    if (noches > 90) { setError('La estadía no puede superar 90 noches.'); return }
-    setError(null); setSearching(true); setHasSearched(false); setHabitaciones([]); setServicios([]); setSeleccion({}); setExtras({})
-    try {
-      const [rooms, services] = await Promise.all([getDisponibilidad(sedeId, checkIn, checkOut), getServiciosDeSede(sedeId)])
-      setHabitaciones(rooms); setServicios(services); setHasSearched(true)
-    } catch { setError('No se pudo consultar disponibilidad. Revisa las fechas e inténtalo nuevamente.') }
-    finally { setSearching(false) }
+    await buscarDisponibilidad(sedeId, checkIn, checkOut)
   }
 
   const toggleRoom = (room: HabitacionDisponible) => {
+    if (!resultadosActuales || searching) return
     if (!seleccion[room.habitacionId] && selectedRoomCount >= maxRoomsPerReservation) {
       setError(`Una reserva admite como máximo ${maxRoomsPerReservation} habitaciones.`)
       return
@@ -115,10 +171,12 @@ export function CompraReserva() {
   }
 
   const validateStay = (): boolean => {
+    if (!resultadosActuales || searching) { setError('Busca habitaciones para las fechas seleccionadas antes de continuar.'); return false }
     if (!rangoFechasValido) { setError('Revisa el rango de fechas: la salida debe ser posterior a la entrada.'); return false }
     if (!Object.keys(seleccion).length) { setError('Selecciona al menos una habitación.'); return false }
     if (selectedRoomCount > maxRoomsPerReservation) { setError(`Una reserva admite como máximo ${maxRoomsPerReservation} habitaciones.`); return false }
     const guestEmails = new Set<string>()
+    const guestDnis = new Set<string>()
     for (const [roomId, guests] of Object.entries(seleccion)) {
       const room = habitaciones.find(item => item.habitacionId === Number(roomId))
       const capacity = room ? Math.min(room.capacidadAdultos + room.capacidadNinos, maxGuestsPerRoom) : 0
@@ -127,6 +185,9 @@ export function CompraReserva() {
         setError('Completa los nombres, apellidos, correos y teléfonos de huéspedes con un formato válido.'); return false
       }
       for (const guest of guests) {
+        if (!/^\d{8}$/.test(guest.dni) || !guest.fechaNacimiento || guest.fechaNacimiento > peruToday() || guest.fechaNacimiento < '1900-01-01' || !['M', 'F'].includes(guest.sexo)) { setError('Completa el DNI, la fecha de nacimiento y el sexo de cada huésped.'); return false }
+        if (guestDnis.has(guest.dni)) { setError('Cada huésped debe tener un DNI diferente en la reserva.'); return false }
+        guestDnis.add(guest.dni)
         const email = guest.correo.trim().toLowerCase()
         if (guestEmails.has(email)) { setError('Cada huésped debe tener un correo único dentro de la reserva.'); return false }
         guestEmails.add(email)
@@ -154,6 +215,7 @@ export function CompraReserva() {
         metodoPagoCodigo
       }
       const response = await comprarReserva(payload)
+      void queryClient.invalidateQueries({ queryKey: ['huespedes', usuario?.token] })
       setConfirmacion({ data: response, codigo: response.codigoReserva, fechas: `${checkIn} - ${checkOut}`, habitacionNombres: Object.keys(seleccion).map(id => `Hab. ${habitaciones.find(room => room.habitacionId === Number(id))?.numero ?? id}`) })
     } catch (e) {
       const response = (e as { response?: { data?: { message?: string; title?: string; errors?: Record<string, string[] | string> } } }).response?.data
@@ -194,7 +256,7 @@ export function CompraReserva() {
         <div className="booking-section-title"><h2>Encuentra tu destino</h2><span>{sedes.length} sedes para elegir</span></div>
         {catalogLoading && <p className="client-state" role="status">Cargando sedes…</p>}
         {!catalogLoading && !error && !sedes.length && <p className="client-state">No hay sedes disponibles.</p>}
-        <div className="booking-sede-grid">{sedes.map(sede => <button type="button" className="booking-sede-card" key={sede.id} onClick={() => { invalidarDisponibilidad(); setSedeId(sede.id) }}>
+        <div className="booking-sede-grid">{sedes.map(sede => <button type="button" className="booking-sede-card" key={sede.id} onClick={() => { invalidarDisponibilidad(); setSedeId(sede.id); void buscarDisponibilidad(sede.id, checkIn, checkOut) }}>
           {sedeImage(sede.nombre, sede.ciudad) && <img src={sedeImage(sede.nombre, sede.ciudad)} alt="" loading="lazy" />}
           <span className="booking-sede-body"><small>{sede.ciudad}</small><strong>{sede.nombre}</strong><span>Ver habitaciones <b aria-hidden="true">↗</b></span></span>
         </button>)}</div>
@@ -202,19 +264,20 @@ export function CompraReserva() {
       {selectedSede && <>
         <div className="booking-chosen-sede"><div><p className="cliente-eyebrow">TU DESTINO</p><h2>{selectedSede.nombre}</h2><span>{selectedSede.ciudad}</span></div><button type="button" className="client-secondary" disabled={searching} onClick={() => { invalidarDisponibilidad(); setSedeId(0) }}>Cambiar sede</button></div>
         <form className="booking-search booking-date-search" onSubmit={event => { event.preventDefault(); void buscar() }}>
-          <label>Entrada<input disabled={searching} type="date" min={peruToday()} value={checkIn} onChange={event => { const value=event.target.value; setCheckIn(value); if (checkOut <= value) setCheckOut(nextDateValue(value)); invalidarDisponibilidad() }} required /></label>
-          <label>Salida<input disabled={searching} type="date" min={nextDateValue(checkIn)} value={checkOut} onChange={event => { setCheckOut(event.target.value); invalidarDisponibilidad() }} required /></label>
+          <label>Entrada<input disabled={searching} type="date" min={peruToday()} value={checkIn} onChange={event => { const value=event.target.value; setCheckIn(value); if (checkOut <= value) setCheckOut(nextDateValue(value)); setError(null) }} required /></label>
+          <label>Salida<input disabled={searching} type="date" min={nextDateValue(checkIn)} value={checkOut} onChange={event => { setCheckOut(event.target.value); setError(null) }} required /></label>
           <button className="client-primary" type="submit" disabled={searching || !rangoFechasValido}>{searching ? 'Buscando…' : 'Buscar habitaciones'}</button>
         </form>
         {!rangoFechasValido && <p className="client-alert" role="alert">Elige fechas válidas y una estadía de hasta 90 noches.</p>}
         {searching && <p className="client-state" role="status">Consultando disponibilidad…</p>}
         {hasSearched && <>
-          <div className="booking-section-title"><h2>Elige tus habitaciones</h2><span>{noches} {noches === 1 ? 'noche' : 'noches'} · {habitaciones.length} {habitaciones.length === 1 ? 'habitación disponible' : 'habitaciones disponibles'}</span></div>
+          {!resultadosActuales && fechasConsultadas && <p className="client-state" role="status">Estas habitaciones corresponden a la búsqueda del {fechasConsultadas.entrada.split('-').reverse().join('/')} al {fechasConsultadas.salida.split('-').reverse().join('/')}. Pulsa Buscar habitaciones para consultar las nuevas fechas.</p>}
+          <div className="booking-section-title"><h2>Elige tus habitaciones</h2><span>{nochesConsultadas} {nochesConsultadas === 1 ? 'noche' : 'noches'} · {habitaciones.length} {habitaciones.length === 1 ? 'habitación disponible' : 'habitaciones disponibles'}</span></div>
           {!habitaciones.length && <p className="client-state">No hay habitaciones disponibles en estas fechas. Prueba otro periodo o sede.</p>}
           <div className="room-options">{habitaciones.map(room => <article className={seleccion[room.habitacionId] ? 'room-option selected' : 'room-option'} key={room.habitacionId}>
-            {room.fotoUrl?.trim() && <img className="booking-room-photo" src={room.fotoUrl.trim()} alt={`Habitación ${room.numero} · ${room.tipoHabitacion}`} loading="lazy" onError={event => { event.currentTarget.hidden = true }} />}<div className="room-option-main"><div><span className="room-category">HABITACIÓN {room.numero} · PISO {room.piso}</span><h3>{room.tipoHabitacion}</h3><p className="room-capacity">{room.capacidadAdultos} {room.capacidadAdultos === 1 ? 'adulto' : 'adultos'}{room.capacidadNinos > 0 && <> · hasta {room.capacidadNinos} {room.capacidadNinos === 1 ? 'niño' : 'niños'}</>}</p>{room.comodidades.length > 0 && <ul className="room-amenities" aria-label="Comodidades de la habitación">{room.comodidades.map(amenity => <li key={amenity}>{amenity}</li>)}</ul>}</div><div className="room-price"><strong>{money(room.precioNoche)}</strong><small>por noche</small></div><button type="button" className={seleccion[room.habitacionId] ? 'client-secondary' : 'client-primary'} onClick={() => toggleRoom(room)}>{seleccion[room.habitacionId] ? 'Quitar' : 'Seleccionar'}</button></div>
+            {room.fotoUrl?.trim() && <img className="booking-room-photo" src={room.fotoUrl.trim()} alt={`Habitación ${room.numero} · ${room.tipoHabitacion}`} loading="lazy" onError={event => { event.currentTarget.hidden = true }} />}<div className="room-option-main"><div><span className="room-category">HABITACIÓN {room.numero} · PISO {room.piso}</span><h3>{room.tipoHabitacion}</h3><p className="room-capacity">{room.capacidadAdultos} {room.capacidadAdultos === 1 ? 'adulto' : 'adultos'}{room.capacidadNinos > 0 && <> · hasta {room.capacidadNinos} {room.capacidadNinos === 1 ? 'niño' : 'niños'}</>}</p>{room.comodidades.length > 0 && <ul className="room-amenities" aria-label="Comodidades de la habitación">{room.comodidades.map(amenity => <li key={amenity}>{amenity}</li>)}</ul>}</div><div className="room-price"><strong>{money(room.precioNoche)}</strong><small>por noche</small></div><button type="button" className={seleccion[room.habitacionId] ? 'client-secondary' : 'client-primary'} disabled={!resultadosActuales || searching} onClick={() => toggleRoom(room)}>{seleccion[room.habitacionId] ? 'Quitar' : 'Seleccionar'}</button></div>
           </article>)}</div>
-          {!!selectedRoomCount && <div className="booking-next-step"><div><strong>{selectedRoomCount} {selectedRoomCount === 1 ? 'habitación seleccionada' : 'habitaciones seleccionadas'}</strong><span>{money(costoHabitaciones)} por {noches} {noches === 1 ? 'noche' : 'noches'}</span></div><button type="button" className="client-primary" onClick={() => changeStep(1)}>Continuar con huéspedes →</button></div>}
+          {!!selectedRoomCount && resultadosActuales && <div className="booking-next-step"><div><strong>{selectedRoomCount} {selectedRoomCount === 1 ? 'habitación seleccionada' : 'habitaciones seleccionadas'}</strong><span>{money(costoHabitaciones)} por {noches} {noches === 1 ? 'noche' : 'noches'}</span></div><button type="button" className="client-primary" disabled={!resultadosActuales || searching} onClick={() => changeStep(1)}>Continuar con huéspedes →</button></div>}
         </>}
       </>}
     </>}
@@ -222,7 +285,7 @@ export function CompraReserva() {
       <div className="booking-chosen-sede"><div><h2>{selectedSede?.nombre}</h2><span>{checkIn.split('-').reverse().join('/')} — {checkOut.split('-').reverse().join('/')} · {selectedRoomCount} habitaciones</span></div><button type="button" className="client-secondary" onClick={() => changeStep(0)}>Editar estadía</button></div>
       <form onSubmit={event => { event.preventDefault(); continueToPayment() }}>
         <div className="room-options">{selectedRooms.map(room => { const capacity=Math.min(room.capacidadAdultos+room.capacidadNinos,maxGuestsPerRoom); return <article className="room-option selected" key={room.habitacionId}><div className="booking-guest-heading"><h2>{room.tipoHabitacion}</h2><span>Habitación {room.numero}</span></div>
-          {<div className="guest-list"><div className="guest-list-title"><strong>Huéspedes de habitación {room.numero}</strong><span>Máximo {capacity} · incluye huésped principal</span></div>{seleccion[room.habitacionId].map((guest, index) => <div className="guest-fields" key={`${room.habitacionId}-${index}`}><label>Nombre<input disabled={loading} maxLength={200} value={guest.nombres} onChange={e => updateGuest(room.habitacionId, index, 'nombres', e.target.value)} required /></label><label>Apellido<input disabled={loading} maxLength={100} value={guest.apellidos} onChange={e => updateGuest(room.habitacionId, index, 'apellidos', e.target.value)} required /></label><label>Correo<input disabled={loading} type="email" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" placeholder="nombre@correo.com" title="Ingresa un correo válido, por ejemplo nombre@correo.com." maxLength={150} value={guest.correo} onChange={e => updateGuest(room.habitacionId, index, 'correo', e.target.value)} required /></label><label>Teléfono<input disabled={loading} type="tel" inputMode="tel" maxLength={22} pattern="\+?[1-9][0-9 ]{7,20}" placeholder="+51 999 999 999" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={formatGuestPhone(guest.telefono)} onChange={e => updateGuest(room.habitacionId, index, 'telefono', e.target.value)} /></label>{guest.esTitular && <span className="guest-owner">Huésped principal</span>}{!guest.esTitular && <button type="button" className="remove-guest" disabled={loading} onClick={() => setSeleccion(current => ({ ...current, [room.habitacionId]: current[room.habitacionId].filter((_, guestIndex) => guestIndex !== index) }))}>Quitar huésped</button>}</div>)}{seleccion[room.habitacionId].length < capacity && <button type="button" className="add-guest" disabled={loading} onClick={() => addGuest(room)}>+ Agregar huésped</button>}</div>}
+          {<div className="guest-list"><div className="guest-list-title"><strong>Huéspedes de habitación {room.numero}</strong><span>Máximo {capacity} · incluye huésped principal</span></div>{seleccion[room.habitacionId].map((guest, index) => <div className="guest-fields" key={`${room.habitacionId}-${index}`}><label className="guest-autofill">Autocompletar huésped<select disabled={loading} defaultValue="" onChange={e => { fillGuest(room.habitacionId, index, e.target.value); e.currentTarget.value = "" }}><option value="">Seleccionar datos guardados</option>{buyer.data?.tipoPersona === "N" && !seleccionadoEnOtraCasilla(room.habitacionId, index, buyer.data.documentos.find(d => d.codigo === "DNI")?.numero, buyer.data.correo) && <option value="comprador">Mis datos de cliente</option>}{savedGuests.data?.filter(saved => !seleccionadoEnOtraCasilla(room.habitacionId, index, saved.dni, saved.correo)).map(guest => <option key={guest.id} value={guest.id}>{guest.nombres} {guest.apellidos} · DNI {guest.dni}</option>)}</select></label><label>Nombre<input disabled={loading} maxLength={200} value={guest.nombres} onChange={e => updateGuest(room.habitacionId, index, 'nombres', e.target.value)} required /></label><label>Apellido<input disabled={loading} maxLength={100} value={guest.apellidos} onChange={e => updateGuest(room.habitacionId, index, 'apellidos', e.target.value)} required /></label><label>Correo<input disabled={loading} type="email" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" placeholder="nombre@correo.com" title="Ingresa un correo válido, por ejemplo nombre@correo.com." maxLength={150} value={guest.correo} onBlur={() => { if (seleccionadoEnOtraCasilla(room.habitacionId, index, null, guest.correo)) setError("Este correo ya está asignado a otro huésped de la reserva.") }} onChange={e => updateGuest(room.habitacionId, index, 'correo', e.target.value)} required /></label><label>Teléfono<input disabled={loading} type="tel" inputMode="tel" maxLength={22} pattern="\+?[1-9][0-9 ]{7,20}" placeholder="+51 999 999 999" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={formatGuestPhone(guest.telefono)} onChange={e => updateGuest(room.habitacionId, index, 'telefono', e.target.value)} /></label><label>DNI<input disabled={loading} required inputMode="numeric" maxLength={8} pattern="[0-9]{8}" value={guest.dni} onBlur={() => { if (seleccionadoEnOtraCasilla(room.habitacionId, index, guest.dni, null)) setError("Este DNI ya está asignado a otro huésped de la reserva.") }} onChange={e => updateGuest(room.habitacionId, index, "dni", e.target.value.replace(/\D/g, ""))} /></label><label>Fecha de nacimiento<input disabled={loading} required type="date" min="1900-01-01" max={peruToday()} value={guest.fechaNacimiento} onChange={e => updateGuest(room.habitacionId, index, "fechaNacimiento", e.target.value)} /></label><label>Sexo<select disabled={loading} required value={guest.sexo} onChange={e => updateGuest(room.habitacionId, index, "sexo", e.target.value)}><option value="">Seleccionar</option><option value="F">Femenino</option><option value="M">Masculino</option></select></label>{guest.esTitular && <><span className="guest-owner">Huésped principal</span><button type="button" className="remove-guest" disabled={loading} onClick={() => { setSeleccion(current => ({ ...current, [room.habitacionId]: current[room.habitacionId].map((item, i) => i === index ? emptyGuest(true) : item) })); setError(null) }}>Limpiar datos</button></>}{!guest.esTitular && <button type="button" className="remove-guest" disabled={loading} onClick={() => { setSeleccion(current => ({ ...current, [room.habitacionId]: current[room.habitacionId].filter((_, guestIndex) => guestIndex !== index) })) }}>Quitar huésped</button>}</div>)}{seleccion[room.habitacionId].length < capacity && <button type="button" className="add-guest" disabled={loading} onClick={() => addGuest(room)}>+ Agregar huésped</button>}</div>}
         </article> })}</div>
                 <div className="section-heading extras-heading"><div><p className="cliente-eyebrow">OPCIONAL</p><h2>Servicios adicionales</h2></div><span>Por reserva</span></div>
         <div className="service-options">{servicios.map(service => <div className="service-option" key={service.id}><div><strong>{service.nombre}</strong><p>{service.descripcion}</p></div><b>{money(service.precio)}</b><input disabled={loading} type="number" min="0" max="20" step="1" inputMode="numeric" aria-label={`Cantidad de ${service.nombre}`} value={extras[service.id] ?? 0} onChange={e => setExtras(current => ({ ...current, [service.id]: Math.min(20, Math.max(0, Math.trunc(Number(e.target.value)))) }))} /></div>)}</div>

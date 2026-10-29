@@ -42,6 +42,8 @@
 .shell-brand {
   padding: 28px 25px 36px;
   color: var(--ink);
+  display: flex;
+  justify-content: center;
 }
 
 .shell-brand__logo {
@@ -49,16 +51,8 @@
   width: auto;
   max-width: 100%;
   object-fit: contain;
-  object-position: left;
+  object-position: center;
   display: block;
-}
-
-.shell-brand__label {
-  display: block;
-  margin-top: 8px;
-  color: #788984;
-  font-size: 10px;
-  letter-spacing: .13em;
 }
 
 /* Navegación */
@@ -165,7 +159,7 @@
   background: var(--ink);
   color: #fff;
   font: 700 11px 'Hanken Grotesk', sans-serif;
-  border-radius: 0;
+  border-radius: 50%;
 }
 
 .shell-avatar--sm {
@@ -205,3 +199,5 @@
     display: none;
   }
 }
+.shell-profile-button { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.shell-profile-button:focus-visible { outline: 2px solid #86aa98; outline-offset: 3px; }

@@ -223,6 +223,7 @@ export const AuthPage = () => {
             </p>
           </header>
 
+          {!isRegister && (location.state as { correoActualizado?: boolean } | null)?.correoActualizado && <p role="status">Tu correo de acceso se actualizó. Inicia sesión con el nuevo correo.</p>}
           {errorMessage && <div className="auth-alert" role="alert">{errorMessage}</div>}
 
           <form onSubmit={isRegister ? handleRegister : handleLogin} className="auth-form">

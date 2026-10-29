@@ -7,6 +7,8 @@
 .users-role-options input { width: auto; }
 .users-create { padding: 10px 16px; border: 0; background: #194d40; color: white; cursor: pointer; }
 .users-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
+.users-heading-actions { display: flex; align-items: end; gap: 10px; }
+.users-heading-actions .users-create { min-height: 38px; white-space: nowrap; font: inherit; font-size: 11px; }
 .users-heading p { margin: 0 0 5px; color: #54816b; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
 .users-heading h1 { margin: 0; font-size: 28px; }
 .users-heading div > span { display: block; margin-top: 6px; color: #667570; font-size: 13px; }
@@ -55,6 +57,20 @@
 .users-edit footer button[type="submit"] { background: #173f35; color: white; }
 .users-edit footer button:disabled { opacity: .55; }
 .users-native-dialog { width: min(660px, 94vw); max-height: min(90dvh, 900px); color: #173f35; font-family: 'Hanken Grotesk', Arial, sans-serif; }
+.users-native-dialog.users-confirm-dialog { width: min(480px, 92vw); }
+.users-confirm-content { padding: 26px; }
+.users-confirm-content header { display: flex; justify-content: space-between; gap: 14px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
+.users-confirm-content header p { margin: 0 0 5px; color: #54816b; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.users-confirm-content h2 { margin: 0; font-size: 22px; }
+.users-confirm-content header button { width: 34px; height: 34px; border: 1px solid #dae4e1; background: white; color: #315c45; font-size: 22px; cursor: pointer; }
+.users-confirm-content > p:not(.users-alert) { margin: 20px 0 12px; color: #52645b; font-size: 13px; line-height: 1.6; }
+.users-confirm-content > p strong { color: #173f35; }
+.users-confirm-note { padding: 12px 14px; border: 1px solid #e7dfd3; background: #fbf8f3; color: #776a58; font-size: 12px; line-height: 1.6; }
+.users-confirm-content footer { display: flex; justify-content: end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #dae4e1; }
+.users-confirm-content footer button { min-height: 38px; padding: 0 14px; border: 1px solid #cddbd4; background: white; color: #315c45; font: inherit; font-size: 11px; cursor: pointer; }
+.users-confirm-content footer .users-confirm-danger { border-color: #8a4036; background: #8a4036; color: white; }
+.users-confirm-content button:disabled { opacity: .55; cursor: not-allowed; }
+.users-confirm-content button:focus-visible { outline: 2px solid #86aa98; outline-offset: 2px; }
 .users-native-dialog .users-personal-form { box-sizing: border-box; width: 100%; height: auto; padding: 26px; gap: 18px; box-shadow: none; }
 .users-personal-intro h3 { margin: 0 0 5px; color: #173f35; font-size: 14px; }
 .users-personal-intro p, .users-personal-form .users-role-options > p { margin: 0; color: #73847b; font-size: 11px; line-height: 1.5; }
@@ -72,4 +88,5 @@
 .users-personal-form footer button { min-height: 38px; padding: 0 14px; }
 .users-personal-form input:focus-visible, .users-personal-form select:focus-visible, .users-personal-form button:focus-visible { outline: 2px solid #86aa98; outline-offset: 2px; }
 @media (max-width: 520px) { .users-native-dialog .users-personal-form { padding: 20px 16px; }.users-personal-grid, .users-personal-form .users-role-list { grid-template-columns: 1fr; }.users-personal-grid .users-field-wide { grid-column: auto; } }
-@media (max-width: 700px) { .users-page { padding: 20px 14px; }.users-heading { align-items: start; flex-direction: column; }.users-search, .users-search input { width: 100%; }.users-detail, .users-edit { padding: 20px 14px; } }
+@media (max-width: 700px) { .users-page { padding: 20px 14px; }.users-heading { align-items: start; flex-direction: column; }.users-heading-actions { width: 100%; }.users-search { flex: 1; min-width: 0; }.users-search input { box-sizing: border-box; width: 100%; }.users-detail, .users-edit { padding: 20px 14px; } }
+@media (max-width: 380px) { .users-heading-actions { flex-wrap: wrap; }.users-search { flex-basis: 100%; } }

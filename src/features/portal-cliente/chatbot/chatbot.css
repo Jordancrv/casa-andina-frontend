@@ -100,3 +100,4 @@
 @media (max-width:620px) { .ca-typing { align-items:center; gap:12px; padding:15px 13px; }.ca-typing strong { font-size:12px; }.ca-typing p { font-size:10px; } }
 .ca-chat-brand-copy>.ca-answer-label { margin-top:12px; }
 @media (min-width:621px) { .ca-chat-composer { min-height:156px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; } }
+.ca-room-popularity{margin:10px 0 0;color:#607f6c;font-size:12px;font-weight:600}
