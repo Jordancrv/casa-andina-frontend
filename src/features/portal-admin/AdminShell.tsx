@@ -1,3 +1,4 @@
+import { useAccess, SECTION_PERMISSIONS } from '@/app/providers/access-context'
 /**
  * AdminShell.tsx
  * ---------------------------------------------------------------------------
@@ -13,8 +14,6 @@
 
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/app/providers/auth-context'
-import type { Rol } from '@/shared/types/global.types'
-import { ROLE_ACCESS } from '@/shared/constants/role-access'
 import logoCasaAndina from '@/assets/casa-andina.png'
 import './AdminShell.css'
 
@@ -47,6 +46,14 @@ const IcoReservas = () => (
   </svg>
 )
 
+const IcoAccesos = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="4" y="10" width="16" height="11" rx="2" />
+    <path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3" />
+  </svg>
+)
+
 const IcoHabitaciones = () => (
   // Llave de habitación
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -66,6 +73,16 @@ const IcoServicios = () => (
     <line x1="6" y1="1" x2="6" y2="4" />
     <line x1="10" y1="1" x2="10" y2="4" />
     <line x1="14" y1="1" x2="14" y2="4" />
+  </svg>
+)
+
+const IcoComodidades = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+    aria-hidden="true">
+    <path d="M3 18v-7m18 7v-5a3 3 0 0 0-3-3H9v6" />
+    <path d="M3 16h18M3 18v2m18-2v2" />
+    <circle cx="6" cy="12" r="2" />
   </svg>
 )
 
@@ -95,16 +112,18 @@ const IcoReportes = () => (
 // Ítems de navegación con SVG icon como ReactNode
 // ---------------------------------------------------------------------------
 
-const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode; roles: readonly Rol[] }[] = [
-  { label: 'Dashboard',    path: '/admin/dashboard',    icon: <IcoResumen />, roles: ROLE_ACCESS.dashboard },
-  { label: 'Recepción', path: '/admin/recepcion', icon: <IcoReservas />, roles: ROLE_ACCESS.reception },
-  { label: 'Sedes',        path: '/admin/sedes',         icon: <IcoSedes />, roles: ROLE_ACCESS.branches },
-  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones />, roles: ROLE_ACCESS.rooms },
-  { label: 'Calendario',   path: '/admin/calendario',   icon: <IcoReservas />, roles: ROLE_ACCESS.internal },
-  { label: 'Clientes',     path: '/admin/clientes',     icon: <IcoUsuarios />, roles: ROLE_ACCESS.dashboard },
-  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios />, roles: ROLE_ACCESS.users },
-  { label: 'Reportes',     path: '/admin/reportes',     icon: <IcoReportes />, roles: ROLE_ACCESS.dashboard },
-  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios />, roles: ROLE_ACCESS.services },
+const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
+  { label: 'Dashboard',    path: '/admin/dashboard',    icon: <IcoResumen /> },
+  { label: 'Calendario',   path: '/admin/calendario',   icon: <IcoReservas /> },
+  { label: 'Recepción', path: '/admin/recepcion', icon: <IcoReservas /> },
+  { label: 'Clientes',     path: '/admin/clientes',     icon: <IcoUsuarios /> },
+  { label: 'Usuarios',     path: '/admin/usuarios',     icon: <IcoUsuarios /> },
+  { label: 'Roles y accesos', path: '/admin/roles', icon: <IcoAccesos /> },
+  { label: 'Habitaciones', path: '/admin/habitaciones', icon: <IcoHabitaciones /> },
+  { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios /> },
+  { label: 'Comodidades', path: '/admin/comodidades', icon: <IcoComodidades /> },
+  { label: 'Reportes',     path: '/admin/reportes',     icon: <IcoReportes /> },
+  { label: 'Sedes',        path: '/admin/sedes',         icon: <IcoSedes /> },
 ]
 
 // ---------------------------------------------------------------------------
@@ -127,7 +146,8 @@ export function AdminShell({
   const navigate     = useNavigate()
   const { pathname } = useLocation()
   const { usuario, logout } = useAuth()
-  const navItems = NAV_ITEMS.filter(item => usuario && item.roles.includes(usuario.rol))
+  const access = useAccess()
+  const navItems = NAV_ITEMS.filter(item => access.can(SECTION_PERMISSIONS[item.path]))
 
   return (
     <div className="shell">

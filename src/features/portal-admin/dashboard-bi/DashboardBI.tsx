@@ -7,6 +7,7 @@ import { OcupacionList } from './components/OcupacionList'
 import { CanalesCard } from './components/CanalesCard'
 import { useDashboard, formatSoles, formatVariacion } from './useDashboard'
 import { DashboardReport } from './DashboardReport'
+import { OcupacionProyeccion } from './components/OcupacionProyeccion'
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -70,18 +71,15 @@ export const DashboardBI = () => {
       </section>
 
       <section aria-label="Proyección de demanda">
-        {loading ? <SkeletonCard/> : data ? <CardWrapper titulo="Proyección de demanda" nota="Próximas 4 semanas">
-          <div className="db-unavailable"><strong>Proyección aún no disponible</strong><p>Se habilitará cuando exista un modelo predictivo conectado a datos históricos.</p></div>
+        {loading ? <SkeletonCard/> : data ? <CardWrapper titulo="Proyección de ocupación" nota="Próximas 4 semanas">
+          <OcupacionProyeccion />
         </CardWrapper> : error ? <CardWrapper titulo="Proyección de demanda"><DashboardErrorPanel/></CardWrapper> : null}
       </section>
 
-      <section className="db-grid-2" aria-label="Canales y asistente">
-        {loading ? <><SkeletonCard/><SkeletonCard/></> : data ? <>
+      <section aria-label="Canales de reserva">
+        {loading ? <SkeletonCard/> : data ?
           <CardWrapper titulo="Canal de reservas" nota="Periodo seleccionado"><CanalesCard canales={data.canales} /></CardWrapper>
-          <CardWrapper titulo="Asistente IA" nota="Métricas de uso">
-            <div className="db-unavailable"><strong>Sin métricas de uso registradas</strong><p>Las interacciones del asistente aún no se almacenan para generar estadísticas.</p></div>
-          </CardWrapper>
-        </> : error ? <><CardWrapper titulo="Canal de reservas"><DashboardErrorPanel/></CardWrapper><CardWrapper titulo="Asistente IA"><DashboardErrorPanel/></CardWrapper></> : null}
+          : error ? <CardWrapper titulo="Canal de reservas"><DashboardErrorPanel/></CardWrapper> : null}
       </section>
     </main>
   )

@@ -1,3 +1,4 @@
+import { useAccess } from '@/app/providers/access-context'
 import { useEffect, useRef, useState } from 'react'
 import { PdfDialog } from '@/shared/ui/PdfDialog'
 import type { DashboardFiltros } from '@/shared/types/global.types'
@@ -7,6 +8,7 @@ type Periodo = DashboardFiltros['periodo']
 const labels: Record<Periodo, string> = { '7d': 'Últimos 7 días', '30d': 'Últimos 30 días', mes: 'Este mes' }
 
 export function DashboardReport({ periodo, disabled }: { periodo: Periodo; disabled: boolean }) {
+  const { can } = useAccess()
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<Periodo>(periodo)
   const [url, setUrl] = useState<string | null>(null)
@@ -49,7 +51,7 @@ export function DashboardReport({ periodo, disabled }: { periodo: Periodo; disab
     document.body.appendChild(link); link.click(); link.remove()
   }
   return <>
-    <button className="db-btn-report" type="button" disabled={disabled || loading} onClick={() => void generate(periodo)}>{loading ? 'Generando reporte…' : 'Generar reporte ↗'}</button>
+    <button className="db-btn-report" type="button" disabled={disabled || loading || !can("reportes.exportar")} onClick={() => void generate(periodo)}>{loading ? 'Generando reporte…' : 'Generar reporte ↗'}</button>
     {open && <PdfDialog url={url} title="Reporte del dashboard" eyebrow={`RESUMEN OPERATIVO · ${labels[selected].toUpperCase()}`} footer="Datos actualizados al generar · sede asignada · importe reservado no equivale a pagos aprobados." loading={loading} error={error} onClose={close} onRetry={() => void generate(selected)} onDownload={download} />}
   </>
 }

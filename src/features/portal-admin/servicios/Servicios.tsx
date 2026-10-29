@@ -1,3 +1,4 @@
+import { useAccess } from '@/app/providers/access-context'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
@@ -25,6 +26,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 export const Servicios = () => {
+  const { can } = useAccess()
   const { usuario } = useAuth()
   const sedeAsignadaId = usuario ? getSedeIdFromToken(usuario.token) : null
   const alcanceGlobal = usuario?.rol === 'Superadministrador' && sedeAsignadaId === null
@@ -170,7 +172,7 @@ export const Servicios = () => {
           <h1>Servicios</h1>
           <p>Administra servicios complementarios, tarifas y disponibilidad por sede.</p>
         </div>
-        <button className="services-primary" type="button" onClick={openCreate}>
+        <button className="services-primary" type="button" disabled={!can("servicios.crear")} onClick={openCreate}>
           Nuevo servicio
         </button>
       </header>
@@ -290,7 +292,7 @@ export const Servicios = () => {
               </fieldset>
               <footer>
                 <button className="services-secondary" type="button" onClick={() => setIsFormOpen(false)}>Cancelar</button>
-                <button className="services-primary" type="submit" disabled={isSubmitting}>
+                <button className="services-primary" type="submit" disabled={isSubmitting || !can(editingId ? "servicios.editar" : "servicios.crear")}>
                   {isSubmitting ? 'Guardando...' : editingId ? 'Actualizar servicio' : 'Guardar servicio'}
                 </button>
               </footer>
@@ -316,9 +318,9 @@ export const Servicios = () => {
             </dl>
             {!detail.puedeEditar && <p>Este servicio es compartido. Su modificación corresponde a la administración de la cadena.</p>}
             <footer>
-              <button className="services-danger" type="button" disabled={isSubmitting || !detail.puedeEditar}
+              <button className="services-danger" type="button" disabled={isSubmitting || !detail.puedeEditar || !can("servicios.desactivar")}
                 onClick={() => void handleDeactivate(detail)}>Desactivar</button>
-              <button className="services-secondary" type="button" disabled={!detail.puedeEditar} onClick={() => openEdit(detail)}>Editar</button>
+              <button className="services-secondary" type="button" disabled={!detail.puedeEditar || !can("servicios.editar")} onClick={() => openEdit(detail)}>Editar</button>
               <button className="services-primary" type="button" onClick={() => setDetail(null)}>Cerrar</button>
             </footer>
           </section>

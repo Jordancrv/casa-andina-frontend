@@ -1,3 +1,6 @@
+import { AccessProvider } from '@/app/providers/AccessProvider'
+import { useAccess, SECTION_PERMISSIONS } from '@/app/providers/access-context'
+import { Roles } from '@/features/portal-admin/roles/Roles'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import type { ReactElement } from 'react'
 import { LandingPage } from '@/features/landing/components/LandingPage'
@@ -7,38 +10,31 @@ import { Calendario } from '@/features/portal-admin/calendario/Calendario'
 import { Recepcion } from '@/features/portal-admin/recepcion/Recepcion'
 import { Habitaciones } from '@/features/portal-admin/habitaciones/Habitaciones'
 import { Servicios } from '@/features/portal-admin/servicios/Servicios'
+import { Comodidades } from '@/features/portal-admin/comodidades/Comodidades'
 import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
 import { Clientes } from '@/features/portal-admin/clientes/Clientes'
 import { Sedes } from '@/features/portal-admin/sedes/Sedes'
 import { Reportes } from '@/features/portal-admin/reportes/Reportes'
 import { useAuth } from '@/app/providers/auth-context'
-import type { Rol } from '@/shared/types/global.types'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
 import { CompraReserva } from '@/features/portal-cliente/reservas/CompraReserva'
 import { MisReservas } from '@/features/portal-cliente/reservas/MisReservas'
 import { MiCalendario } from '@/features/portal-cliente/calendario/MiCalendario'
 import { Chatbot } from '@/features/portal-cliente/chatbot/components/Chatbot'
-import { getRoleHomeRoute, ROLE_ACCESS } from '@/shared/constants/role-access'
 
-// Guard de ruta: permite acceso a los roles indicados, redirige a /login si no hay sesión activa
-const RequireRole = ({ roles, children }: { roles: readonly Rol[]; children: ReactElement }) => {
+// La identidad separa los portales; el servidor resuelve los permisos operativos.
+const RequireAccess = ({ client = false, children }: { client?: boolean; children: ReactElement }) => {
   const { usuario } = useAuth()
   const location = useLocation()
+  const access = useAccess()
   if (!usuario) return <Navigate to="/login" replace />
-  if (!roles.includes(usuario.rol)) {
-    if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace state={{ from: location }} />
-    if (location.pathname === '/admin' || location.pathname === '/admin/dashboard') {
-      return <Navigate to="/admin/calendario" replace />
-    }
-    return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-bold text-red-600 mb-2">Acceso No Autorizado</h2>
-        <p className="text-gray-600">Tu usuario tiene el rol <span className="font-semibold">{usuario.rol}</span> que no tiene permisos para esta sección.</p>
-      </div>
-    )
-  }
-  return children
+  if (client) return usuario.rol === 'Cliente' ? children : <Navigate to="/admin" replace />
+  if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace />
+  if (access.loading) return <p className="p-8">Cargando accesos…</p>
+  if (access.error) return <div className="p-8"><p>No se pudieron verificar tus accesos.</p><button onClick={access.refresh}>Reintentar</button></div>
+  if (location.pathname === '/admin' || access.can(SECTION_PERMISSIONS[location.pathname])) return children
+  return <Navigate to={access.home} replace />
 }
 
 const AppContent = () => {
@@ -52,27 +48,29 @@ const AppContent = () => {
         <Route path="/registro" element={<AuthPage />} />
 
         {/* Portal Admin — AdminShell provee sidebar + topbar para TODAS las rutas */}
-        <Route path="/admin" element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><AdminRoleHome /></AdminShell></RequireRole>} />
-        <Route path="/admin/recepcion" element={<RequireRole roles={ROLE_ACCESS.reception}><AdminShell><Recepcion /></AdminShell></RequireRole>} />
-        <Route path="/admin/dashboard"    element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><DashboardBI /></AdminShell></RequireRole>} />
-        <Route path="/admin/habitaciones" element={<RequireRole roles={ROLE_ACCESS.rooms}><AdminShell><Habitaciones /></AdminShell></RequireRole>} />
-        <Route path="/admin/calendario"   element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><Calendario /></AdminShell></RequireRole>} />
-        <Route path="/admin/servicios"    element={<RequireRole roles={ROLE_ACCESS.services}><AdminShell><Servicios /></AdminShell></RequireRole>} />
-        <Route path="/admin/usuarios"     element={<RequireRole roles={ROLE_ACCESS.users}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
-        <Route path="/admin/sedes"        element={<RequireRole roles={ROLE_ACCESS.branches}><AdminShell><Sedes /></AdminShell></RequireRole>} />
-        <Route path="/admin/clientes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Clientes /></AdminShell></RequireRole>} />
-        <Route path="/admin/reportes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Reportes /></AdminShell></RequireRole>} />
+        <Route path="/admin" element={<RequireAccess><AdminShell><AdminRoleHome /></AdminShell></RequireAccess>} />
+        <Route path="/admin/recepcion" element={<RequireAccess><AdminShell><Recepcion /></AdminShell></RequireAccess>} />
+        <Route path="/admin/dashboard"    element={<RequireAccess><AdminShell><DashboardBI /></AdminShell></RequireAccess>} />
+        <Route path="/admin/habitaciones" element={<RequireAccess><AdminShell><Habitaciones /></AdminShell></RequireAccess>} />
+        <Route path="/admin/calendario"   element={<RequireAccess><AdminShell><Calendario /></AdminShell></RequireAccess>} />
+        <Route path="/admin/servicios"    element={<RequireAccess><AdminShell><Servicios /></AdminShell></RequireAccess>} />
+        <Route path="/admin/comodidades" element={<RequireAccess><AdminShell><Comodidades /></AdminShell></RequireAccess>} />
+        <Route path="/admin/usuarios"     element={<RequireAccess><AdminShell><Usuarios /></AdminShell></RequireAccess>} />
+        <Route path="/admin/sedes"        element={<RequireAccess><AdminShell><Sedes /></AdminShell></RequireAccess>} />
+        <Route path="/admin/clientes"     element={<RequireAccess><AdminShell><Clientes /></AdminShell></RequireAccess>} />
+        <Route path="/admin/reportes"     element={<RequireAccess><AdminShell><Reportes /></AdminShell></RequireAccess>} />
 
+        <Route path="/admin/roles" element={<RequireAccess><AdminShell><Roles /></AdminShell></RequireAccess>} />
         {/* Portal Cliente — rol: Cliente */}
         <Route
           path="/cliente"
           element={
-            <RequireRole roles={ROLE_ACCESS.client}><ClienteShell><CompraReserva /></ClienteShell></RequireRole>
+            <RequireAccess client><ClienteShell><CompraReserva /></ClienteShell></RequireAccess>
           }
         />
-        <Route path="/cliente/reservas" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MisReservas /></ClienteShell></RequireRole>} />
-        <Route path="/cliente/calendario" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><MiCalendario /></ClienteShell></RequireRole>} />
-        <Route path="/cliente/asistente" element={<RequireRole roles={ROLE_ACCESS.client}><ClienteShell><Chatbot /></ClienteShell></RequireRole>} />
+        <Route path="/cliente/reservas" element={<RequireAccess client><ClienteShell><MisReservas /></ClienteShell></RequireAccess>} />
+        <Route path="/cliente/calendario" element={<RequireAccess client><ClienteShell><MiCalendario /></ClienteShell></RequireAccess>} />
+        <Route path="/cliente/asistente" element={<RequireAccess client><ClienteShell><Chatbot /></ClienteShell></RequireAccess>} />
       </Routes>
     </Router>
   )
@@ -80,18 +78,24 @@ const AppContent = () => {
 
 const RoleHome = () => {
   const { usuario } = useAuth()
+  const access = useAccess()
   if (!usuario) return <Navigate to="/" replace />
-  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
+  if (access.loading) return <p className="p-8">Cargando accesos…</p>
+  if (access.home === '/admin') return <div className="p-8"><h2>Sin secciones disponibles</h2><p>Solicita al administrador que revise tus roles.</p><button onClick={access.refresh}>Actualizar accesos</button></div>
+  return <Navigate to={access.home} replace />
 }
 
 const AdminRoleHome = () => {
   const { usuario } = useAuth()
+  const access = useAccess()
   if (!usuario) return <Navigate to="/login" replace />
-  return <Navigate to={getRoleHomeRoute(usuario.rol)} replace />
+  if (access.loading) return <p className="p-8">Cargando accesos…</p>
+  if (access.home === '/admin') return <div className="p-8"><h2>Sin secciones disponibles</h2><p>Solicita al administrador que revise tus roles.</p><button onClick={access.refresh}>Actualizar accesos</button></div>
+  return <Navigate to={access.home} replace />
 }
 
 const App = () => {
-  return <AppContent />
+  return <AccessProvider><AppContent /></AccessProvider>
 }
 
 export default App

@@ -1,3 +1,4 @@
+import { useAccess } from '@/app/providers/access-context'
 import { StayStatus } from '@/shared/ui/StayStatus'
 import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
@@ -17,13 +18,14 @@ const planned = (value: string) => value.slice(0,10).split('-').reverse().join('
 const actual = (value: string | null) => value ? new Intl.DateTimeFormat('es-PE', { timeZone: 'America/Lima', dateStyle: 'short', timeStyle: 'short' }).format(new Date(/Z$|[+-]\d\d:\d\d$/.test(value) ? value : value + 'Z')) : 'Sin registrar'
 
 function StayDialog({ room, close, refresh }: { room: RoomStay; close: () => void; refresh: () => Promise<unknown> }) {
+  const { can } = useAccess()
   const ref = useRef<HTMLDialogElement>(null)
   const [verified, setVerified] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const checkout = Boolean(room.entradaReal)
-  const allowed = !room.salidaReal && room.estadoReserva === 'Reservado' && (checkout || (room.estadoHabitacion === 'Disponible' && today() >= room.entradaPrevista.slice(0,10) && today() < room.salidaPrevista.slice(0,10)))
+  const allowed = can(checkout ? "recepcion.salida" : "recepcion.ingreso") && !room.salidaReal && room.estadoReserva === 'Reservado' && (checkout || (room.estadoHabitacion === 'Disponible' && today() >= room.entradaPrevista.slice(0,10) && today() < room.salidaPrevista.slice(0,10)))
   useEffect(() => { const dialog=ref.current; dialog?.showModal(); return () => dialog?.close() }, [])
   const confirm = async () => {
     if (busy || !verified || !allowed || done) return

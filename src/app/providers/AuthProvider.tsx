@@ -6,7 +6,7 @@ import type { Rol } from '@/shared/types/global.types'
 import { AuthContext } from './auth-context'
 
 const ROLES_VALIDOS: readonly Rol[] = [
-  'Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento', 'Cliente'
+  'Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento', 'Personal', 'Cliente'
 ]
 
 const claimsToken = (token: string): { exp?: unknown; role?: unknown; [key: string]: unknown } | null => {

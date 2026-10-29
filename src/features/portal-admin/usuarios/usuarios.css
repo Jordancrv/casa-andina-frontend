@@ -1,4 +1,11 @@
 .users-page { display: grid; align-content: start; gap: 18px; min-height: 100%; padding: 28px 30px; background: #f4fbf8; color: #173f35; font-family: 'Hanken Grotesk', Arial, sans-serif; }
+.users-native-dialog { padding: 0; border: 0; border-radius: 8px; width: min(600px, 94vw); max-height: 90vh; }
+.users-native-dialog::backdrop { background: #12362ca3; }
+.users-native-dialog .users-edit { width: auto; max-height: none; }
+.users-role-options { border: 1px solid #d6e5dd; display: grid; gap: 8px; margin: 16px 0; padding: 12px; }
+.users-role-options label { display: flex; align-items: center; gap: 8px; }
+.users-role-options input { width: auto; }
+.users-create { padding: 10px 16px; border: 0; background: #194d40; color: white; cursor: pointer; }
 .users-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; padding-bottom: 18px; border-bottom: 1px solid #dae4e1; }
 .users-heading p { margin: 0 0 5px; color: #54816b; font-size: 11px; font-weight: 700; letter-spacing: 1px; }
 .users-heading h1 { margin: 0; font-size: 28px; }
@@ -47,4 +54,22 @@
 .users-edit footer { display: flex; justify-content: end; gap: 8px; padding-top: 14px; border-top: 1px solid #dae4e1; }
 .users-edit footer button[type="submit"] { background: #173f35; color: white; }
 .users-edit footer button:disabled { opacity: .55; }
+.users-native-dialog { width: min(660px, 94vw); max-height: min(90dvh, 900px); color: #173f35; font-family: 'Hanken Grotesk', Arial, sans-serif; }
+.users-native-dialog .users-personal-form { box-sizing: border-box; width: 100%; height: auto; padding: 26px; gap: 18px; box-shadow: none; }
+.users-personal-intro h3 { margin: 0 0 5px; color: #173f35; font-size: 14px; }
+.users-personal-intro p, .users-personal-form .users-role-options > p { margin: 0; color: #73847b; font-size: 11px; line-height: 1.5; }
+.users-personal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.users-personal-grid .users-field-wide { grid-column: 1 / -1; }
+.users-personal-form .users-personal-grid label { min-width: 0; font-weight: 600; }
+.users-personal-form .users-personal-grid input, .users-personal-form .users-personal-grid select { box-sizing: border-box; width: 100%; height: 40px; padding: 0 10px; border: 1px solid #cddbd4; border-radius: 0; background: #fff; color: #173f35; font: inherit; font-weight: 400; }
+.users-personal-form .users-password-note { margin: -5px 0 0; color: #73847b; font-size: 11px; line-height: 1.5; }
+.users-personal-form .users-role-options { min-width: 0; margin: 0; padding: 14px 16px 16px; border: 1px solid #dce8e1; background: #f8fbf9; }
+.users-personal-form .users-role-options legend { padding: 0 6px; color: #173f35; font-size: 13px; font-weight: 700; }
+.users-personal-form .users-role-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.users-personal-form .users-role-list label { display: flex; align-items: center; gap: 9px; min-height: 38px; padding: 8px 10px; border: 1px solid #dce8e1; background: #fff; color: #315c45; cursor: pointer; box-sizing: border-box; }
+.users-personal-form .users-role-list input[type="checkbox"] { flex: 0 0 16px; width: 16px; height: 16px; margin: 0; padding: 0; accent-color: #245f4c; }
+.users-personal-form .users-roles-note { color: #73847b; line-height: 1.5; }
+.users-personal-form footer button { min-height: 38px; padding: 0 14px; }
+.users-personal-form input:focus-visible, .users-personal-form select:focus-visible, .users-personal-form button:focus-visible { outline: 2px solid #86aa98; outline-offset: 2px; }
+@media (max-width: 520px) { .users-native-dialog .users-personal-form { padding: 20px 16px; }.users-personal-grid, .users-personal-form .users-role-list { grid-template-columns: 1fr; }.users-personal-grid .users-field-wide { grid-column: auto; } }
 @media (max-width: 700px) { .users-page { padding: 20px 14px; }.users-heading { align-items: start; flex-direction: column; }.users-search, .users-search input { width: 100%; }.users-detail, .users-edit { padding: 20px 14px; } }

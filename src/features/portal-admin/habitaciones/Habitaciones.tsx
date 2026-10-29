@@ -1,3 +1,4 @@
+import { useAccess } from '@/app/providers/access-context'
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import {
@@ -51,6 +52,7 @@ const emptyForm: CreateHabitacionPayload = {
 }
 
 export const Habitaciones = () => {
+  const { can } = useAccess()
 
   const [habitaciones, setHabitaciones] = useState<HabitacionDto[]>([])
   const [isLoading, setIsLoading]       = useState(true)
@@ -275,7 +277,7 @@ export const Habitaciones = () => {
               <h1>Habitaciones</h1>
               <p>Administra la disponibilidad, tarifas y comodidades de cada sede.</p>
             </div>
-            <button className="primary-button" type="button" onClick={handleOpenModal}>
+            <button className="primary-button" type="button" disabled={!can("habitaciones.crear")} onClick={handleOpenModal}>
               + Nueva habitación
             </button>
           </div>
@@ -554,7 +556,7 @@ export const Habitaciones = () => {
                 <button className="secondary-button" type="button" onClick={() => setIsModalOpen(false)}>
                   Cancelar
                 </button>
-                <button className="primary-button" type="submit" disabled={isSubmitting}>
+                <button className="primary-button" type="submit" disabled={isSubmitting || !can(editingId ? "habitaciones.editar" : "habitaciones.crear")}>
                   {isSubmitting ? 'Guardando…' : editingId ? 'Actualizar habitación' : 'Guardar habitación'}
                 </button>
               </div>
@@ -642,10 +644,10 @@ export const Habitaciones = () => {
             </div>
 
             <div className="modal-actions">
-              <button className="clear-button" type="button" disabled={isSubmitting} onClick={() => handleDeactivate(detailHabitacion)}>
+              <button className="clear-button" type="button" disabled={isSubmitting || !can("habitaciones.desactivar")} onClick={() => handleDeactivate(detailHabitacion)}>
                 Desactivar
               </button>
-              <button className="secondary-button" type="button" onClick={() => handleEdit(detailHabitacion)}>
+              <button className="secondary-button" type="button" disabled={!can("habitaciones.editar")} onClick={() => handleEdit(detailHabitacion)}>
                 Editar
               </button>
               <button className="primary-button" type="button" onClick={() => setDetailHabitacion(null)}>

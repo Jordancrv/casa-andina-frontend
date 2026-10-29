@@ -26,6 +26,9 @@ api.interceptors.response.use(
       window.dispatchEvent(new Event('auth:unauthorized'))
       window.location.href = '/login'
     }
+    if (axios.isAxiosError(error) && error.response?.status === 403 && !error.config?.url?.endsWith('/accesos/actual')) {
+      window.dispatchEvent(new Event('access:changed'))
+    }
     return Promise.reject(error)
   }
 )
