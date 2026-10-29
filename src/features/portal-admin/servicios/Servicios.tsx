@@ -72,10 +72,10 @@ export const Servicios = () => {
     return servicios.filter((servicio) => {
       const text = `${servicio.nombre} ${servicio.descripcion ?? ''} ${servicio.sedes.join(' ')}`
       const matchesText = !normalized || text.toLowerCase().includes(normalized)
-      const matchesSede = sedeFiltro === 'Todas' || servicio.sedesIds.includes(sedeFiltro)
+      const matchesSede = !alcanceGlobal || sedeFiltro === 'Todas' || servicio.sedesIds.includes(sedeFiltro)
       return matchesText && matchesSede
     })
-  }, [query, sedeFiltro, servicios])
+  }, [alcanceGlobal, query, sedeFiltro, servicios])
 
   const promedio = servicios.length
     ? servicios.reduce((total, servicio) => total + servicio.precio, 0) / servicios.length
@@ -200,7 +200,7 @@ export const Servicios = () => {
                 />
               </label>
             </div>
-            <div className="services-filters">
+            {alcanceGlobal && <div className="services-filters">
               <label>
                 Sede
                 <select
@@ -209,14 +209,11 @@ export const Servicios = () => {
                     event.target.value === 'Todas' ? 'Todas' : Number(event.target.value)
                   )}
                 >
-                  <option value="Todas">{alcanceGlobal ? 'Todas' : 'Mi sede'}</option>
+                  <option value="Todas">Todas</option>
                   {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre}</option>)}
                 </select>
               </label>
-              <button type="button" onClick={() => { setQuery(''); setSedeFiltro('Todas') }}>
-                Limpiar filtros
-              </button>
-            </div>
+            </div>}
 
             <div className="services-table-wrap">
               <table>
