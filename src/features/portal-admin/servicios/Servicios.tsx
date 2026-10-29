@@ -317,10 +317,11 @@ export const Servicios = () => {
               <div className="services-full-width"><dt>Descripción</dt><dd>{detail.descripcion || 'Sin descripción registrada.'}</dd></div>
               <div className="services-full-width"><dt>Sedes asignadas</dt><dd>{alcanceGlobal ? detail.sedes.join(', ') : sedes.map(sede => sede.nombre).join(', ')}</dd></div>
             </dl>
+            {!detail.puedeEditar && <p>Este servicio es compartido. Su modificación corresponde a la administración de la cadena.</p>}
             <footer>
-              <button className="services-danger" type="button" disabled={isSubmitting}
+              <button className="services-danger" type="button" disabled={isSubmitting || !detail.puedeEditar}
                 onClick={() => void handleDeactivate(detail)}>Desactivar</button>
-              <button className="services-secondary" type="button" onClick={() => openEdit(detail)}>Editar</button>
+              <button className="services-secondary" type="button" disabled={!detail.puedeEditar} onClick={() => openEdit(detail)}>Editar</button>
               <button className="services-primary" type="button" onClick={() => setDetail(null)}>Cerrar</button>
             </footer>
           </section>

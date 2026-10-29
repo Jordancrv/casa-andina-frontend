@@ -109,6 +109,7 @@ export type UpdateHabitacionPayload = CreateHabitacionPayload
 // ---------------------------------------------------------------------------
 
 export interface ServicioDto {
+  puedeEditar?: boolean
   id: number
   nombre: string
   descripcion: string | null
