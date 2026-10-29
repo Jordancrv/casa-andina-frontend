@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
 import { getCatalogos } from '@/features/portal-admin/habitaciones/habitaciones.api'
@@ -27,7 +27,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 export const Servicios = () => {
   const { usuario } = useAuth()
   const sedeAsignadaId = usuario ? getSedeIdFromToken(usuario.token) : null
-  const isAdministrador = usuario?.rol === 'Administrador'
+  const alcanceGlobal = usuario?.rol === 'Superadministrador' && sedeAsignadaId === null
 
   const [servicios, setServicios] = useState<ServicioDto[]>([])
   const [sedes, setSedes] = useState<SedeDto[]>([])
@@ -41,7 +41,7 @@ export const Servicios = () => {
   const [form, setForm] = useState<ServicioPayload>(emptyForm)
   const [detail, setDetail] = useState<ServicioDto | null>(null)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true)
     setError(null)
     try {
@@ -54,18 +54,18 @@ export const Servicios = () => {
         pages.push(await listServicios({ pageNumber, pageSize: 100 }))
       }
       setServicios(pages.flatMap((page) => page.items))
-      setSedes(catalogos.sedes)
+      setSedes(alcanceGlobal ? catalogos.sedes : catalogos.sedes.filter(sede => sede.id === sedeAsignadaId))
     } catch (loadError) {
       setError(getErrorMessage(loadError, 'No se pudieron cargar los servicios.'))
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [alcanceGlobal, sedeAsignadaId])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => void loadData(), 0)
     return () => window.clearTimeout(timeoutId)
-  }, [])
+  }, [loadData])
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase()
@@ -85,7 +85,7 @@ export const Servicios = () => {
     setEditingId(null)
     setForm({
       ...emptyForm,
-      sedesIds: !isAdministrador && sedeAsignadaId ? [sedeAsignadaId] : [],
+      sedesIds: !alcanceGlobal && sedeAsignadaId ? [sedeAsignadaId] : [],
     })
     setError(null)
     setIsFormOpen(true)
@@ -114,7 +114,7 @@ export const Servicios = () => {
   }
 
   const toggleSede = (sedeId: number) => {
-    if (!isAdministrador) return
+    if (!alcanceGlobal) return
     setForm((current) => ({
       ...current,
       sedesIds: current.sedesIds.includes(sedeId)
@@ -209,7 +209,7 @@ export const Servicios = () => {
                     event.target.value === 'Todas' ? 'Todas' : Number(event.target.value)
                   )}
                 >
-                  <option value="Todas">Todas</option>
+                  <option value="Todas">{alcanceGlobal ? 'Todas' : 'Mi sede'}</option>
                   {sedes.map((sede) => <option key={sede.id} value={sede.id}>{sede.nombre}</option>)}
                 </select>
               </label>
@@ -225,7 +225,7 @@ export const Servicios = () => {
                   {filtered.map((servicio) => (
                     <tr key={servicio.id}>
                       <td><strong>{servicio.nombre}</strong><small>{servicio.descripcion || 'Sin descripción'}</small></td>
-                      <td>{servicio.sedes.join(', ')}</td>
+                      <td>{alcanceGlobal ? servicio.sedes.join(', ') : sedes.map(sede => sede.nombre).join(', ')}</td>
                       <td className="services-price">S/ {servicio.precio.toFixed(2)}</td>
                       <td>
                         <button
@@ -277,14 +277,14 @@ export const Servicios = () => {
                 </label>
               </div>
               <fieldset>
-                <legend>Sedes disponibles *</legend>
+                <legend>{alcanceGlobal ? 'Sedes disponibles *' : 'Sede asignada'}</legend>
                 <div className="services-sedes">
                   {sedes.map((sede) => {
-                    const allowed = isAdministrador || sede.id === sedeAsignadaId
+                    const allowed = alcanceGlobal || sede.id === sedeAsignadaId
                     return (
                       <label key={sede.id} className={!allowed ? 'is-disabled' : ''}>
                         <input type="checkbox" checked={form.sedesIds.includes(sede.id)}
-                          disabled={!allowed || !isAdministrador} onChange={() => toggleSede(sede.id)} />
+                          disabled={!allowed || !alcanceGlobal} onChange={() => toggleSede(sede.id)} />
                         <span>{sede.nombre}<small>{sede.ciudad}</small></span>
                       </label>
                     )
@@ -315,7 +315,7 @@ export const Servicios = () => {
               <div><dt>Precio</dt><dd>S/ {detail.precio.toFixed(2)}</dd></div>
               <div><dt>Estado</dt><dd><span className="services-status">Activo</span></dd></div>
               <div className="services-full-width"><dt>Descripción</dt><dd>{detail.descripcion || 'Sin descripción registrada.'}</dd></div>
-              <div className="services-full-width"><dt>Sedes asignadas</dt><dd>{detail.sedes.join(', ')}</dd></div>
+              <div className="services-full-width"><dt>Sedes asignadas</dt><dd>{alcanceGlobal ? detail.sedes.join(', ') : sedes.map(sede => sede.nombre).join(', ')}</dd></div>
             </dl>
             <footer>
               <button className="services-danger" type="button" disabled={isSubmitting}

@@ -59,7 +59,7 @@ const AppContent = () => {
         <Route path="/admin/calendario"   element={<RequireRole roles={ROLE_ACCESS.internal}><AdminShell><Calendario /></AdminShell></RequireRole>} />
         <Route path="/admin/servicios"    element={<RequireRole roles={ROLE_ACCESS.services}><AdminShell><Servicios /></AdminShell></RequireRole>} />
         <Route path="/admin/usuarios"     element={<RequireRole roles={ROLE_ACCESS.users}><AdminShell><Usuarios /></AdminShell></RequireRole>} />
-        <Route path="/admin/sedes"        element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Sedes /></AdminShell></RequireRole>} />
+        <Route path="/admin/sedes"        element={<RequireRole roles={ROLE_ACCESS.branches}><AdminShell><Sedes /></AdminShell></RequireRole>} />
         <Route path="/admin/clientes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><Clientes /></AdminShell></RequireRole>} />
         <Route path="/admin/reportes"     element={<RequireRole roles={ROLE_ACCESS.dashboard}><AdminShell><ModulosPendientes modulo="reportes" /></AdminShell></RequireRole>} />
 

@@ -2,6 +2,7 @@ import type { Rol } from '@/shared/types/global.types'
 
 export const ROLE_ACCESS = {
   internal: ['Superadministrador', 'Administrador', 'Recepcion', 'Operaciones', 'Mantenimiento'],
+  branches: ['Superadministrador'],
   rooms: ['Superadministrador', 'Administrador', 'Operaciones', 'Mantenimiento'],
   services: ['Superadministrador', 'Administrador', 'Operaciones'],
   dashboard: ['Administrador'],
@@ -13,7 +14,7 @@ export const ROLE_ACCESS = {
 const ROLE_SECTIONS: readonly { label: string; roles: readonly Rol[] }[] = [
   { label: 'Dashboard', roles: ROLE_ACCESS.dashboard },
   { label: 'Recepción', roles: ROLE_ACCESS.reception },
-  { label: 'Sedes', roles: ROLE_ACCESS.dashboard },
+  { label: 'Sedes', roles: ROLE_ACCESS.branches },
   { label: 'Habitaciones', roles: ROLE_ACCESS.rooms },
   { label: 'Calendario', roles: ROLE_ACCESS.internal },
   { label: 'Clientes', roles: ROLE_ACCESS.dashboard },
