@@ -174,6 +174,12 @@
 .booking-guest-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:20px; }
 .booking-guest-heading h2 { margin:0; font-size:20px; color:#173f35; }
 .booking-guest-heading>span { color:#63726e; font-size:13px; }
+.booking-guest-heading { flex:0 0 250px; flex-direction:column; align-items:stretch; justify-content:center; gap:14px; }
+.booking-guest-photo { display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px; }
+.booking-guest-photo[hidden] { display:none; }
+.booking-guest-room-name { display:grid; gap:6px; }
+.booking-guest-room-name span { color:#63726e; font-size:13px; }
+@media (max-width:620px) { .booking-guest-heading { flex:0 0 auto; } .booking-guest-photo { max-height:200px; } }
 .booking-wizard .guest-fields label { font-size:12px; }
 .booking-wizard .guest-fields input { font-size:14px; }
 .booking-wizard .room-option { display:flex; align-items:stretch; border-radius:10px; overflow:hidden; }
@@ -329,3 +335,25 @@ button.cliente-profile:focus-visible { outline: 2px solid #86aa98; outline-offse
   .booking-sede-card .booking-sede-photo img, .booking-wizard .booking-room-photo-frame .booking-room-photo, .booking-sede-body>span b, .calendar-plan-link { transition:none; }
   .booking-sede-card:hover .booking-sede-photo img, .booking-wizard .room-option:hover .booking-room-photo, .booking-sede-card:hover .booking-sede-body>span b, .cliente-app .client-primary:hover:not(:disabled), .cliente-app .client-secondary:hover:not(:disabled), .calendar-plan-link:hover { transform:none; }
 }
+
+.booking-view-photos { position:absolute; left:12px; bottom:12px; z-index:1; padding:8px 11px; border:1px solid #ffffff88; border-radius:6px; background:#123c32e8; color:#fff; font:600 11px 'Hanken Grotesk',sans-serif; cursor:pointer; }
+.room-gallery { width:min(880px,calc(100% - 32px)); max-height:calc(100dvh - 32px); padding:0; border:1px solid #dae4e1; border-radius:16px; background:#fff; color:#173f35; font-family:'Hanken Grotesk',sans-serif; box-shadow:0 24px 80px #08261f40; }
+.room-gallery::backdrop { background:#08261fbb; }
+.room-gallery-state { padding:48px 24px; color:#526b60; text-align:center; }
+.room-gallery-state button { border:0; background:none; color:#246b50; font:inherit; text-decoration:underline; cursor:pointer; }
+.room-gallery header { display:flex; justify-content:space-between; align-items:start; gap:16px; padding:18px 24px; }
+.room-gallery header small { color:#a17945; font-size:10px; font-weight:700; letter-spacing:.1em; }
+.room-gallery h2 { margin:5px 0; font-size:21px; }
+.room-gallery header p { margin:0; color:#72837b; font-size:12px; }
+.room-gallery header button { border:0; background:none; color:#173f35; font-size:28px; cursor:pointer; }
+.room-gallery-view { position:relative; height:min(54dvh,500px); min-height:220px; background:#132a24; }
+.room-gallery-view>img { display:block; width:100%; height:100%; object-fit:contain; }
+.room-gallery-view>button { position:absolute; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:42px; height:42px; border:1px solid #ffffff80; border-radius:50%; background:#173f35d9; color:white; font-size:29px; cursor:pointer; }
+.room-gallery-prev { left:16px; }.room-gallery-next { right:16px; }
+.room-gallery-count { position:absolute; bottom:14px; right:16px; padding:6px 10px; border-radius:20px; background:#102b24d9; color:white; font-size:12px; }
+.room-gallery-thumbnails { display:flex; gap:8px; padding:14px 24px 20px; overflow-x:auto; }
+.room-gallery-thumbnails button { flex:0 0 76px; height:58px; padding:0; overflow:hidden; border:2px solid transparent; border-radius:6px; background:#e5ede8; cursor:pointer; }
+.room-gallery-thumbnails button[aria-pressed=true] { border-color:#32745c; }
+.room-gallery-thumbnails img { display:block; width:100%; height:100%; object-fit:cover; }
+.room-gallery button:focus-visible,.booking-view-photos:focus-visible { outline:3px solid #b48345; outline-offset:2px; }
+@media (max-width:620px) { .room-gallery header { padding:15px; }.room-gallery h2 { font-size:18px; }.room-gallery-view { height:42dvh; }.room-gallery-thumbnails { padding:12px 15px 16px; } }
