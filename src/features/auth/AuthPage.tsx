@@ -7,6 +7,7 @@ import { getDocumentTypes, registerClient } from './auth.api'
 import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
 import { cleanGuestPhone, formatGuestPhone } from '@/features/portal-cliente/reservas/guest-input'
 import logo from '@/assets/casa-andina.png'
+import { NacionalidadSelect } from '@/shared/components/NacionalidadSelect'
 import './auth.css'
 
 type ApiError = {
@@ -25,6 +26,7 @@ const passwordRequirements = (value: string) => [
 ]
 const isPasswordValid = (value: string) => passwordRequirements(value).every(Boolean)
 const naturalPersonNamePattern = /^[\p{L}][\p{L}\s.'-]*$/u
+const todayPeru = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 
 const isDocumentNumberValid = (code: string, value: string) => {
   switch (code) {
@@ -184,7 +186,11 @@ export const AuthPage = () => {
       nombreComercial: personType === 'J' ? String(data.get('nombreComercial') ?? '').trim() || null : null,
       email: String(data.get('email') ?? '').trim().toLowerCase(),
       telefono: phone || null,
-      password
+      password,
+      apellidos: personType === 'N' ? String(data.get('apellidos') ?? '').trim() : null,
+      fechaNacimiento: personType === 'N' ? String(data.get('fechaNacimiento') ?? '') : null,
+      genero: personType === 'N' ? String(data.get('genero') ?? '') : null,
+      nacionalidad: personType === 'N' ? String(data.get('nacionalidad') ?? '').trim() : null
     }
 
     setIsSubmitting(true)
@@ -232,10 +238,16 @@ export const AuthPage = () => {
                     <option value="J">Persona jurídica</option>
                   </select>
                 </label>
-                <label className="auth-field auth-field-wide">
-                  <span>{personType === 'N' ? 'Nombre completo' : 'Razón social'}</span>
-                  <input name="nombreCompleto" autoComplete="name" minLength={3} maxLength={200} required />
+                <label className={`auth-field${personType === 'J' ? ' auth-field-wide' : ''}`}>
+                  <span>{personType === 'N' ? 'Nombres' : 'Razón social'}</span>
+                  <input name="nombreCompleto" autoComplete={personType === 'N' ? 'given-name' : 'organization'} minLength={3} maxLength={200} required />
                 </label>
+                {personType === 'N' && <>
+                  <label className="auth-field"><span>Apellidos</span><input name="apellidos" autoComplete="family-name" maxLength={100} pattern="[\p{L}\p{M}][\p{L}\p{M} .'’\-]*" required /></label>
+                  <label className="auth-field"><span>Fecha de nacimiento</span><input name="fechaNacimiento" type="date" min="1900-01-01" max={todayPeru()} required /></label>
+                  <label className="auth-field"><span>Sexo</span><select name="genero" defaultValue="" required><option value="">Seleccionar</option><option value="F">Femenino</option><option value="M">Masculino</option></select></label>
+                  <label className="auth-field auth-field-wide"><span>Nacionalidad</span><NacionalidadSelect name="nacionalidad" required /></label>
+                </>}
                 {personType === 'J' && (
                   <label className="auth-field auth-field-wide">
                     <span>Nombre comercial <small>Opcional</small></span>
@@ -267,7 +279,7 @@ export const AuthPage = () => {
                     required
                   />
                 </label>
-                <label className="auth-field">
+                <label className="auth-field auth-field-wide">
                   <span>Teléfono <small>Opcional</small></span>
                   <input name="telefono" type="tel" inputMode="tel" autoComplete="tel" placeholder="+51 999 999 999" maxLength={22} pattern="\+?[1-9][0-9 ]{7,20}" title="Usa de 8 a 15 dígitos; puedes iniciar con + y código de país." value={formatGuestPhone(phone)} onChange={event => setPhone(cleanGuestPhone(event.target.value))} />
                 </label>

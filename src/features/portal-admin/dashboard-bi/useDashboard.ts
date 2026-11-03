@@ -7,6 +7,9 @@ export interface DashboardBi {
   kpis: DashboardKpisDto
   reservasSemana: ReservaSemanaSerie[]
   ocupacionSedes: OcupacionSedeDto[]
+  ocupacionHabitaciones: { habitacionId: number; numero: string; tipo: string; nochesReservadas: number; nochesPeriodo: number; ocupacionPct: number }[]
+  serviciosPopulares: { servicioId: number; nombre: string; cantidad: number; reservas: number }[]
+  proyeccion?: { disponible: boolean; motivo: string | null; semanasHistoria: number; habitacionesActivas: number; semanas: { inicio: string; fin: string; reservadasNoches: number; estimadasNoches: number | null; reservadasPct: number; estimadasPct: number | null }[] } | null
   canceladasPeriodo: number
   canales: CanalReservasDto
 }

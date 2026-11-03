@@ -24,6 +24,9 @@ export interface Cliente {
   razonSocial: string | null
   nombreComercial: string | null
   tipoDocumentoId: number | null
+  fechaNacimiento: string | null
+  genero: string | null
+  nacionalidad: string | null
   historial: { reservaId: number; codigoReserva: string; estado: string; fechaCheckIn: string; fechaCheckOut: string; importe: number; sede: string }[]
 }
 export interface ClientesCrm {
@@ -52,4 +55,7 @@ export interface ClienteDatos {
   telefono: string | null
   estado: 'Activo' | 'Inactivo'
   sedeRegistroId: number | null
+  fechaNacimiento: string | null
+  genero: string | null
+  nacionalidad: string | null
 }

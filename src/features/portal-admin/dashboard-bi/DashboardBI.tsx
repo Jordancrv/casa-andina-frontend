@@ -8,6 +8,7 @@ import { CanalesCard } from './components/CanalesCard'
 import { useDashboard, formatSoles, formatVariacion } from './useDashboard'
 import { DashboardReport } from './DashboardReport'
 import { OcupacionProyeccion } from './components/OcupacionProyeccion'
+import { ServiciosPopulares } from './components/ServiciosPopulares'
 
 const Icon = ({ children }: { children: React.ReactNode }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
@@ -64,16 +65,16 @@ export const DashboardBI = () => {
           <CardWrapper titulo="Reservas por semana" nota="Últimas 6 semanas · por fecha de creación" className="db-grid-2__main">
             <BarChart series={data.reservasSemana} onSelectType={setVistaReservas} activeType={vistaReservas} />
           </CardWrapper>
-          <CardWrapper titulo={vistaReservas === 'confirmadas' ? 'Ocupación de la sede' : 'Reservas canceladas'} nota={vistaReservas === 'confirmadas' ? 'Hoy' : 'Creadas en el periodo; estado actual'}>
-            {vistaReservas === 'confirmadas' ? <OcupacionList sedes={data.ocupacionSedes} /> : <div className="db-unavailable"><strong>{data.canceladasPeriodo.toLocaleString('es-PE')} reservas canceladas</strong><p>El sistema no registra motivos de cancelación, por eso no se inventa un desglose.</p></div>}
+          <CardWrapper titulo={vistaReservas === 'confirmadas' ? 'Ocupación por habitación' : 'Reservas canceladas'} nota={vistaReservas === 'confirmadas' ? 'Periodo seleccionado' : 'Creadas en el periodo; estado actual'}>
+            {vistaReservas === 'confirmadas' ? <OcupacionList habitaciones={data.ocupacionHabitaciones} /> : <div className="db-unavailable"><strong>{data.canceladasPeriodo.toLocaleString('es-PE')} reservas canceladas</strong><p>El sistema no registra motivos de cancelación, por eso no se inventa un desglose.</p></div>}
           </CardWrapper>
-        </> : error ? <><CardWrapper titulo="Reservas por semana"><DashboardErrorPanel/></CardWrapper><CardWrapper titulo="Ocupación de la sede"><DashboardErrorPanel/></CardWrapper></> : null}
+        </> : error ? <><CardWrapper titulo="Reservas por semana"><DashboardErrorPanel/></CardWrapper><CardWrapper titulo="Ocupación por habitación"><DashboardErrorPanel/></CardWrapper></> : null}
       </section>
 
-      <section aria-label="Proyección de demanda">
-        {loading ? <SkeletonCard/> : data ? <CardWrapper titulo="Proyección de ocupación" nota="Próximas 4 semanas">
+      <section className="db-grid-equal" aria-label="Proyección y servicios">
+        {loading ? <><SkeletonCard/><SkeletonCard/></> : data ? <><CardWrapper titulo="Proyección de ocupación" nota="Próximas 4 semanas">
           <OcupacionProyeccion />
-        </CardWrapper> : error ? <CardWrapper titulo="Proyección de demanda"><DashboardErrorPanel/></CardWrapper> : null}
+        </CardWrapper><CardWrapper titulo="Servicios más agregados" nota="Periodo seleccionado"><ServiciosPopulares servicios={data.serviciosPopulares} /></CardWrapper></> : error ? <><CardWrapper titulo="Proyección de demanda"><DashboardErrorPanel/></CardWrapper><CardWrapper titulo="Servicios más agregados"><DashboardErrorPanel/></CardWrapper></> : null}
       </section>
 
       <section aria-label="Canales de reserva">

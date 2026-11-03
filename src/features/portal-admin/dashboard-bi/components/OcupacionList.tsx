@@ -1,48 +1,15 @@
-/**
- * OcupacionList.tsx
- * Lista de barras horizontales de ocupación por sede.
- * El color de la barra varía según el porcentaje (verde alto, ámbar medio, rojo bajo).
- */
+import type { DashboardBi } from '../useDashboard'
 
-import type { OcupacionSedeDto } from '@/shared/types/global.types'
-
-interface OcupacionListProps {
-  sedes: OcupacionSedeDto[]
-}
-
-function getBarColor(pct: number): string {
-  if (pct >= 80) return 'db-ocupacion__fill--high'
-  if (pct >= 60) return 'db-ocupacion__fill--mid'
-  return 'db-ocupacion__fill--low'
-}
-
-export function OcupacionList({ sedes }: OcupacionListProps) {
-  return (
-    <div
-      className="db-ocupacion"
-      role="list"
-      aria-label="Ocupación actual por sede"
-    >
-      {sedes.map((s) => (
-        <div
-          key={s.sedeNombre}
-          className="db-ocupacion__row"
-          role="listitem"
-          aria-label={`${s.sedeNombre}: ${s.ocupacionPct}%`}
-        >
-          <span className="db-ocupacion__nombre" title={s.sedeNombre}>
-            {s.sedeNombre.replace('Casa Andina ', '').replace(' Plaza', '')}
-          </span>
-          <div className="db-ocupacion__track" aria-hidden="true">
-            <div
-              className={`db-ocupacion__fill ${getBarColor(s.ocupacionPct)}`}
-              style={{ width: `${s.ocupacionPct}%` }}
-              title={`Cantidad: ${s.cantidad}`}
-            />
-          </div>
-          <span className="db-ocupacion__pct">{s.cantidad}</span>
-        </div>
-      ))}
+export function OcupacionList({ habitaciones }: { habitaciones: DashboardBi['ocupacionHabitaciones'] }) {
+  if (!habitaciones) return <p className="db-empty">Actualiza el backend para consultar la ocupación por habitación.</p>
+  if (!habitaciones.length) return <p className="db-empty">No hay habitaciones activas en esta sede.</p>
+  return <div className="db-ocupacion-rooms">
+    <p className="db-ocupacion-caption">Noches reservadas en el periodo sobre el total de noches del periodo.</p>
+    <div className="db-ocupacion db-ocupacion--scroll" role="list" aria-label="Ocupación por habitación en el periodo">
+      {habitaciones.map(h => <div key={h.habitacionId} className="db-ocupacion__room" role="listitem">
+        <div className="db-ocupacion__room-head"><span><strong>Habitación {h.numero}</strong><small>{h.tipo}</small></span><span><strong>{h.ocupacionPct.toFixed(1)}%</strong><small>{h.nochesReservadas} de {h.nochesPeriodo} noches</small></span></div>
+        <div className="db-ocupacion__track" role="progressbar" aria-label={`Habitación ${h.numero}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={h.ocupacionPct}><div className="db-ocupacion__fill db-ocupacion__fill--high" style={{ width: `${h.ocupacionPct}%` }} /></div>
+      </div>)}
     </div>
-  )
+  </div>
 }

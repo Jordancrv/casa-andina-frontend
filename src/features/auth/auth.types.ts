@@ -32,6 +32,10 @@ export interface RegisterClientRequest {
   email: string
   telefono: string | null
   password: string
+  apellidos: string | null
+  fechaNacimiento: string | null
+  genero: string | null
+  nacionalidad: string | null
 }
 
 export interface DocumentTypeOption {

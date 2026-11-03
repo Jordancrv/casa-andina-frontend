@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { actualizarCliente, crearCliente, crmError } from './clientes.api'
 import type { CatalogosCrm, Cliente, ClienteDatos } from './clientes.types'
+import { NacionalidadSelect } from '@/shared/components/NacionalidadSelect'
 
 interface Props { cliente: Cliente | null; catalogos: CatalogosCrm; sedeInicial: string; onClose: () => void; onSaved: (nuevo: boolean, sedeId: number | null) => Promise<void> }
 
@@ -14,6 +15,7 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
     tipoDocumentoId: cliente?.tipoDocumentoId ?? 0, numeroDocumento: cliente?.documentoNumero ?? '',
     correoNotificacion: cliente?.correoNotificacion ?? '', telefono: cliente?.telefono ?? '',
     estado: cliente?.estado ?? 'Activo',
+    fechaNacimiento: cliente?.fechaNacimiento?.slice(0, 10) ?? '', genero: cliente?.genero ?? '', nacionalidad: cliente?.nacionalidad ?? '',
     sedeRegistroId: cliente ? cliente.sedeRegistroId : catalogos.sedeAsignadaId ?? (Number(sedeInicial) || null),
   }))
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +24,9 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
       const normalizados: ClienteDatos = { ...datos, nombre: datos.nombre.trim(),
         apellidos: datos.tipoPersona === 'N' ? datos.apellidos?.trim() || null : null,
         nombreComercial: datos.tipoPersona === 'J' ? datos.nombreComercial?.trim() || null : null,
+        fechaNacimiento: datos.tipoPersona === 'N' ? datos.fechaNacimiento || null : null,
+        genero: datos.tipoPersona === 'N' ? datos.genero || null : null,
+        nacionalidad: datos.tipoPersona === 'N' ? datos.nacionalidad?.trim() || null : null,
         correoNotificacion: datos.correoNotificacion?.trim() || null, telefono: datos.telefono?.trim() || null,
         numeroDocumento: datos.numeroDocumento.trim().toUpperCase() }
       if (cliente) await actualizarCliente(cliente.clienteId, normalizados)
@@ -43,7 +48,9 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
         <legend className="clients-sr-only">Datos del perfil</legend>
         <label>Tipo de persona<select value={datos.tipoPersona} disabled={!!cliente} onChange={event => { setDatos(prev => ({ ...prev, tipoPersona: event.target.value as 'N' | 'J', tipoDocumentoId: 0 })); setError(null) }}><option value="N">Persona natural</option><option value="J">Persona jurídica</option></select></label>
         <label>{datos.tipoPersona === 'N' ? 'Nombres' : 'Razón social'}<input autoFocus required maxLength={200} value={datos.nombre} onChange={event => set('nombre', event.target.value)} autoComplete="off" /></label>
-        {datos.tipoPersona === 'N' ? <label>Apellidos<input maxLength={100} value={datos.apellidos ?? ''} onChange={event => set('apellidos', event.target.value)} autoComplete="off" /></label> : <label>Nombre comercial <small>Opcional</small><input maxLength={150} value={datos.nombreComercial ?? ''} onChange={event => set('nombreComercial', event.target.value)} /></label>}
+        {datos.tipoPersona === 'N' ? <><label>Apellidos<input required={!cliente} maxLength={100} value={datos.apellidos ?? ''} onChange={event => set('apellidos', event.target.value)} autoComplete="family-name" /></label>
+          <div className="clients-form-pair"><label>Fecha de nacimiento<input required={!cliente} type="date" min="1900-01-01" max={new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())} value={datos.fechaNacimiento ?? ''} onChange={event => set('fechaNacimiento', event.target.value)} /></label><label>Sexo<select required={!cliente} value={datos.genero ?? ''} onChange={event => set('genero', event.target.value)}><option value="">Seleccionar</option><option value="F">Femenino</option><option value="M">Masculino</option></select></label></div>
+          <label>Nacionalidad<NacionalidadSelect required={!cliente} value={datos.nacionalidad ?? ''} onChange={value => set('nacionalidad', value)} /></label></> : <label>Nombre comercial <small>Opcional</small><input maxLength={150} value={datos.nombreComercial ?? ''} onChange={event => set('nombreComercial', event.target.value)} /></label>}
         <div className="clients-form-pair"><label>Documento<select required value={datos.tipoDocumentoId || ''} onChange={event => set('tipoDocumentoId', Number(event.target.value))}><option value="">Selecciona</option>{tipos.map(t => <option key={t.id} value={t.id}>{t.codigo}</option>)}</select></label><label>Número<input required minLength={tipo?.longitudMinima} maxLength={tipo?.longitudMaxima ?? 20} pattern={tipo?.codigo === 'DNI' ? '[0-9]{8}' : tipo?.codigo === 'RUC' ? '[0-9]{11}' : '[A-Za-z0-9]+'} inputMode={tipo?.codigo === 'DNI' || tipo?.codigo === 'RUC' ? 'numeric' : 'text'} value={datos.numeroDocumento} onChange={event => set('numeroDocumento', event.target.value.replace(/\s/g, '').toUpperCase())} /></label></div>
         <label>Correo de notificación <small>Opcional</small><input type="email" maxLength={150} value={datos.correoNotificacion ?? ''} onChange={event => set('correoNotificacion', event.target.value)} placeholder="cliente@ejemplo.com" /></label>
         <label>Teléfono <small>Opcional</small><input type="tel" maxLength={16} pattern="\+?[0-9]{7,15}" value={datos.telefono ?? ''} onChange={event => set('telefono', event.target.value)} placeholder="+51987654321" /></label>

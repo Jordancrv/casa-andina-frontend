@@ -1,3 +1,4 @@
+import { limiteCancelacion } from './cancelacion'
 import { StayStatus } from '@/shared/ui/StayStatus'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -25,7 +26,7 @@ function ConfirmarCancelacion({ reserva, onClose, onCancelled }: { reserva: Rese
   return <dialog ref={ref} className="cancel-reservation-dialog" aria-labelledby="cancel-title" onCancel={event => { event.preventDefault(); if (!cancel.isPending) onClose() }}>
     <header><div><p>CANCELACIÓN DE RESERVA</p><h2 id="cancel-title">¿Deseas cancelar tu reserva?</h2></div><button type="button" onClick={onClose} disabled={cancel.isPending} aria-label="Cerrar">×</button></header>
     <div className="cancel-reservation-body"><p>Se cancelará la reserva <strong>{reserva.codigo}</strong> y sus habitaciones quedarán disponibles.</p>
-      <div className="cancel-reservation-note"><strong>Sobre la devolución</strong><p>El plazo indicado para una devolución es de 5 a 10 días hábiles según el método de pago. En este sistema el pago es simulado: no se realiza ningún cobro ni se procesará una devolución real.</p></div>
+      <div className="cancel-reservation-note"><strong>Sobre la devolución</strong><p>El plazo de devolución del dinero es de 5 a 10 días hábiles, dependiendo del método de pago utilizado o del banco. En este sistema el pago es simulado: no se realiza ningún cobro ni se procesará una devolución real.</p></div>
       {cancel.isError && <p className="client-alert" role="alert">{error || 'No se pudo cancelar la reserva. Actualiza e inténtalo nuevamente.'}</p>}
     </div><footer><button type="button" className="client-secondary" disabled={cancel.isPending} onClick={onClose}>Volver</button><button type="button" className="cancel-reservation-confirm" disabled={cancel.isPending} onClick={() => cancel.mutate()}>{cancel.isPending ? 'Cancelando…' : 'Sí, cancelar reserva'}</button></footer>
   </dialog>
@@ -36,8 +37,11 @@ export function ReservaDetail({ reserva, onClose, onCancelled }: { reserva: Rese
   const [confirmCancel, setConfirmCancel] = useState(false)
   const { usuario } = useAuth()
   const detail = useQuery({ queryKey: ['reserva-detalle', usuario?.token, reserva.reservaId], queryFn: async () => await api.get(`/reservas/${reserva.reservaId}/detalle`) as ReservaDetalles, enabled: !!usuario })
-  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
-  const puedeCancelar = reserva.estado === 'Reservado' && reserva.estadoEstadia === 'Reservado' && reserva.fechaCheckIn.slice(0, 10) >= hoy
+  const [ahora, setAhora] = useState(() => Date.now())
+  const limite = limiteCancelacion(reserva.fechaCheckIn)
+  const plazo = new Intl.DateTimeFormat('es-PE', { dateStyle: 'long', timeStyle: 'short', timeZone: 'America/Lima' }).format(new Date(limite))
+  useEffect(() => { const timer = window.setInterval(() => setAhora(Date.now()), 1000); return () => window.clearInterval(timer) }, [])
+  const puedeCancelar = reserva.estado === 'Reservado' && reserva.estadoEstadia === 'Reservado' && ahora <= limite
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -69,7 +73,8 @@ export function ReservaDetail({ reserva, onClose, onCancelled }: { reserva: Rese
       <section className="reservation-detail-section"><h4>Pagos registrados</h4>{!reserva.pagos.length ? <p>No hay pagos registrados.</p> : <ul className="reservation-payment-list">{reserva.pagos.map(pago => <li key={pago.pagoId}><div><strong>{pago.metodoPago}</strong><span>{pago.estado} · Simulado</span><small>{date(pago.fechaCreacion)}</small></div><div><strong>{money(pago.montoAplicado, pago.moneda)}</strong><small>Aplicado a esta reserva</small></div></li>)}</ul>}</section>
       <div className="reservation-detail-total"><span>Total de la reserva</span><strong>{money(reserva.montoTotal)}</strong></div>
       {reserva.comprobanteDisponible && <section className="reservation-detail-section"><h4>{reserva.tipoComprobante ?? 'Comprobante'} de reserva</h4><p className="reservation-receipt-number">{reserva.numeroComprobante}</p><ComprobanteActions reservaId={reserva.reservaId} tipo={reserva.tipoComprobante} numero={reserva.numeroComprobante} /></section>}
-      {puedeCancelar && <section className="reservation-detail-section"><h4>¿Cambiaste de planes?</h4><p>Puedes cancelar la reserva antes del check-in.</p><button type="button" className="cancel-reservation-link" onClick={() => setConfirmCancel(true)}>Cancelar reserva</button></section>}
+      {puedeCancelar && <section className="reservation-detail-section"><h4>¿Cambiaste de planes?</h4><p>Puedes cancelar hasta el {plazo} (hora de Perú), dos días antes de la entrada.</p><button type="button" className="cancel-reservation-link" onClick={() => setConfirmCancel(true)}>Cancelar reserva</button></section>}
+      {reserva.estado === 'Reservado' && !puedeCancelar && <section className="reservation-detail-section"><h4>Cancelación no disponible</h4><p>El plazo finaliza el {plazo} (hora de Perú). No se permite cancelar fuera del plazo ni después de iniciar la estadía.</p></section>}
     </div>
     {confirmCancel && <ConfirmarCancelacion reserva={reserva} onClose={() => setConfirmCancel(false)} onCancelled={onCancelled} />}
   </dialog>

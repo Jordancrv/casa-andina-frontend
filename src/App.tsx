@@ -17,6 +17,7 @@ import { Usuarios } from '@/features/portal-admin/usuarios/Usuarios'
 import { Clientes } from '@/features/portal-admin/clientes/Clientes'
 import { Sedes } from '@/features/portal-admin/sedes/Sedes'
 import { Reportes } from '@/features/portal-admin/reportes/Reportes'
+import { Auditoria } from '@/features/portal-admin/auditoria/Auditoria'
 import { useAuth } from '@/app/providers/auth-context'
 import { AuthPage } from '@/features/auth/AuthPage'
 import { ClienteShell } from '@/features/portal-cliente/ClienteShell'
@@ -35,6 +36,7 @@ const RequireAccess = ({ client = false, children }: { client?: boolean; childre
   if (usuario.rol === 'Cliente') return <Navigate to="/cliente" replace />
   if (access.loading) return <p className="p-8">Cargando accesos…</p>
   if (access.error) return <div className="p-8"><p>No se pudieron verificar tus accesos.</p><button onClick={access.refresh}>Reintentar</button></div>
+  if (location.pathname === '/admin/auditoria') return usuario.rol === 'Administrador' ? children : <Navigate to={access.home} replace />
   if (location.pathname === '/admin' || location.pathname === '/admin/perfil' || access.can(SECTION_PERMISSIONS[location.pathname])) return children
   return <Navigate to={access.home} replace />
 }
@@ -62,6 +64,7 @@ const AppContent = () => {
         <Route path="/admin/sedes"        element={<RequireAccess><AdminShell><Sedes /></AdminShell></RequireAccess>} />
         <Route path="/admin/clientes"     element={<RequireAccess><AdminShell><Clientes /></AdminShell></RequireAccess>} />
         <Route path="/admin/reportes"     element={<RequireAccess><AdminShell><Reportes /></AdminShell></RequireAccess>} />
+        <Route path="/admin/auditoria"    element={<RequireAccess><AdminShell><Auditoria /></AdminShell></RequireAccess>} />
 
         <Route path="/admin/roles" element={<RequireAccess><AdminShell><Roles /></AdminShell></RequireAccess>} />
         {/* Portal Cliente — rol: Cliente */}

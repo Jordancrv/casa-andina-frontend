@@ -69,6 +69,7 @@
 .users-confirm-content footer { display: flex; justify-content: end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid #dae4e1; }
 .users-confirm-content footer button { min-height: 38px; padding: 0 14px; border: 1px solid #cddbd4; background: white; color: #315c45; font: inherit; font-size: 11px; cursor: pointer; }
 .users-confirm-content footer .users-confirm-danger { border-color: #8a4036; background: #8a4036; color: white; }
+.users-confirm-content footer .users-confirm-activate { border-color: #173f35; background: #173f35; color: white; }
 .users-confirm-content button:disabled { opacity: .55; cursor: not-allowed; }
 .users-confirm-content button:focus-visible { outline: 2px solid #86aa98; outline-offset: 2px; }
 .users-native-dialog .users-personal-form { box-sizing: border-box; width: 100%; height: auto; padding: 26px; gap: 18px; box-shadow: none; }

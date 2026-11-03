@@ -9,7 +9,7 @@ import './recepcion.css'
 interface RoomStay {
   id: number; codigoReserva: string; numero: string; tipo: string
   entradaPrevista: string; salidaPrevista: string; entradaReal: string | null; salidaReal: string | null
-  estadoReserva: string; estadoHabitacion: string
+  estadoReserva: string; estadoHabitacion: string; entradaAutomatica: boolean; salidaAutomatica: boolean
   huespedes: { nombre: string; esTitular: boolean }[]
 }
 const stayStatus = (room: RoomStay) => room.salidaReal ? 'Estadía finalizada' : room.entradaReal ? 'Estadía en curso' : room.estadoReserva
@@ -25,13 +25,13 @@ function StayDialog({ room, close, refresh }: { room: RoomStay; close: () => voi
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const checkout = Boolean(room.entradaReal)
-  const allowed = can(checkout ? "recepcion.salida" : "recepcion.ingreso") && !room.salidaReal && room.estadoReserva === 'Reservado' && (checkout || (room.estadoHabitacion === 'Disponible' && today() >= room.entradaPrevista.slice(0,10) && today() < room.salidaPrevista.slice(0,10)))
+  const allowed = checkout && can("recepcion.salida") && !room.salidaReal && room.estadoReserva === 'Reservado'
   useEffect(() => { const dialog=ref.current; dialog?.showModal(); return () => dialog?.close() }, [])
   const confirm = async () => {
     if (busy || !verified || !allowed || done) return
     setBusy(true); setError('')
     try {
-      await api.post(`/recepcion/${room.id}/${checkout ? 'check-out' : 'check-in'}`)
+      await api.post(`/recepcion/${room.id}/check-out`)
       setDone(true)
       await refresh()
     } catch (reason) {
@@ -40,14 +40,14 @@ function StayDialog({ room, close, refresh }: { room: RoomStay; close: () => voi
   }
   return <dialog ref={ref} className="reception-dialog" aria-labelledby="stay-dialog-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>
     <header><div><p>RECEPCIÓN · {room.codigoReserva}</p><h2 id="stay-dialog-title">Habitación {room.numero}</h2></div><button type="button" disabled={busy} aria-label="Cerrar detalle" onClick={close}>×</button></header>
-    <div className="reception-dialog-body"><StayStatus status={done ? (checkout ? 'Estadía finalizada' : 'Estadía en curso') : stayStatus(room)} detailed /><p>{room.tipo}</p><dl><div><dt>Entrada prevista</dt><dd>{planned(room.entradaPrevista)}</dd></div><div><dt>Salida prevista</dt><dd>{planned(room.salidaPrevista)}</dd></div><div><dt>Check-in real</dt><dd>{actual(room.entradaReal)}</dd></div><div><dt>Check-out real</dt><dd>{actual(room.salidaReal)}</dd></div></dl>
+    <div className="reception-dialog-body"><StayStatus status={done ? 'Estadía finalizada' : stayStatus(room)} detailed /><p>{room.tipo}</p><dl><div><dt>Entrada prevista</dt><dd>{planned(room.entradaPrevista)}</dd></div><div><dt>Salida prevista</dt><dd>{planned(room.salidaPrevista)}</dd></div><div><dt>Check-in registrado</dt><dd>{actual(room.entradaReal)}{room.entradaAutomatica && ' · Automático'}</dd></div><div><dt>Check-out registrado</dt><dd>{actual(room.salidaReal)}{room.salidaAutomatica && ' · Automático'}</dd></div></dl>
       <h3>Huéspedes asignados</h3><ul>{room.huespedes.map((guest,index) => <li key={index}>{guest.nombre}{guest.esTitular && <small> Principal</small>}</li>)}</ul>
-      {done ? <p className="reception-success" role="status">{checkout ? 'Check-out registrado. La habitación queda bloqueada hasta su preparación.' : 'Check-in registrado. La habitación está ocupada.'}</p> : <>
+      {done ? <p className="reception-success" role="status">Check-out registrado. La habitación queda bloqueada hasta su preparación.</p> : <>
         {error && <p className="reception-error" role="alert">{error}</p>}
-        {!allowed ? <p className="reception-note">Esta habitación no permite movimientos ahora. Para ingresar requiere fecha vigente, una reserva y habitación disponible.</p> : <>
-          <p className="reception-note">{checkout ? 'La salida finalizará esta estadía. La habitación quedará bloqueada; el personal deberá marcarla disponible desde Habitaciones cuando esté preparada.' : 'Confirma la identidad de los huéspedes y que la habitación está preparada antes de entregar el acceso.'}</p>
-          <label className="reception-confirm"><input type="checkbox" checked={verified} disabled={busy} onChange={event => setVerified(event.target.checked)} />{checkout ? 'He revisado la salida y los pagos de la reserva' : 'He verificado a los huéspedes y la entrega de la habitación'}</label>
-          <button type="button" className="reception-primary" disabled={busy || !verified} onClick={() => void confirm()}>{busy ? 'Registrando…' : checkout ? 'Confirmar check-out' : 'Confirmar check-in'}</button>
+        {!allowed ? <p className="reception-note">{room.salidaReal || room.estadoReserva !== 'Reservado' ? 'Esta estadía no admite movimientos.' : <>El check-in se registra automáticamente desde las 10:00 a. m. de Perú cuando la habitación está disponible. Si sigue ocupada por otra estadía, bloqueada o en mantenimiento, el ingreso queda pendiente.</>}</p> : <>
+          <p className="reception-note">La salida finalizará esta estadía. La habitación quedará bloqueada; el personal deberá marcarla disponible desde Habitaciones cuando esté preparada.</p>
+          <label className="reception-confirm"><input type="checkbox" checked={verified} disabled={busy} onChange={event => setVerified(event.target.checked)} />He revisado la salida y los pagos de la reserva</label>
+          <button type="button" className="reception-primary" disabled={busy || !verified} onClick={() => void confirm()}>{busy ? 'Registrando…' : 'Confirmar check-out'}</button>
         </>}
       </>}
     </div>
@@ -63,10 +63,10 @@ export function Recepcion() {
   const [selected,setSelected]=useState<RoomStay | null>(null)
   const [page,setPage]=useState(1)
   const pageSize=20
-  const query=useQuery({ queryKey:['recepcion',view,date,search,roomNumber,page], queryFn:async () => await api.get('/recepcion',{params:{vista:view,fecha:date,codigo:search || undefined,habitacion:roomNumber || undefined,pagina:page,tamanoPagina:pageSize}}) as unknown as RoomStay[] })
+  const query=useQuery({ refetchInterval: 30000, queryKey:['recepcion',view,date,search,roomNumber,page], queryFn:async () => await api.get('/recepcion',{params:{vista:view,fecha:date,codigo:search || undefined,habitacion:roomNumber || undefined,pagina:page,tamanoPagina:pageSize}}) as unknown as RoomStay[] })
   const rooms = view === 'historial' ? query.data?.slice(0,pageSize) : query.data
   const hasNext = view === 'historial' && (query.data?.length ?? 0) > pageSize
-  return <section className="reception-page"><header className="reception-heading"><p>OPERACIÓN HOTELERA</p><h1>Recepción</h1><span>Registra ingresos y salidas por habitación de tu sede.</span></header>
+  return <section className="reception-page"><header className="reception-heading"><p>OPERACIÓN HOTELERA</p><h1>Recepción</h1><span>Check-in automático a las 10:00 a. m. · Checkout manual o automático a las 00:00 del día siguiente a la salida. Hora de Perú.</span></header>
     <div className="reception-tabs" aria-label="Vista de recepción">{[['llegadas','Llegadas'],['estadia','En estadía'],['salidas','Salidas'],['historial','Historial']].map(([value,label]) => <button type="button" key={value} aria-pressed={view===value} className={view===value ? 'active' : ''} onClick={() => {setView(value);setSearch('');setCode('');setPage(1)}}>{label}</button>)}</div>
     <form className="reception-filters" onSubmit={event => {event.preventDefault();setPage(1);setSearch(code.trim().toUpperCase())}}><label>Fecha de referencia<input type="date" required value={date} onChange={event => setDate(event.target.value)} disabled={view==='estadia' || view==='historial' || !!search} /></label><label>Habitación<input maxLength={20} placeholder="Ej. 201" value={roomNumber} onChange={event => {setPage(1);setRoomNumber(event.target.value)}} /></label><label>Código de reserva<input maxLength={12} placeholder="CA-XXXXXXXXX" value={code} onChange={event => setCode(event.target.value)} /></label><button className="reception-primary" type="submit">Buscar reserva</button><button type="button" onClick={() => {setSearch('');setCode('');setRoomNumber('');setPage(1);void query.refetch()}}>Actualizar / limpiar</button></form>
     {view !== 'historial' && <p className="reception-note">{search ? 'Búsqueda por código en todas las fechas de tu sede (reservas activas).' : view==='llegadas' ? 'Ingresos pendientes dentro del periodo contratado para la fecha elegida.' : view==='salidas' ? 'Salidas previstas hasta la fecha elegida, incluidas las vencidas.' : 'Habitaciones con check-in registrado y sin check-out.'}</p>}

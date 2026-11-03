@@ -107,6 +107,9 @@ const IcoReportes = () => (
     <path d="M4 19V5m0 14h17M8 15l3-4 3 2 5-7" />
   </svg>
 )
+const IcoAuditoria = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 3h8l4 4v14H4V3zM15 3v5h5M8 12h8M8 16h8"/></svg>
+)
 
 // ---------------------------------------------------------------------------
 // Ítems de navegación con SVG icon como ReactNode
@@ -123,6 +126,7 @@ const NAV_ITEMS: { label: string; path: string; icon: React.ReactNode }[] = [
   { label: 'Servicios',    path: '/admin/servicios',    icon: <IcoServicios /> },
   { label: 'Comodidades', path: '/admin/comodidades', icon: <IcoComodidades /> },
   { label: 'Reportes',     path: '/admin/reportes',     icon: <IcoReportes /> },
+  { label: 'Auditoría',    path: '/admin/auditoria',    icon: <IcoAuditoria /> },
   { label: 'Sedes',        path: '/admin/sedes',         icon: <IcoSedes /> },
 ]
 
@@ -147,7 +151,7 @@ export function AdminShell({
   const { pathname } = useLocation()
   const { usuario, logout } = useAuth()
   const access = useAccess()
-  const navItems = NAV_ITEMS.filter(item => access.can(SECTION_PERMISSIONS[item.path]))
+  const navItems = NAV_ITEMS.filter(item => item.path === '/admin/auditoria' ? usuario?.rol === 'Administrador' : access.can(SECTION_PERMISSIONS[item.path]))
 
   return (
     <div className="shell">
