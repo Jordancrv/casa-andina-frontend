@@ -4,7 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import type { ReservaDto } from '@/shared/types/global.types'
 import { getReservas } from '../reservas/reservas.api'
 import { ReservaDetail } from '../reservas/ReservaDetail'
-import { conectarCalendario, desconectarCalendario, getEstadoCalendario, sincronizarCalendario, type EstadoCalendario } from './calendario.api'
+import { conectarCalendario, finalizarConexionCalendario, desconectarCalendario, getEstadoCalendario, sincronizarCalendario, type EstadoCalendario } from './calendario.api'
 import { containsStay, dateKey, monthDays, parseDate, todayPeru } from './calendar-dates'
 import '../cliente.css'
 import './calendario.css'
@@ -34,7 +34,20 @@ export function MiCalendario() {
   const [disconnectConfirm, setDisconnectConfirm] = useState(false)
 
   useEffect(() => {
-    if (params.has('google')) setParams(previous => { previous.delete('google'); return previous }, { replace: true })
+    const ticket = params.get('google_ticket')
+    if (ticket) {
+      const correlacion = sessionStorage.getItem('calendar-correlation')
+      sessionStorage.removeItem('calendar-correlation')
+      setParams(previous => { previous.delete('google_ticket'); return previous }, { replace: true })
+      if (!correlacion) return
+      void Promise.resolve().then(() => { setBusy(true); return finalizarConexionCalendario(ticket, correlacion) }).then(async result => {
+        setConnection(await getEstadoCalendario())
+        setNotice(result.sincronizado ? callbackMessages.conectado : 'Cuenta conectada. No se pudieron sincronizar las reservas; intenta sincronizar ahora.')
+      }).catch(() => setNotice(callbackMessages.error)).finally(() => setBusy(false))
+    } else if (params.has('google')) {
+      sessionStorage.removeItem('calendar-correlation')
+      setParams(previous => { previous.delete('google'); return previous }, { replace: true })
+    }
   }, [params, setParams])
   useEffect(() => {
     let active = true
@@ -52,7 +65,10 @@ export function MiCalendario() {
   const connect = async () => {
     setBusy(true); setConnectionError('')
     try {
-      const { url } = await conectarCalendario()
+      const bytes = crypto.getRandomValues(new Uint8Array(32))
+      const correlacion = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+      sessionStorage.setItem('calendar-correlation', correlacion)
+      const { url } = await conectarCalendario(correlacion)
       if (new URL(url).origin !== 'https://accounts.google.com') throw new Error('Destino no válido')
       window.location.assign(url)
     } catch (err) { setConnectionError(errorText(err)); setBusy(false) }
