@@ -1,12 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '@/app/providers/auth-context'
 import { getRoleHomeRoute } from '@/shared/constants/role-access'
 import { getDocumentTypes, registerClient } from './auth.api'
 import type { DocumentTypeOption, RegisterClientRequest } from './auth.types'
-import { RecaptchaCheckbox } from './RecaptchaCheckbox'
-import { isRecaptchaConfigured } from './recaptcha.config'
 import { cleanGuestPhone, formatGuestPhone } from '@/features/portal-cliente/reservas/guest-input'
 import logo from '@/assets/casa-andina.png'
 import './auth.css'
@@ -99,13 +97,6 @@ export const AuthPage = () => {
   const [documentCode, setDocumentCode] = useState('')
   const [documentNumber, setDocumentNumber] = useState('')
   const [phone, setPhone] = useState('')
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
-  const [captchaAttempt, setCaptchaAttempt] = useState(0)
-  const [captchaRequired, setCaptchaRequired] = useState(false)
-  const handleCaptchaToken = useCallback((token: string | null) => {
-    setCaptchaToken(token)
-    if (token) setCaptchaRequired(false)
-  }, [])
 
   useEffect(() => {
     if (!isRegister) return
@@ -130,16 +121,11 @@ export const AuthPage = () => {
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
-    setCaptchaRequired(false)
-    if (isRecaptchaConfigured && !captchaToken) {
-      setCaptchaRequired(true)
-      return
-    }
     setIsSubmitting(true)
     const data = new FormData(event.currentTarget)
 
     try {
-      await login(String(data.get('email')), String(data.get('password')), captchaToken)
+      await login(String(data.get('email')), String(data.get('password')))
     } catch (error) {
       setErrorMessage(
         axios.isAxiosError(error) && error.response?.status === 401
@@ -148,8 +134,6 @@ export const AuthPage = () => {
       )
     } finally {
       setIsSubmitting(false)
-      setCaptchaToken(null)
-      setCaptchaAttempt(value => value + 1)
     }
   }
 
@@ -318,11 +302,6 @@ export const AuthPage = () => {
                 </button>
               </div>
             </div>
-
-            {!isRegister && <div className="auth-captcha-group">
-              <RecaptchaCheckbox onToken={handleCaptchaToken} resetKey={captchaAttempt} />
-              {captchaRequired && <p className="auth-captcha-required" role="alert">Completa la verificación reCAPTCHA antes de iniciar sesión.</p>}
-            </div>}
 
             {isRegister && (
               <>
