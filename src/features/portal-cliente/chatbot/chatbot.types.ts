@@ -15,6 +15,7 @@ export interface PreferenciasConversacion {
   adultos: number | null
   ciudad: string | null
   destinoFlexible: boolean
+  evitarLluvia?: boolean
 }
 export interface RespuestaConversacion {
   mensaje: string
@@ -22,6 +23,8 @@ export interface RespuestaConversacion {
   preferencias: PreferenciasConversacion
   plan: PlanViaje | null
   sugerencias: string[]
+  atractivos?: { ciudad: string; lugares: string[]; fuenteUrl: string } | null
+  atractivosAdicionales?: { ciudad: string; lugares: string[]; fuenteUrl: string }[] | null
 }
 export interface ConsultaConversacion {
   mensaje: string
@@ -41,6 +44,7 @@ export interface PlanViaje {
   resumen: string
   usaIa: boolean
   generadoEn: string
+  filtroLluvia?: boolean
   recomendaciones: {
     sedeId: number
     sedeNombre: string
@@ -55,6 +59,8 @@ export interface PlanViaje {
     habitacionId?: number | null
     fotoUrl?: string | null
     reservasRecientes?: number
+    climaFavorable?: boolean
+    motivoFiltroClima?: string | null
   }[]
   avisos: string[]
 }

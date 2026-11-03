@@ -12,12 +12,25 @@ export interface TurnoViaje {
   error?: string
 }
 
-export function usePlanViaje() {
-  const [turnos, setTurnos] = useState<TurnoViaje[]>([])
+interface ChatGuardado { id: string; titulo: string; turnos: TurnoViaje[]; preferencias: PreferenciasConversacion | null }
+interface SesionChats { turnos: TurnoViaje[]; preferencias: PreferenciasConversacion | null; anteriores: ChatGuardado[] }
+
+export function usePlanViaje(account: string) {
+  const storageKey = account ? `casa-andina-chats-${account}` : ''
+  const [saved] = useState<SesionChats>(() => {
+    try { const raw = storageKey && sessionStorage.getItem(storageKey); return raw ? JSON.parse(raw) as SesionChats : { turnos: [], preferencias: null, anteriores: [] } }
+    catch { return { turnos: [], preferencias: null, anteriores: [] } }
+  })
+  const [turnos, setTurnos] = useState<TurnoViaje[]>(() => (saved.turnos ?? []).map(t => t.estado === 'enviando' ? { ...t, estado:'cancelado' } : t))
+  const [anteriores, setAnteriores] = useState<ChatGuardado[]>(saved.anteriores ?? [])
   const [isLoading, setIsLoading] = useState(false)
   const active = useRef<{ controller: AbortController; id: number } | null>(null)
-  const preferences = useRef<PreferenciasConversacion | null>(null)
-  const sequence = useRef(0)
+  const preferences = useRef<PreferenciasConversacion | null>(saved.preferencias ?? null)
+  const sequence = useRef(Math.max(0, ...((saved.turnos ?? []).map(t => t.id))))
+  useEffect(() => {
+    if (!storageKey) return
+    try { sessionStorage.setItem(storageKey, JSON.stringify({ turnos, preferencias: preferences.current, anteriores })) } catch { /* El chat sigue funcionando sin almacenamiento disponible. */ }
+  }, [storageKey, turnos, anteriores])
   useEffect(() => () => active.current?.controller.abort(), [])
   const ejecutar = async (consulta: ConsultaConversacion, id: number) => {
     const controller = new AbortController()
@@ -63,6 +76,25 @@ export function usePlanViaje() {
     request.controller.abort(); active.current=null; setIsLoading(false)
     setTurnos(current => current.map(t => t.id === request.id ? { ...t, estado:'cancelado' } : t))
   }
-  const reiniciar = () => { active.current?.controller.abort(); active.current=null; preferences.current=null; setIsLoading(false); setTurnos([]) }
-  return { turnos, isLoading, consultar, cancelar, reiniciar, reintentar }
+  const guardarActual = (): ChatGuardado | null => {
+    const persistibles = turnos.filter(t => t.estado !== 'enviando')
+    if (!persistibles.length) return null
+    return { id: crypto.randomUUID(), titulo: persistibles[0].consulta.mensaje.slice(0, 65), turnos: persistibles, preferencias: preferences.current }
+  }
+  const cambiarChat = (chat?: ChatGuardado) => {
+    active.current?.controller.abort(); active.current = null; setIsLoading(false)
+    const actual = guardarActual()
+    setAnteriores(current => [...(actual ? [actual] : []), ...current.filter(item => item.id !== chat?.id)].slice(0, 20))
+    preferences.current = chat?.preferencias ?? null
+    sequence.current = Math.max(0, ...(chat?.turnos.map(t => t.id) ?? []))
+    setTurnos(chat?.turnos ?? [])
+  }
+  const reiniciar = () => cambiarChat()
+  const seleccionarDestino = (ciudad: string) => {
+    if (!preferences.current) return
+    preferences.current = { ...preferences.current, ciudad, destinoFlexible: false }
+    try { if (storageKey) sessionStorage.setItem(storageKey, JSON.stringify({ turnos, preferencias: preferences.current, anteriores })) } catch { /* La conversación sigue disponible en memoria. */ }
+  }
+  const seleccionarChat = (id: string) => { const chat = anteriores.find(item => item.id === id); if (chat) cambiarChat(chat) }
+  return { turnos, isLoading, consultar, cancelar, reiniciar, reintentar, anteriores, seleccionarChat, seleccionarDestino }
 }

@@ -9,7 +9,7 @@ export function ChatFlotante() {
  const input = useRef<HTMLTextAreaElement>(null)
  const log = useRef<HTMLDivElement>(null)
  const navigate = useNavigate()
- const { turnos, isLoading, consultar, cancelar, reintentar } = useConversation()
+ const { turnos, isLoading, consultar, cancelar, reintentar, reiniciar, anteriores, seleccionarChat } = useConversation()
  useEffect(() => { if (open) input.current?.focus() }, [open])
  useEffect(() => { if (open && log.current) log.current.scrollTop = log.current.scrollHeight }, [turnos, open])
  const submit = (event: FormEvent) => { event.preventDefault(); if (!mensaje.trim() || isLoading) return; void consultar(mensaje.trim()); setMensaje('') }
@@ -18,10 +18,11 @@ export function ChatFlotante() {
   {open && <section className="float-chat-panel" role="dialog" aria-label="Asistente de viajes" onKeyDown={e => { if (e.key === 'Escape') setOpen(false) }}>
    <header><div className="float-chat-title"><span aria-hidden="true">✦</span><div><strong>Asistente Casa Andina</strong><small>Tu compañero de viaje</small></div></div><button type="button" onClick={() => setOpen(false)} aria-label="Cerrar chat">×</button></header>
    <div className="float-chat-log" ref={log} role="log" aria-label="Conversación" aria-live="polite">
+    <div className="float-chat-history"><button type="button" onClick={() => { reiniciar(); setMensaje('') }}>Nuevo chat</button>{anteriores.length > 0 && <details><summary>Conversaciones anteriores ({anteriores.length})</summary>{anteriores.map(chat => <button type="button" key={chat.id} onClick={() => seleccionarChat(chat.id)}>{chat.titulo}</button>)}</details>}</div>
     <div className="float-chat-message assistant">¡Hola! Cuéntame cómo imaginas tu viaje y te ayudaré a encontrar opciones.</div>
     {turnos.map(turno => <div key={turno.id} className="float-chat-turn"><div className="float-chat-message user">{turno.consulta.mensaje}</div>
      {turno.estado === 'enviando' && <div className="float-chat-message assistant" role="status">Preparando una respuesta…</div>}
-     {turno.estado === 'listo' && turno.respuesta && <><div className="float-chat-message assistant">{turno.respuesta.mensaje}</div>{turno.respuesta.plan && <button type="button" className="float-chat-plan" onClick={abrirAsistente}>Ver recomendaciones y clima en el asistente ↗</button>}</>}
+     {turno.estado === 'listo' && turno.respuesta && <><div className="float-chat-message assistant">{turno.respuesta.mensaje}</div>{turno.respuesta.plan && <button type="button" className="float-chat-plan" onClick={abrirAsistente}>Ver recomendaciones y clima en el asistente ↗</button>}{turno.respuesta.atractivos && <button type="button" className="float-chat-plan" onClick={abrirAsistente}>Ver atractivos y fuentes ↗</button>}</>}
      {(turno.estado === 'error' || turno.estado === 'cancelado') && <div className="float-chat-message assistant"><p>{turno.estado === 'error' ? turno.error : 'Consulta detenida.'}</p><button type="button" disabled={isLoading} onClick={() => void reintentar(turno)}>Reintentar</button></div>}
     </div>)}
    </div>

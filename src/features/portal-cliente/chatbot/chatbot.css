@@ -105,7 +105,109 @@
   .ca-assistant-bubble, .ca-user-message, .ca-trip-question, .ca-trip-confirmed { animation:none; }
   .ca-assistant button, .ca-room-book { transition:none; }
 }
+.ca-chat-history { margin:0 0 20px; padding:12px 15px; border:1px solid #dce8df; border-radius:10px; background:#f8fbf7; color:#315c45; font-size:12px; }
+.ca-chat-history summary { cursor:pointer; font-weight:600; }
+.ca-chat-history p { color:#72857a; font-size:11px; }
+.ca-chat-history button { display:block; width:100%; padding:9px 0; border:0; border-top:1px solid #e3ede5; background:none; color:#315c45; text-align:left; cursor:pointer; }
+.ca-weather-filter-note,.ca-other-options>p { margin:14px 0; color:#657b6c; font-size:12px; line-height:1.6; }
+.ca-weather-filter-reason { margin:14px 0 8px; padding:10px 12px; border-left:3px solid #bd9052; border-radius:4px; background:#fbf5e9; color:#6d593b; font-size:12px; line-height:1.5; }
+.ca-other-options>button { margin:16px 0 4px; padding:10px 14px; border:1px solid #a9c6b8; border-radius:8px; background:#fff; color:#315c45; font:inherit; font-size:12px; cursor:pointer; }
+
+/* Una sección por ciudad: pronóstico compartido y habitaciones en carrusel. */
+.ca-city-groups { display:grid; gap:18px; margin-top:16px; }
+.ca-city-group { min-width:0; padding:18px; border:1px solid #dce8df; border-radius:16px; background:#fff; }
+.ca-city-heading,.ca-city-rooms-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.ca-city-heading { margin-bottom:14px; }
+.ca-city-heading p,.ca-city-rooms-heading p { margin:0 0 4px; color:#8a785d; font-size:10px; font-weight:700; letter-spacing:.09em; }
+.ca-city-heading h3 { margin:0; color:#244e3b; font-size:23px; }
+.ca-city-heading>span { color:#61796a; font-size:12px; }
+.ca-city-content { display:grid; grid-template-columns:minmax(240px, 300px) minmax(0,1fr); align-items:start; gap:18px; }
+.ca-city-weather,.ca-city-rooms { min-width:0; }
+.ca-city-weather .ca-weather { padding:0; }
+.ca-city-weather .ca-weather-stage { min-height:175px; padding:13px 15px; }
+.ca-city-weather .ca-weather-stage .ca-weather-current { min-height:100px; padding:8px 0; }
+.ca-city-weather .ca-weather-stage .ca-weather-current h4 { font-size:18px; }
+.ca-city-weather .ca-weather-stage .ca-weather-temperature { font-size:42px; letter-spacing:-2px; margin-top:3px; }
+.ca-city-weather .ca-weather-stage .ca-weather-temperature>span { font-size:20px; }
+.ca-city-weather .ca-weather-details { padding:4px 12px 12px; }
+.ca-city-weather .ca-weather-metrics { font-size:11px; }
+.ca-city-weather .ca-weather-source { font-size:11px; }
+.ca-city-weather .ca-weather-empty { min-height:175px; }
+.ca-city-rooms-heading { margin-bottom:10px; }
+.ca-city-rooms-heading h4 { margin:0; color:#315a42; font-size:16px; }
+.ca-carousel-controls { display:flex; gap:6px; }
+.ca-carousel-controls button { display:grid; place-items:center; width:36px; height:36px; border:1px solid #cdded3; border-radius:50%; background:#f8fbf7; color:#315c45; font-size:17px; cursor:pointer; }
+.ca-room-carousel { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(230px, 280px); grid-auto-rows:1fr; gap:12px; min-width:0; overflow-x:auto; padding:3px 2px 12px; scroll-snap-type:x proximity; overscroll-behavior-x:contain; scrollbar-width:thin; }
+.ca-room-carousel .ca-recommendation { display:flex; flex-direction:column; height:100%; min-width:0; scroll-snap-align:start; }
+.ca-room-carousel .ca-recommendation .ca-room-photo { flex:0 0 140px; height:140px; min-height:0; }
+.ca-room-carousel .ca-recommendation .ca-room-body { display:flex; flex:1; flex-direction:column; padding:14px; }
+.ca-room-carousel .ca-recommendation .ca-room-body h3 { font-size:17px; line-height:1.3; }
+.ca-room-carousel .ca-room-type { margin-top:3px; color:#62766a; line-height:1.45; }
+.ca-room-carousel .ca-room-reason { font-size:12px; line-height:1.5; }
+.ca-room-carousel .ca-room-footer { display:flex; align-items:stretch; flex-direction:column; gap:10px; margin-top:auto; padding-top:12px; }
+.ca-room-carousel .ca-room-book { display:flex; justify-content:space-between; width:100%; }
+.ca-room-carousel .ca-room-popularity { margin:3px 0; }
+@media (max-width:850px) {
+  .ca-city-content { grid-template-columns:1fr; }
+  .ca-city-weather .ca-weather-stage { min-height:150px; }
+  .ca-room-carousel { grid-auto-columns:min(260px, 85%); }
+}
+@media (max-width:620px) {
+  .ca-city-group { padding:14px; }
+  .ca-city-heading { align-items:start; }
+  .ca-city-heading h3 { font-size:20px; }
+  .ca-city-heading>span { max-width:120px; text-align:right; line-height:1.4; }
+  .ca-city-weather .ca-weather-stage { min-height:150px; }
+}
+
+/* Tarjetas compactas; el pronóstico detallado se monta solo cuando se abre. */
+.ca-recommendations { gap:12px; }
+.ca-recommendation { display:grid; grid-template-columns:minmax(150px, 200px) minmax(0, 1fr); border-radius:12px; box-shadow:0 2px 8px #244b380a; }
+.ca-recommendation .ca-room-photo { height:190px; min-height:165px; }
+.ca-recommendation .ca-room-body { min-width:0; padding:16px 18px; }
+.ca-recommendation .ca-room-body h3 { font-size:19px; }
+.ca-recommendation .ca-room-reason { margin:8px 0; line-height:1.5; }
+.ca-recommendation .ca-room-footer { margin-top:12px; }
+.ca-recommendation .ca-room-footer strong { font-size:21px; }
+.ca-room-weather-toggle { margin-top:12px; border-top:1px solid #e3ece5; }
+.ca-room-weather-toggle>summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; color:#315c45; font-size:13px; font-weight:600; cursor:pointer; list-style:none; }
+.ca-room-weather-toggle>summary::-webkit-details-marker { display:none; }
+.ca-room-weather-toggle[open]>summary span { transform:rotate(180deg); }
+.ca-room-weather-toggle .ca-weather,.ca-room-weather-toggle .ca-weather-empty { margin:2px 0 10px; }
+.ca-answer-notes { margin-top:18px; padding:14px 16px; border:1px solid #dce8df; border-radius:10px; background:#f8fbf7; color:#405f4b; font-size:14px; line-height:1.65; }
+.ca-answer-notes summary { color:#244f3a; font-size:14px; font-weight:700; }
+.ca-answer-notes p { margin:10px 0 0; }
+@media (max-width:620px) {
+  .ca-recommendation { grid-template-columns:1fr; }
+  .ca-recommendation .ca-room-photo { height:135px; min-height:0; }
+  .ca-recommendation .ca-room-body { padding:14px; }
+  .ca-recommendation .ca-room-body h3 { font-size:18px; }
+  .ca-answer-notes,.ca-answer-notes summary { font-size:14px; }
+}
 @media (max-width:620px) { .ca-typing { align-items:center; gap:12px; padding:15px 13px; }.ca-typing strong { font-size:12px; }.ca-typing p { font-size:10px; } }
 .ca-chat-brand-copy>.ca-answer-label { margin-top:12px; }
 @media (min-width:621px) { .ca-chat-composer { min-height:156px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center; } }
 .ca-room-popularity{margin:10px 0 0;color:#607f6c;font-size:12px;font-weight:600}
+.ca-city-attractions {
+  margin: 0 0 1rem;
+  padding: .5rem .8rem;
+  border: 1px solid #c8dad3;
+  border-radius: .5rem;
+  background: #fff;
+  color: #174a3e;
+  font: inherit;
+  cursor: pointer;
+}
+.ca-city-attractions:hover, .ca-city-attractions:focus-visible { background: #e9f4ef; }
+.ca-city-attractions:disabled { opacity: .5; cursor: wait; }
+.ca-attractions { margin: .8rem 0; padding: 1.2rem 1.4rem; border: 1px solid #d4e4dc; border-radius: .8rem; background: #f5faf7; color: #173e35; }
+.ca-attractions h3 { margin: 0 0 .3rem; }
+.ca-attractions p { margin: 0; }
+.ca-attractions ol { padding-left: 1.4rem; line-height: 1.9; }
+.ca-attractions a { color: #1c5849; text-decoration: underline; text-underline-offset: .2em; }
+.ca-attraction-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: .8rem; list-style: none; margin: 1rem 0; padding: 0; }
+.ca-attraction-card { overflow: hidden; background: #fff; border: 1px solid #dbe8e1; border-radius: .65rem; }
+.ca-attraction-image { display: grid; place-items: center; height: 132px; background: #e8f0eb; color: #657b70; font-size: .8rem; text-align: center; }
+.ca-attraction-image img { width: 100%; height: 100%; object-fit: cover; }
+.ca-attraction-body { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; padding: .75rem; font-size: .9rem; }
+.ca-attraction-body small { color: #5a7167; font-size: .7rem; overflow-wrap: anywhere; }

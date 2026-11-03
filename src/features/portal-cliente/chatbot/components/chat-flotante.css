@@ -6,3 +6,6 @@
 @keyframes float-chat-appear { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 .float-chat-panel, .float-chat-message { animation:float-chat-appear .24s ease-out both; }
 @media (prefers-reduced-motion:reduce) { .float-chat button { transition:none; } .float-chat-trigger:hover { transform:none; } .float-chat-panel, .float-chat-message { animation:none; } }
+.float-chat-history { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; color:#315c45; font-size:11px; }
+.float-chat-history button,.float-chat-history summary { border:0; background:none; color:#315c45; font:inherit; text-align:left; cursor:pointer; }
+.float-chat-history details { flex-basis:100%; }.float-chat-history details button { display:block; padding:7px 0; }
