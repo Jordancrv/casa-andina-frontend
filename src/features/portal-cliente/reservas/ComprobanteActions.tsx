@@ -47,6 +47,6 @@ export function ComprobanteActions({ reservaId, tipo, numero }: Props) {
   return <div className="receipt-access">
     <div className="receipt-actions"><button className="client-secondary" type="button" disabled={loading} onClick={() => { setPreview(true); void load() }}>Previsualizar {label.toLowerCase()} ↗</button><button className="client-secondary" type="button" disabled={loading} onClick={() => void download()}>{loading && !preview ? 'Preparando PDF…' : 'Descargar PDF ↓'}</button></div>
     {!preview && error && <p className="receipt-error" role="alert">{error}</p>}
-    {preview && <PdfDialog url={url} title={`${label} · Vista previa`} eyebrow="COMPROBANTE DE TU RESERVA" footer="Pago simulado. Si tu navegador no muestra el documento, utiliza «Descargar PDF»." loading={loading} error={error} onClose={() => setPreview(false)} onRetry={() => void load()} onDownload={() => void download()} />}
+    {preview && <PdfDialog url={url} title={`${label} · Vista previa`} eyebrow="COMPROBANTE DE TU RESERVA" footer="Si tu navegador no muestra el documento, utiliza «Descargar PDF»." loading={loading} error={error} onClose={() => setPreview(false)} onRetry={() => void load()} onDownload={() => void download()} />}
   </div>
 }
