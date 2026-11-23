@@ -2,11 +2,14 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { actualizarCliente, crearCliente, crmError } from './clientes.api'
 import type { CatalogosCrm, Cliente, ClienteDatos } from './clientes.types'
+import { useAuth } from '@/app/providers/auth-context'
 import { NacionalidadSelect } from '@/shared/components/NacionalidadSelect'
 
 interface Props { cliente: Cliente | null; catalogos: CatalogosCrm; sedeInicial: string; onClose: () => void; onSaved: (nuevo: boolean, sedeId: number | null) => Promise<void> }
 
 export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved }: Props) {
+  const { usuario } = useAuth()
+  const esAdministrador = usuario?.rol === 'Administrador'
   const dialog = useRef<HTMLDialogElement>(null)
   const [datos, setDatos] = useState<ClienteDatos>(() => ({
     tipoPersona: cliente?.tipoPersona === 'Jurídica' ? 'J' : 'N',
@@ -16,6 +19,7 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
     correoNotificacion: cliente?.correoNotificacion ?? '', telefono: cliente?.telefono ?? '',
     estado: cliente?.estado ?? 'Activo',
     fechaNacimiento: cliente?.fechaNacimiento?.slice(0, 10) ?? '', genero: cliente?.genero ?? '', nacionalidad: cliente?.nacionalidad ?? '',
+    ...(cliente && esAdministrador ? { observacion: cliente.observacion ?? '' } : {}),
     sedeRegistroId: cliente ? cliente.sedeRegistroId : catalogos.sedeAsignadaId ?? (Number(sedeInicial) || null),
   }))
   const [error, setError] = useState<string | null>(null)
@@ -55,6 +59,7 @@ export function ClienteForm({ cliente, catalogos, sedeInicial, onClose, onSaved 
         <label>Correo de notificación <small>Opcional</small><input type="email" maxLength={150} value={datos.correoNotificacion ?? ''} onChange={event => set('correoNotificacion', event.target.value)} placeholder="cliente@ejemplo.com" /></label>
         <label>Teléfono <small>Opcional</small><input type="tel" maxLength={16} pattern="\+?[0-9]{7,15}" value={datos.telefono ?? ''} onChange={event => set('telefono', event.target.value)} placeholder="+51987654321" /></label>
         {!cliente && <label>Sede de registro<select required disabled={!catalogos.puedeElegirSede} value={datos.sedeRegistroId ?? ''} onChange={event => set('sedeRegistroId', Number(event.target.value) || null)}><option value="">Selecciona una sede</option>{catalogos.sedes.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></label>}
+        {cliente && esAdministrador && <label>Observaciones / Preferencias <small>Opcional · Solo el administrador puede editar</small><textarea maxLength={2000} rows={4} value={datos.observacion ?? ''} onChange={event => set('observacion', event.target.value)} placeholder="Registra preferencias relevantes para la atención del cliente" /></label>}
         <label>Estado comercial<select value={datos.estado} onChange={event => set('estado', event.target.value as 'Activo' | 'Inactivo')}><option value="Activo">Activo</option><option value="Inactivo">Inactivo</option></select></label>
       </fieldset>
       <div className="clients-form-note"><strong>Categoría automática</strong><p>Ocasional: 0–1 estadías completadas · Frecuente: 2–4 · VIP: 5 o más.</p><p>{cliente ? 'El correo de notificación es independiente del correo de acceso. Los datos de identidad y contacto pertenecen al perfil compartido del cliente.' : 'El alta crea un perfil comercial. La cuenta de acceso se administra por separado.'}</p></div>

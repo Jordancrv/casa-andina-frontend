@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '@/shared/lib/api'
 import { useAuth } from '@/app/providers/auth-context'
+import { useAccess } from '@/app/providers/access-context'
+import { BloqueoDialog } from './BloqueoDialog'
 import { getSedeIdFromToken } from '@/shared/lib/jwt'
 import type { SedeDto } from '@/shared/types/global.types'
 import './calendario.css'
@@ -11,6 +13,8 @@ interface ReservaCalendario {
   fechaCheckOut: string
   estado: string
   nombreReservante: string | null
+  codigo: string | null
+  canal: string | null
 }
 
 interface HabitacionCalendario {
@@ -20,6 +24,7 @@ interface HabitacionCalendario {
   tipoHabitacion: string
   estadoHabitacion: string
   reservas: ReservaCalendario[]
+  bloqueos: { id: number; inicio: string; finExclusivo: string; motivo: string }[]
 }
 
 const DAY_MS = 86_400_000
@@ -47,6 +52,11 @@ const bookingLabel = (start: string, end: string) =>
 
 export const Calendario = () => {
   const { usuario } = useAuth()
+  const { can } = useAccess()
+  const [bloquear, setBloquear] = useState<HabitacionCalendario | null>(null)
+  const [cancelar, setCancelar] = useState<{ id: number; motivo: string } | null>(null)
+  const [bloqueoError, setBloqueoError] = useState('')
+  const [cancelando, setCancelando] = useState(false)
   const [sedeSeleccionada, setSedeSeleccionada] = useState('')
   const [rango, setRango] = useState(initialRange)
   const sedeAsignada = usuario ? getSedeIdFromToken(usuario.token) : null
@@ -116,14 +126,13 @@ export const Calendario = () => {
       {rangoValido && !consultando && !error && sedes.length > 0 && habitaciones.length === 0 && <p className="cal-message">No hay habitaciones registradas para esta sede.</p>}
 
       {rangoValido && !consultando && !error && habitaciones.length > 0 && <>
-        <div className="cal-legend"><span><i className="is-confirmada" /> Reservado</span><span><i className="is-pendiente" /> Pendiente</span><span>La fecha de salida no cuenta como noche ocupada. Solo se muestra el titular, sin datos de contacto.</span></div>
-        <p className="cal-message cal-block-note">Los bloqueos por arreglo o mantenimiento aún no aparecen en la línea de tiempo: el modelo actual no guarda periodo ni motivo del bloqueo.</p>
+        <div className="cal-legend"><span><i className="is-confirmada" /> Reservado</span><span><i className="is-pendiente" /> Pendiente</span><span><i className="is-bloqueo" /> Bloqueada</span><span>La salida de una reserva no cuenta como noche ocupada; el fin de un bloqueo sí está incluido.</span></div>
         <div className="cal-timeline-scroll" role="region" aria-label="Calendario de habitaciones reservadas" tabIndex={0}>
           <div className="cal-timeline" style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
             <div className="cal-timeline-room-head">HABITACIÓN</div>
             {dias.map(day => <div className="cal-day-head" key={day.toISOString()}><span>{dayLabel(day, { weekday: 'short' }).replace('.', '')}</span><strong>{dayLabel(day, { day: '2-digit' })}</strong></div>)}
             {habitaciones.map(habitacion => <div className="cal-timeline-row" key={habitacion.habitacionId} style={{ gridTemplateColumns: `210px repeat(${dias.length}, 44px)` }}>
-              <div className="cal-room-cell"><strong>{habitacion.numero}</strong><span>{habitacion.tipoHabitacion} · Piso {habitacion.piso}</span><small>{habitacion.estadoHabitacion}</small></div>
+              <div className="cal-room-cell"><strong>{habitacion.numero}</strong><span>{habitacion.tipoHabitacion} · Piso {habitacion.piso}</span><small>{habitacion.estadoHabitacion}</small>{can('habitaciones.editar') && <button type="button" className="cal-block-button" onClick={() => setBloquear(habitacion)}>Bloquear fechas</button>}</div>
               {dias.map((day, index) => <div className="cal-day-cell" key={day.toISOString()} style={{ gridColumn: index + 2 }} />)}
               {habitacion.reservas.map(reserva => {
                 const start = Math.max(0, daysApart(rango.desde, reserva.fechaCheckIn))
@@ -132,14 +141,17 @@ export const Calendario = () => {
                 const estadoReserva = reserva.estado?.toLowerCase() ?? ''
                 const estado = estadoReserva === 'reservado' ? 'confirmada' : estadoReserva === 'pendiente' ? 'pendiente' : 'otro'
                 const nombreReservante = reserva.nombreReservante || 'Titular no disponible'
-                return <div className={`cal-booking-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.estado || 'Estado no informado'}: ${nombreReservante} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
-                  <span>{nombreReservante}</span><small>{bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}</small>
+                return <div className={`cal-booking-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.codigo ?? ''} · ${nombreReservante} · ${reserva.canal ?? ''} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
+                  <span>{reserva.codigo} · {nombreReservante}</span><small>{bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}</small>
                 </div>
               })}
+              {(habitacion.bloqueos ?? []).map(b => { const start=Math.max(0,daysApart(rango.desde,b.inicio)); const end=Math.min(dias.length,daysApart(rango.desde,b.finExclusivo)); if(end<=start) return null; return <button type="button" className="cal-booking-bar cal-block-bar" key={b.id} style={{ left:`calc(210px + ${start} * 44px)`,width:`calc(${end-start} * 44px - 4px)` }} title={`Bloqueada: ${b.motivo} · ${bookingLabel(b.inicio,addDays(b.finExclusivo.slice(0,10),-1))}`} onClick={() => { setBloqueoError(''); setCancelar({ id:b.id,motivo:b.motivo }) }}><span>Bloqueada</span><small>{b.motivo}</small></button> })}
             </div>)}
           </div>
         </div>
       </>}
+      {bloquear && <BloqueoDialog habitacion={bloquear} close={() => setBloquear(null)} saved={() => { setBloquear(null); void ocupacionQuery.refetch() }} />}
+      {cancelar && <div className="cal-confirm-overlay"><section className="cal-confirm" role="dialog" aria-modal="true" aria-labelledby="cancelar-bloqueo"><h2 id="cancelar-bloqueo">Bloqueo de habitación</h2><p>{cancelar.motivo}</p>{bloqueoError && <p className="cal-error" role="alert">{bloqueoError}</p>}<footer><button type="button" disabled={cancelando} onClick={() => setCancelar(null)}>Cerrar</button>{can('habitaciones.editar') && <button type="button" disabled={cancelando} onClick={async () => { setCancelando(true); try { await api.delete(`/habitaciones/bloqueos/${cancelar.id}`); setCancelar(null); await ocupacionQuery.refetch() } catch { setBloqueoError('No se pudo cancelar el bloqueo. Actualiza e inténtalo nuevamente.') } finally { setCancelando(false) } }}>Cancelar bloqueo</button>}</footer></section></div>}
     </section>
   )
 }

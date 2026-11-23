@@ -127,3 +127,8 @@
 .clients-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 @media (max-width: 1100px) { .clients-toolbar { align-items: start; flex-direction: column; }.clients-filters { width: 100%; }.clients-search { flex-basis: 270px; } }
 @media (max-width: 700px) { .clients-page { padding: 20px 14px; gap: 16px; }.clients-heading { align-items: start; flex-direction: column; gap: 20px; }.clients-search { flex-basis: auto; width: 100%; }.clients-kpis { gap: 8px; }.clients-kpi { padding: 12px; }.clients-kpi > div { font-size: 10px; align-items: start; }.clients-kpi > div svg { width: 16px; flex: 0 0 16px; }.clients-kpi > strong { font-size: 28px; }.clients-kpi > small { display: none; }.clients-filters { gap: 8px; }.clients-filters select { width: 100%; max-width: 100%; }.clients-filters label { flex: 1 1 140px; }.clients-filters > button { width: 100%; }.clients-segments button { gap: 6px; padding: 8px; font-size: 11px; }.clients-segments button small { display: none; }.clients-detail, .clients-edit { padding: 22px 18px; }.client-history li { grid-template-columns: 1fr; }.client-history b { grid-column: 1; justify-self: start; }.clients-kpi-note { line-height: 1.7; margin: 0; } }
+
+.clients-edit textarea { width: 100%; min-height: 100px; resize: vertical; padding: 10px 12px; border: 1px solid #d8e2dd; border-radius: 6px; font: inherit; color: inherit; background: #fff; }
+.clients-observacion { padding: 16px; margin: 16px 0; background: #f5f9f7; border: 1px solid #dce8e2; border-radius: 6px; }
+.clients-observacion h3 { margin: 0 0 8px; font-size: 1rem; }
+.clients-observacion p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }

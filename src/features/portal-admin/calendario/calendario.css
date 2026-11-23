@@ -86,3 +86,19 @@
 .cal-summary-footer { display:flex; align-items:center; gap:8px; width:100%; padding-top:12px; border-top:1px solid #d8e2de; color:#63766b; font-size:11px; line-height:1.5; }
 .cal-summary-dot { flex-shrink:0; width:7px; height:7px; border-radius:50%; background:#b48345; }
 @media (max-width:700px) { .cal-summary { min-width:0; width:100%; } }
+.cal-legend i.is-bloqueo { background:#8a6046; }
+.cal-block-button { justify-self:start; border:0; background:transparent; padding:0; color:#315c45; font:inherit; font-size:10px; text-decoration:underline; cursor:pointer; }
+.cal-block-bar { border:0; background:#8a6046; text-align:left; cursor:pointer; }
+.cal-dialog { width:min(480px,92vw); border:1px solid #d8e2de; border-radius:12px; padding:0; color:#173f35; }
+.cal-dialog::backdrop { background:#0d282059; }
+.cal-dialog form { display:grid; gap:14px; padding:24px; }
+.cal-dialog header { display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #d8e2de; padding-bottom:14px; }
+.cal-dialog h2,.cal-confirm h2 { margin:5px 0; font-size:21px; }
+.cal-dialog label { display:grid; gap:6px; font-size:13px; }
+.cal-dialog input { min-height:40px; border:1px solid #cddbd4; border-radius:6px; padding:0 10px; font:inherit; }
+.cal-dialog p,.cal-confirm p { color:#52645b; font-size:13px; }
+.cal-dialog footer,.cal-confirm footer { display:flex; justify-content:flex-end; gap:8px; }
+.cal-dialog button,.cal-confirm button { border:1px solid #cddbd4; border-radius:6px; background:white; color:#173f35; padding:9px 14px; cursor:pointer; }
+.cal-dialog button[type=submit],.cal-confirm footer button:last-child { background:#173f35; color:white; }
+.cal-confirm-overlay { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:#0d282059; }
+.cal-confirm { width:min(440px,90vw); box-sizing:border-box; background:white; border-radius:12px; padding:24px; }

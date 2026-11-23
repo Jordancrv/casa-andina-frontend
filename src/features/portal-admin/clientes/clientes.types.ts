@@ -27,6 +27,7 @@ export interface Cliente {
   fechaNacimiento: string | null
   genero: string | null
   nacionalidad: string | null
+  observacion: string | null
   historial: { reservaId: number; codigoReserva: string; estado: string; fechaCheckIn: string; fechaCheckOut: string; importe: number; sede: string }[]
 }
 export interface ClientesCrm {
@@ -58,4 +59,5 @@ export interface ClienteDatos {
   fechaNacimiento: string | null
   genero: string | null
   nacionalidad: string | null
+  observacion?: string | null
 }

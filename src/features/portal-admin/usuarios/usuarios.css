@@ -91,3 +91,6 @@
 @media (max-width: 520px) { .users-native-dialog .users-personal-form { padding: 20px 16px; }.users-personal-grid, .users-personal-form .users-role-list { grid-template-columns: 1fr; }.users-personal-grid .users-field-wide { grid-column: auto; } }
 @media (max-width: 700px) { .users-page { padding: 20px 14px; }.users-heading { align-items: start; flex-direction: column; }.users-heading-actions { width: 100%; }.users-search { flex: 1; min-width: 0; }.users-search input { box-sizing: border-box; width: 100%; }.users-detail, .users-edit { padding: 20px 14px; } }
 @media (max-width: 380px) { .users-heading-actions { flex-wrap: wrap; }.users-search { flex-basis: 100%; } }
+
+.users-personal-form .users-show-password { display:flex; align-items:center; gap:8px; }
+.users-personal-form .users-show-password input { width:16px; height:16px; margin:0; accent-color:#245f4c; }
