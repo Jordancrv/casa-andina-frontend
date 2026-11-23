@@ -102,3 +102,21 @@
 .cal-dialog button[type=submit],.cal-confirm footer button:last-child { background:#173f35; color:white; }
 .cal-confirm-overlay { position:fixed; inset:0; z-index:100; display:grid; place-items:center; background:#0d282059; }
 .cal-confirm { width:min(440px,90vw); box-sizing:border-box; background:white; border-radius:12px; padding:24px; }
+.cal-reserva-bar { border:0; text-align:left; cursor:pointer; font-family:inherit; }
+.cal-reserva-bar:focus-visible { outline:3px solid #b48345; outline-offset:2px; }
+.cal-reserva-dialog { width:min(680px,94vw); max-height:85vh; padding:0; border:1px solid #d8e2de; border-radius:12px; color:#173f35; }
+.cal-reserva-dialog::backdrop { background:#0d282059; }
+.cal-reserva-dialog header { display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #e2eae5; }
+.cal-reserva-dialog header p { margin:0; font-size:11px; letter-spacing:.1em; color:#72847a; }
+.cal-reserva-dialog h2 { margin:5px 0 0; font-size:22px; }
+.cal-reserva-dialog header button { border:0; background:transparent; color:#52645b; cursor:pointer; font-size:26px; }
+.cal-reserva-body { padding:20px 24px; overflow-wrap:anywhere; }
+.cal-reserva-body section { margin-top:22px; }
+.cal-reserva-body h3 { font-size:15px; margin:0 0 12px; }
+.cal-reserva-body p { font-size:13px; color:#61746a; }
+.cal-reserva-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin:0; }
+.cal-reserva-grid dt { color:#75857b; font-size:11px; }
+.cal-reserva-grid dd { margin:4px 0 0; color:#234b3d; font-size:13px; }
+.cal-reserva-card { padding:14px; margin-bottom:10px; background:#f6faf7; border:1px solid #e0eae4; border-radius:8px; font-size:13px; }
+.cal-reserva-guest { border-top:1px solid #e0eae4; margin-top:12px; padding-top:12px; }
+.cal-reserva-guest dl { margin-top:10px; }

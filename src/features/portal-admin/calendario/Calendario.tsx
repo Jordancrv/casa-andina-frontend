@@ -4,11 +4,13 @@ import api from '@/shared/lib/api'
 import { useAuth } from '@/app/providers/auth-context'
 import { useAccess } from '@/app/providers/access-context'
 import { BloqueoDialog } from './BloqueoDialog'
+import { ReservaCalendarioDialog } from './ReservaCalendarioDialog'
 import { getSedeIdFromToken } from '@/shared/lib/jwt'
 import type { SedeDto } from '@/shared/types/global.types'
 import './calendario.css'
 
 interface ReservaCalendario {
+  reservaId: number
   fechaCheckIn: string
   fechaCheckOut: string
   estado: string
@@ -51,6 +53,7 @@ const bookingLabel = (start: string, end: string) =>
   `${dayLabel(utcDate(start), { day: 'numeric', month: 'short' })} – ${dayLabel(utcDate(end), { day: 'numeric', month: 'short' })}`
 
 export const Calendario = () => {
+  const [reservaSeleccionada, setReservaSeleccionada] = useState<ReservaCalendario | null>(null)
   const { usuario } = useAuth()
   const { can } = useAccess()
   const [bloquear, setBloquear] = useState<HabitacionCalendario | null>(null)
@@ -141,15 +144,16 @@ export const Calendario = () => {
                 const estadoReserva = reserva.estado?.toLowerCase() ?? ''
                 const estado = estadoReserva === 'reservado' ? 'confirmada' : estadoReserva === 'pendiente' ? 'pendiente' : 'otro'
                 const nombreReservante = reserva.nombreReservante || 'Titular no disponible'
-                return <div className={`cal-booking-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.codigo ?? ''} · ${nombreReservante} · ${reserva.canal ?? ''} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
+                return <button type="button" onClick={() => setReservaSeleccionada(reserva)} className={`cal-booking-bar cal-reserva-bar is-${estado}`} key={`${habitacion.habitacionId}-${reserva.fechaCheckIn}-${reserva.fechaCheckOut}`} style={{ left: `calc(210px + ${start} * 44px)`, width: `calc(${end - start} * 44px - 4px)` }} title={`${reserva.codigo ?? ''} · ${nombreReservante} · ${reserva.canal ?? ''} · ${bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}`}>
                   <span>{reserva.codigo} · {nombreReservante}</span><small>{bookingLabel(reserva.fechaCheckIn, reserva.fechaCheckOut)}</small>
-                </div>
+                </button>
               })}
               {(habitacion.bloqueos ?? []).map(b => { const start=Math.max(0,daysApart(rango.desde,b.inicio)); const end=Math.min(dias.length,daysApart(rango.desde,b.finExclusivo)); if(end<=start) return null; return <button type="button" className="cal-booking-bar cal-block-bar" key={b.id} style={{ left:`calc(210px + ${start} * 44px)`,width:`calc(${end-start} * 44px - 4px)` }} title={`Bloqueada: ${b.motivo} · ${bookingLabel(b.inicio,addDays(b.finExclusivo.slice(0,10),-1))}`} onClick={() => { setBloqueoError(''); setCancelar({ id:b.id,motivo:b.motivo }) }}><span>Bloqueada</span><small>{b.motivo}</small></button> })}
             </div>)}
           </div>
         </div>
       </>}
+      {reservaSeleccionada && <ReservaCalendarioDialog reserva={reservaSeleccionada} esAdministrador={usuario?.rol === 'Administrador'} close={() => setReservaSeleccionada(null)} />}
       {bloquear && <BloqueoDialog habitacion={bloquear} close={() => setBloquear(null)} saved={() => { setBloquear(null); void ocupacionQuery.refetch() }} />}
       {cancelar && <div className="cal-confirm-overlay"><section className="cal-confirm" role="dialog" aria-modal="true" aria-labelledby="cancelar-bloqueo"><h2 id="cancelar-bloqueo">Bloqueo de habitación</h2><p>{cancelar.motivo}</p>{bloqueoError && <p className="cal-error" role="alert">{bloqueoError}</p>}<footer><button type="button" disabled={cancelando} onClick={() => setCancelar(null)}>Cerrar</button>{can('habitaciones.editar') && <button type="button" disabled={cancelando} onClick={async () => { setCancelando(true); try { await api.delete(`/habitaciones/bloqueos/${cancelar.id}`); setCancelar(null); await ocupacionQuery.refetch() } catch { setBloqueoError('No se pudo cancelar el bloqueo. Actualiza e inténtalo nuevamente.') } finally { setCancelando(false) } }}>Cancelar bloqueo</button>}</footer></section></div>}
     </section>
