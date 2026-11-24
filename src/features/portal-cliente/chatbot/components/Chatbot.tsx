@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useConversation } from '../conversation-context'
 import { CityRecommendations } from './CityRecommendations'
+import { MemoriaViaje, ValoracionViaje } from './MemoriaViaje'
 import { AttractionsPreview } from './AttractionsPreview'
 import type { ConsultaViaje, PlanViaje } from '../chatbot.types'
 import '../../cliente.css'
@@ -71,9 +72,11 @@ export const Chatbot = () => {
             {turno.estado === 'cancelado' && <div className="ca-assistant-bubble ca-chat-feedback"><p>De acuerdo, dejamos la búsqueda en pausa. Cuando quieras, seguimos planeando.</p><button type="button" disabled={isLoading} onClick={() => void reintentar(turno)}>Retomar búsqueda ↗</button></div>}
             {turno.estado === 'error' && <div className="ca-assistant-bubble ca-chat-feedback ca-chat-error" role="alert"><p>{turno.error}</p><button type="button" disabled={isLoading} onClick={() => void reintentar(turno)}>Reintentar ↗</button></div>}
             {turno.estado === 'listo' && turno.respuesta && <><div className="ca-assistant-bubble"><p>{turno.respuesta.mensaje}</p></div>
+              {i === turnos.length - 1 && (turno.respuesta.preferencias.prefierePlaya || turno.respuesta.preferencias.evitarLluvia) && <MemoriaViaje sugeridas={{ playa: !!turno.respuesta.preferencias.prefierePlaya, evitarLluvia: !!turno.respuesta.preferencias.evitarLluvia }} />}
               {turno.respuesta.atractivos && <AttractionsPreview {...turno.respuesta.atractivos} />}
               {turno.respuesta.atractivosAdicionales?.map(guia => <AttractionsPreview key={guia.ciudad} {...guia} />)}
               {turno.respuesta.plan && turno.consultaPlan && <><OpcionesViaje plan={turno.respuesta.plan} consulta={turno.consultaPlan} old={i !== turnos.length - 1}/><details className="ca-answer-notes"><summary>Sobre estas recomendaciones</summary>{turno.respuesta.plan.avisos.map(aviso => <p key={aviso}>{aviso}</p>)}</details></>}
+              {i === turnos.length - 1 && turno.respuesta.plan && <ValoracionViaje generadoEn={turno.respuesta.plan.generadoEn} ciudad={turno.respuesta.preferencias.ciudad} continuar={consultar} ocupado={isLoading} />}
               {i === turnos.length - 1 && turno.respuesta.sugerencias.length > 0 && <div className="ca-follow-ups" aria-label="Respuestas rápidas opcionales">{turno.respuesta.sugerencias.map(text => <button key={text} type="button" disabled={isLoading} onClick={() => void consultar(text)}>{text} ↗</button>)}</div>}
             </>}
           </div>)}

@@ -15,6 +15,7 @@ export interface PreferenciasConversacion {
   adultos: number | null
   ciudad: string | null
   destinoFlexible: boolean
+  prefierePlaya?: boolean
   evitarLluvia?: boolean
 }
 export interface RespuestaConversacion {
