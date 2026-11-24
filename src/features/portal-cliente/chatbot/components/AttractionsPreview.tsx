@@ -18,21 +18,32 @@ function getPreview(title: string): Promise<Preview | null> {
     if (!response.ok) return null
     const data = await response.json()
     const page = Object.values(data.query?.pages ?? {})[0] as { thumbnail?: { source?: string }; pageimage?: string } | undefined
-    if (!page?.thumbnail?.source || !page.pageimage) return null
-    const imageUrl = new URL(page.thumbnail.source)
-    if (imageUrl.protocol !== 'https:' || imageUrl.hostname !== 'upload.wikimedia.org') return null
-    const info = new URLSearchParams({ action: 'query', format: 'json', origin: '*', prop: 'imageinfo', iiprop: 'url|extmetadata', titles: `File:${page.pageimage}` })
-    const metadataResponse = await fetch(`${api}?${info}`, { signal: AbortSignal.timeout(8000) })
+    const info = new URLSearchParams({ action: 'query', format: 'json', origin: '*', prop: 'imageinfo', iiprop: 'url|extmetadata', iiurlwidth: '480' })
+    if (page?.pageimage) info.set('titles', `File:${page.pageimage}`)
+    else {
+      info.set('generator', 'search')
+      info.set('gsrsearch', '"' + title + '" filetype:bitmap')
+      info.set('gsrnamespace', '6')
+      info.set('gsrlimit', '1')
+    }
+    const metadataResponse = await fetch(`https://commons.wikimedia.org/w/api.php?${info}`, { signal: AbortSignal.timeout(8000) })
     if (!metadataResponse.ok) return null
     const metadata = await metadataResponse.json()
-    const file = Object.values(metadata.query?.pages ?? {})[0] as { imageinfo?: { descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }[] } | undefined
+    const file = Object.values(metadata.query?.pages ?? {})[0] as { imageinfo?: { thumburl?: string; descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }[] } | undefined
     const image = file?.imageinfo?.[0]
+    const source = image?.thumburl ?? page?.thumbnail?.source
+    if (!source) return null
+    const imageUrl = new URL(source)
+    if (imageUrl.protocol !== 'https:' || imageUrl.hostname !== 'upload.wikimedia.org') return null
     const author = plainText(image?.extmetadata?.Artist?.value)
     const license = plainText(image?.extmetadata?.LicenseShortName?.value)
     if (!author || !license || !image?.descriptionurl?.startsWith('https://')) return null
     return { image: imageUrl.href, author, license, fileUrl: image.descriptionurl }
   }
-  const result = load().catch(() => null)
+  const result = load().catch(() => null).then(value => {
+    if (!value) previews.delete(title)
+    return value
+  })
   previews.set(title, result)
   return result
 }
@@ -46,9 +57,9 @@ function PlaceCard({ lugar, ciudad }: { lugar: string; ciudad: string }) {
   }, [lugar])
   const map = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lugar}, ${ciudad}, Perú`)}`
   return <li className="ca-attraction-card">
-    <a className="ca-attraction-image" href={map} target="_blank" rel="noopener noreferrer" aria-label={`Ver ${lugar} en Google Maps`}>
-      {preview ? <img src={preview.image} alt={lugar} loading="lazy" decoding="async" /> : <span>Vista previa no disponible</span>}
-    </a>
+    {preview ? <a className="ca-attraction-image" href={map} target="_blank" rel="noopener noreferrer" aria-label={`Ver ${lugar} en Google Maps`}>
+      <img src={preview.image} alt={lugar} loading="lazy" decoding="async" onError={() => setPreview(null)} />
+    </a> : <iframe className="ca-attraction-map" title={`Mapa de ${lugar}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" src={`https://maps.google.com/maps?q=${encodeURIComponent(`${lugar}, ${ciudad}, Perú`)}&z=15&output=embed`} />}
     <div className="ca-attraction-body"><strong>{lugar}</strong><a href={map} target="_blank" rel="noopener noreferrer">Ver en el mapa ↗</a>
       {preview && <small>Foto: {preview.author} · <a href={preview.fileUrl} target="_blank" rel="noopener noreferrer">{preview.license} / Wikimedia ↗</a></small>}
     </div>
