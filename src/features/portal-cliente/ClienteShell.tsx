@@ -1,3 +1,5 @@
+import { MobileMenu } from '@/shared/components/MobileMenu'
+import { useMobileMenu } from '@/shared/hooks/useMobileMenu'
 import { useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/app/providers/auth-context'
@@ -7,12 +9,14 @@ import './cliente.css'
 
 export function ClienteShell({ children }: { children: React.ReactNode }) {
   const { usuario, logout } = useAuth()
+  const menu = useMobileMenu()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const initials = useMemo(() => usuario?.nombreCompleto.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase() ?? 'CL', [usuario])
 
-  return <div className={`cliente-app${pathname === '/cliente/asistente' ? ' cliente-app--assistant' : ''}${pathname === '/cliente/calendario' ? ' cliente-app--calendar' : ''}`}>
-    <aside className="cliente-sidebar">
+  return <div onKeyDown={menu.onKeyDown} className={`cliente-app portal-mobile-shell${menu.open ? ' portal-menu-open' : ''}${pathname === '/cliente/asistente' ? ' cliente-app--assistant' : ''}${pathname === '/cliente/calendario' ? ' cliente-app--calendar' : ''}`}>
+    <MobileMenu menu={menu} controls="cliente-navigation" />
+    <aside id="cliente-navigation" className="cliente-sidebar" onClick={event => { if ((event.target as HTMLElement).closest('button')) menu.close() }}>
       <div className="cliente-brand"><img className="cliente-brand-logo" src={logo} alt="Casa Andina Hoteles" /></div>
       <nav aria-label="Navegación del cliente">
         <button className={pathname === '/cliente' ? 'active' : ''} onClick={() => navigate('/cliente')}>Buscar estadía</button>

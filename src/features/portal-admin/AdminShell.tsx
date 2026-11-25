@@ -1,3 +1,5 @@
+import { MobileMenu } from '@/shared/components/MobileMenu'
+import { useMobileMenu } from '@/shared/hooks/useMobileMenu'
 import { useAccess, SECTION_PERMISSIONS } from '@/app/providers/access-context'
 /**
  * AdminShell.tsx
@@ -147,6 +149,7 @@ export function AdminShell({
   rolUsuario    = 'Administrador',
   iniciales     = 'AM',
 }: AdminShellProps) {
+  const menu = useMobileMenu()
   const navigate     = useNavigate()
   const { pathname } = useLocation()
   const { usuario, logout } = useAuth()
@@ -154,9 +157,10 @@ export function AdminShell({
   const navItems = NAV_ITEMS.filter(item => item.path === '/admin/auditoria' ? usuario?.rol === 'Administrador' : access.can(SECTION_PERMISSIONS[item.path]))
 
   return (
-    <div className="shell">
+    <div onKeyDown={menu.onKeyDown} className={`shell portal-mobile-shell${menu.open ? ' portal-menu-open' : ''}`}>
+      <MobileMenu menu={menu} controls="admin-navigation" />
       {/* ── Sidebar ─────────────────────────────────────────────────────── */}
-      <aside className="shell-sidebar" aria-label="Navegación principal">
+      <aside id="admin-navigation" className="shell-sidebar" aria-label="Navegación principal" onClick={event => { if ((event.target as HTMLElement).closest('button')) menu.close() }}>
         {/* Logo */}
         <div className="shell-brand">
           <img
